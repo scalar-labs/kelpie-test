@@ -21,3 +21,6 @@ dependencies {
     //implementation group: 'com.google.guava', name: 'guava', version: '24.1-jre'
     //implementation group: 'com.google.inject', name: 'guice', version: '4.2.0'
 }
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
