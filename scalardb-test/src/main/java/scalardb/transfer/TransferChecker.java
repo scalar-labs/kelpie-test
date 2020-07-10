@@ -1,4 +1,4 @@
-package verification.db.transfer;
+package scalardb.transfer;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import scalardb.Common;
 
 public class TransferChecker extends PostProcessor {
   private final DistributedTransactionManager manager;
@@ -44,7 +45,7 @@ public class TransferChecker extends PostProcessor {
   public List<Result> readRecordsWithRetry() {
     logInfo("reading latest records ...");
 
-    Retry retry = Common.getRetry("readRecords");
+    Retry retry = Common.getRetryWithExponentialBackoff("readRecords");
     Supplier<List<Result>> decorated = Retry.decorateSupplier(retry, this::readRecords);
 
     try {
@@ -84,7 +85,7 @@ public class TransferChecker extends PostProcessor {
   }
 
   private int getNumOfCommittedFromCoordinator(Config config) {
-    Retry retry = Common.getRetry("checkCoordinator");
+    Retry retry = Common.getRetryWithExponentialBackoff("checkCoordinator");
     Function<String, Optional<Coordinator.State>> decorated =
         Retry.decorateFunction(retry, id -> getState(id));
 
@@ -128,7 +129,7 @@ public class TransferChecker extends PostProcessor {
   private boolean isConsistent(List<Result> results, int committed) {
     int totalVersion = Common.getActualTotalVersion(results);
     int totalBalance = Common.getActualTotalBalance(results);
-    int expectedTotalVersion = (getPreviousState().getInt("committed") + committed) * 2;
+    int expectedTotalVersion = ((int) getStats().getSuccessCount() + committed) * 2;
     int expectedTotalBalance = Common.getTotalInitialBalance(config);
 
     logInfo("total version: " + totalVersion);

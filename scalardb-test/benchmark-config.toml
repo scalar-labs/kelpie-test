@@ -1,0 +1,29 @@
+[modules]
+  [modules.preprocessor]
+    name = "scalardb.transfer.TransferPreparer"
+    path = "scalardb-test/build/libs/scalardb-test-all.jar"
+  [modules.processor]
+    name = "sccalardb.transfer.TransferProcessor"
+    path = "scalardb-test/build/libs/scalardb-test-all.jar"
+  [modules.postprocessor]
+    name = "scalardb.transfer.TransferChecker"
+    path = "scalardb-test/build/libs/scalardb-test-all.jar"
+
+[common]
+  concurrency = 1
+  run_for_sec = 200
+  ramp_for_sec = 10
+
+[test_config]
+  num_accounts = 100000
+  population_concurrency = 8
+
+[storage_config]
+  contact_points = "localhost"
+
+[killer_config]
+  ssh_user = "centos"
+  ssh_port = 22
+  ssh_private_key = "/home/centos/.ssh/private_key"
+  contact_points = "localhost"
+  max_kill_interval_sec = 300
