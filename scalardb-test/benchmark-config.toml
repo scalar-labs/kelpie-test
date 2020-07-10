@@ -3,7 +3,7 @@
     name = "scalardb.transfer.TransferPreparer"
     path = "scalardb-test/build/libs/scalardb-test-all.jar"
   [modules.processor]
-    name = "sccalardb.transfer.TransferProcessor"
+    name = "scalardb.transfer.TransferProcessor"
     path = "scalardb-test/build/libs/scalardb-test-all.jar"
   [modules.postprocessor]
     name = "scalardb.transfer.TransferChecker"
