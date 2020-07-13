@@ -1,16 +1,16 @@
 [modules]
   [modules.preprocessor]
     name = "scalardb.transfer.TransferPreparer"
-    path = "scalardb-test/build/libs/scalardb-test-all.jar"
+    path = "build/libs/scalardb-test-all.jar"
   [modules.processor]
     name = "scalardb.transfer.TransferProcessor"
-    path = "scalardb-test/build/libs/scalardb-test-all.jar"
+    path = "build/libs/scalardb-test-all.jar"
   [modules.postprocessor]
     name = "scalardb.transfer.TransferChecker"
-    path = "scalardb-test/build/libs/scalardb-test-all.jar"
+    path = "build/libs/scalardb-test-all.jar"
   [[modules.injectors]]
     name = "scalardb.injector.CassandraKiller"
-    path = "scalardb-test/build/libs/scalardb-test-all.jar"
+    path = "build/libs/scalardb-test-all.jar"
 
 [common]
   concurrency = 5

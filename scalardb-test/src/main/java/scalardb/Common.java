@@ -30,11 +30,10 @@ public class Common {
   private static final String ACCOUNT_ID = "account_id";
   private static final String ACCOUNT_TYPE = "account_type";
   private static final String BALANCE = "balance";
-  private static final Duration WAIT_DURATION = Duration.ofMillis(1000);
+  private static final int WAIT_MILLS = 1000;
   private static final long SLEEP_BASE_MILLIS = 100L;
   private static final int MAX_RETRIES = 10;
 
-  public static final String DEFAULT_CONTACT_POINT = "localhost";
   public static final int INITIAL_BALANCE = 10000;
   public static final int NUM_TYPES = 2;
 
@@ -56,8 +55,7 @@ public class Common {
 
   private static DatabaseConfig getDatabaseConfig(Config config) {
     Properties props = new Properties();
-    String contactPoints =
-        config.getUserString("storage_config", "contact_points", DEFAULT_CONTACT_POINT);
+    String contactPoints = config.getUserString("storage_config", "contact_points", "localhost");
     String username = config.getUserString("storage_config", "username", "cassandra");
     String password = config.getUserString("storage_config", "password", "cassandra");
     String storage = config.getUserString("storage_config", "storage", "cassandra");
@@ -102,8 +100,15 @@ public class Common {
   }
 
   public static Retry getRetryWithFixedWaitDuration(String name) {
+    return getRetryWithFixedWaitDuration(name, MAX_RETRIES, WAIT_MILLS);
+  }
+
+  public static Retry getRetryWithFixedWaitDuration(String name, int maxRetries, int waitMillis) {
     RetryConfig retryConfig =
-        RetryConfig.custom().maxAttempts(MAX_RETRIES).waitDuration(WAIT_DURATION).build();
+        RetryConfig.custom()
+            .maxAttempts(maxRetries)
+            .waitDuration(Duration.ofMillis(waitMillis))
+            .build();
 
     return Retry.of(name, retryConfig);
   }
