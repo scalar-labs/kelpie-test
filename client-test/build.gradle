@@ -1,6 +1,7 @@
 plugins {
     id 'java-library-distribution'
     id "com.github.johnrengelman.shadow" version "5.2.0"
+    id 'com.palantir.docker' version '0.25.0'
 }
 
 repositories {
@@ -14,9 +15,22 @@ dependencies {
     implementation group: "io.github.resilience4j", name: "resilience4j-retry", version: "1.3.1"
 }
 
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
 shadowJar {
     exclude 'contract/*'
 }
 
+docker {
+    name 'scalarlabs/kelpie-test'
+    files tasks.distTar.outputs, 'kelpie'
+    noCache true
+}
+
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
+
+archivesBaseName = "kelpie-test"
