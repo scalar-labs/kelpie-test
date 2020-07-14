@@ -26,7 +26,14 @@ shadowJar {
 
 docker {
     name 'scalarlabs/kelpie-test'
-    files tasks.distTar.outputs, 'files/kelpie'
+    files tasks.distTar.outputs, 'benchmark-config-docker.toml'
+    copySpec.with {
+        from('.') {
+            include 'sample-keys/**'
+            include 'src/**'
+            into '.'
+        }
+    }
     noCache true
 }
 
