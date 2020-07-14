@@ -80,7 +80,7 @@ case "`uname`" in
     ;;
 esac
 
-CLASSPATH=$APP_HOME/lib/kelpie-1.0.0.jar:$APP_HOME/lib/guice-4.2.2.jar:$APP_HOME/lib/guava-25.1-android.jar:$APP_HOME/lib/toml4j-0.7.2.jar:$APP_HOME/lib/picocli-4.1.4.jar:$APP_HOME/lib/javax.json-api-1.1.4.jar:$APP_HOME/lib/javax.json-1.1.4.jar:$APP_HOME/lib/slf4j-log4j12-1.7.30.jar:$APP_HOME/lib/HdrHistogram-2.1.12.jar:$APP_HOME/lib/javax.inject-1.jar:$APP_HOME/lib/aopalliance-1.0.jar:$APP_HOME/lib/gson-2.8.1.jar:$APP_HOME/lib/slf4j-api-1.7.30.jar:$APP_HOME/lib/log4j-1.2.17.jar:$APP_HOME/lib/jsr305-3.0.2.jar:$APP_HOME/lib/checker-compat-qual-2.0.0.jar:$APP_HOME/lib/error_prone_annotations-2.1.3.jar:$APP_HOME/lib/j2objc-annotations-1.1.jar:$APP_HOME/lib/animal-sniffer-annotations-1.14.jar
+CLASSPATH=$APP_HOME/lib/kelpie-1.1.0.jar:$APP_HOME/lib/guice-4.2.2.jar:$APP_HOME/lib/guava-25.1-android.jar:$APP_HOME/lib/toml4j-0.7.2.jar:$APP_HOME/lib/picocli-4.1.4.jar:$APP_HOME/lib/javax.json-api-1.1.4.jar:$APP_HOME/lib/javax.json-1.1.4.jar:$APP_HOME/lib/slf4j-log4j12-1.7.30.jar:$APP_HOME/lib/HdrHistogram-2.1.12.jar:$APP_HOME/lib/javax.inject-1.jar:$APP_HOME/lib/aopalliance-1.0.jar:$APP_HOME/lib/gson-2.8.1.jar:$APP_HOME/lib/slf4j-api-1.7.30.jar:$APP_HOME/lib/log4j-1.2.17.jar:$APP_HOME/lib/jsr305-3.0.2.jar:$APP_HOME/lib/checker-compat-qual-2.0.0.jar:$APP_HOME/lib/error_prone_annotations-2.1.3.jar:$APP_HOME/lib/j2objc-annotations-1.1.jar:$APP_HOME/lib/animal-sniffer-annotations-1.14.jar
 
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
