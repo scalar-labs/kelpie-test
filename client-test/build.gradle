@@ -1,7 +1,6 @@
 plugins {
     id 'java-library-distribution'
     id "com.github.johnrengelman.shadow" version "5.2.0"
-    id 'com.palantir.docker' version '0.25.0'
 }
 
 repositories {
@@ -24,20 +23,5 @@ shadowJar {
     exclude 'contract/*'
 }
 
-docker {
-    name 'scalarlabs/kelpie-test'
-    files tasks.distTar.outputs, 'benchmark-config-docker.toml'
-    copySpec.with {
-        from('.') {
-            include 'sample-keys/**'
-            include 'src/**'
-            into '.'
-        }
-    }
-    noCache true
-}
-
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
-
-archivesBaseName = "kelpie-test"
