@@ -93,7 +93,7 @@ public class CassandraKiller extends Injector {
     logInfo("Killing cassandra on " + node);
     String killCommand = "pkill -9 -F /var/run/cassandra/cassandra.pid";
     try {
-      execCommand(node, killCommand);
+      execCommand(node, killCommand.split(" "));
     } catch (CommandException e) {
       logWarn("Kill command failed");
       // ignore this failure
@@ -104,7 +104,7 @@ public class CassandraKiller extends Injector {
     logInfo("Restarting cassandra on " + node);
     String restartCommand = "/etc/init.d/cassandra start";
     try {
-      execCommand(node, restartCommand);
+      execCommand(node, restartCommand.split(" "));
     } catch (CommandException e) {
       logWarn("Restart command failed");
       // the node will be recovered when close()
@@ -112,7 +112,7 @@ public class CassandraKiller extends Injector {
   }
 
   private void checkNode(String node) {
-    String checkCommand = "nc -z localhost 9042";
+    String[] checkCommand = {"sh", "-c", "ss -at | grep :9042"};
     Retry retry = Common.getRetryWithFixedWaitDuration("checkNodeUp", 10, 10000);
     Runnable decorated = Retry.decorateRunnable(retry, () -> execCommand(node, checkCommand));
 
@@ -124,15 +124,15 @@ public class CassandraKiller extends Injector {
       throw e;
     }
 
-    logInfo("Cassandra is running on" + node);
+    logInfo("Cassandra is running on " + node);
   }
 
-  private void execCommand(String node, String commandStr) throws CommandException {
+  private void execCommand(String node, String[] commandStr) throws CommandException {
     SshHostAccessor accessor = accessors.get(node);
 
     try (HostControlSystem hcs = accessor.open()) {
       Command.Builder builder = hcs.getExecutionSystem().getCommandBuilder("sudo");
-      Arrays.stream(commandStr.split(" ")).forEach(arg -> builder.addArgument(arg));
+      Arrays.stream(commandStr).forEach(arg -> builder.addArgument(arg));
       Commands.execute(builder.build());
     } catch (CommandException e) {
       throw e;
