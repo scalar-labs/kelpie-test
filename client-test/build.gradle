@@ -1,6 +1,7 @@
 plugins {
     id 'java-library-distribution'
     id "com.github.johnrengelman.shadow" version "5.2.0"
+    id 'com.palantir.docker' version '0.25.0'
 }
 
 repositories {
@@ -8,7 +9,7 @@ repositories {
 }
 
 dependencies {
-    implementation group: 'com.scalar-labs', name: 'kelpie', version: '1.0.0'
+    implementation group: 'com.scalar-labs', name: 'kelpie', version: '1.1.0'
     implementation group: 'com.scalar-labs', name: 'scalardl-java-client-sdk', version: '2.0.5'
     implementation group: 'com.scalar-labs', name: 'scalardb', version: '2.0.1'
     implementation group: "io.github.resilience4j", name: "resilience4j-retry", version: "1.3.1"
@@ -16,6 +17,17 @@ dependencies {
 
 shadowJar {
     exclude 'contract/*'
+}
+
+docker {
+    name 'scalarlabs/kelpie-test-client'
+    files tasks.shadowJar.outputs, 'benchmark-config.toml'
+    copySpec.with {
+        from('.') {
+            include 'sample-keys/**'
+            into '.'
+        }
+    }
 }
 
 sourceCompatibility = 1.8
