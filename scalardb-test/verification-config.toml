@@ -1,0 +1,39 @@
+[modules]
+  [modules.preprocessor]
+    name = "scalardb.transfer.TransferPreparer"
+    path = "build/libs/scalardb-test-all.jar"
+  [modules.processor]
+    name = "scalardb.transfer.TransferProcessor"
+    path = "build/libs/scalardb-test-all.jar"
+  [modules.postprocessor]
+    name = "scalardb.transfer.TransferChecker"
+    path = "build/libs/scalardb-test-all.jar"
+  [[modules.injectors]]
+    name = "scalardb.injector.CassandraKiller"
+    path = "build/libs/scalardb-test-all.jar"
+
+[common]
+  concurrency = 5
+  run_for_sec = 900
+  ramp_for_sec = 0
+
+[stats]
+  realtime_report_enabled = false
+
+[test_config]
+  is_verification = true
+  num_accounts = 10
+  population_concurrency = 8
+
+[storage_config]
+  contact_points = "localhost"
+  #username = "cassandra"
+  #password = "cassandra"
+  #storage = "cassandra"
+
+[killer_config]
+  ssh_user = "centos"
+  ssh_port = 22
+  ssh_private_key = "/home/centos/.ssh/private_key"
+  contact_points = "localhost"
+  max_kill_interval_sec = 300

@@ -1,17 +1,18 @@
-package verification.db.transfer;
+package scalardb.transfer;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.Put;
 import com.scalar.kelpie.config.Config;
-import com.scalar.kelpie.exception.PreProcessException;
 import com.scalar.kelpie.modules.PreProcessor;
+import io.github.resilience4j.retry.Retry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
+import scalardb.Common;
 
 public class TransferPreparer extends PreProcessor {
   private static final long DEFAULT_POPULATION_CONCURRENCY = 32L;
@@ -79,28 +80,33 @@ public class TransferPreparer extends PreProcessor {
     }
 
     private void populateWithTx(int startId, int endId) {
-      int retries = 0;
-      while (true) {
-        if (retries++ > 10) {
-          throw new PreProcessException("population failed repeatedly!");
-        }
-        DistributedTransaction transaction = manager.start();
-        IntStream.range(startId, endId)
-            .forEach(
-                i -> {
-                  IntStream.range(0, Common.NUM_TYPES)
-                      .forEach(
-                          j -> {
-                            Put put = Common.preparePut(i, j, Common.INITIAL_BALANCE);
-                            transaction.put(put);
-                          });
-                });
-        try {
-          transaction.commit();
-          break;
-        } catch (Exception e) {
-          // ignored
-        }
+      Runnable populate =
+          () -> {
+            DistributedTransaction transaction = manager.start();
+            IntStream.range(startId, endId)
+                .forEach(
+                    i -> {
+                      IntStream.range(0, Common.NUM_TYPES)
+                          .forEach(
+                              j -> {
+                                Put put = Common.preparePut(i, j, Common.INITIAL_BALANCE);
+                                transaction.put(put);
+                              });
+                    });
+            try {
+              transaction.commit();
+            } catch (Exception e) {
+              throw new RuntimeException("population failed, retry", e);
+            }
+          };
+
+      Retry retry = Common.getRetryWithFixedWaitDuration("populate");
+      Runnable decorated = Retry.decorateRunnable(retry, populate);
+      try {
+        decorated.run();
+      } catch (Exception e) {
+        logError("population failed repeatedly!");
+        throw e;
       }
     }
   }

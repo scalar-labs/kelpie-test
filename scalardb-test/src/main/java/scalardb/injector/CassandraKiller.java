@@ -1,4 +1,4 @@
-package verification.db.transfer;
+package scalardb.injector;
 
 import com.palantir.giraffe.command.Command;
 import com.palantir.giraffe.command.CommandException;
@@ -11,6 +11,7 @@ import com.palantir.giraffe.ssh.SshHostAccessor;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.InjectionException;
 import com.scalar.kelpie.modules.Injector;
+import io.github.resilience4j.retry.Retry;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import scalardb.Common;
 
 public class CassandraKiller extends Injector {
   private final Random random = new Random(System.currentTimeMillis());
@@ -35,10 +37,7 @@ public class CassandraKiller extends Injector {
     String user = config.getUserString("killer_config", "ssh_user", "centos");
     int port = (int) config.getUserLong("killer_config", "ssh_port", 22L);
     String privateKeyFile = config.getUserString("killer_config", "ssh_private_key");
-    nodes =
-        config
-            .getUserString("killer_config", "contact_points", Common.DEFAULT_CONTACT_POINT)
-            .split(",");
+    nodes = config.getUserString("killer_config", "contact_points", "localhost").split(",");
     accessors = getAccessors(user, port, privateKeyFile, nodes);
   }
 
@@ -77,29 +76,66 @@ public class CassandraKiller extends Injector {
   }
 
   @Override
-  public void close() {}
+  public void close() {
+    Retry retry = Common.getRetryWithFixedWaitDuration("checkNodeUp", 5, 60000);
+
+    for (String node : nodes) {
+      Runnable decorated = Retry.decorateRunnable(retry, () -> checkNode(node));
+      try {
+        decorated.run();
+      } catch (Exception e) {
+        throw new InjectionException(node + " couldn't restart", e);
+      }
+    }
+  }
 
   private void kill(String node) {
     logInfo("Killing cassandra on " + node);
     String killCommand = "pkill -9 -F /var/run/cassandra/cassandra.pid";
-    execCommand(node, killCommand);
+    try {
+      execCommand(node, killCommand.split(" "));
+    } catch (CommandException e) {
+      logWarn("Kill command failed");
+      // ignore this failure
+    }
   }
 
   private void restart(String node) {
     logInfo("Restarting cassandra on " + node);
     String restartCommand = "/etc/init.d/cassandra start";
-    execCommand(node, restartCommand);
+    try {
+      execCommand(node, restartCommand.split(" "));
+    } catch (CommandException e) {
+      logWarn("Restart command failed");
+      // the node will be recovered when close()
+    }
   }
 
-  private void execCommand(String node, String commandStr) {
+  private void checkNode(String node) {
+    String[] checkCommand = {"sh", "-c", "ss -at | grep :9042"};
+    Retry retry = Common.getRetryWithFixedWaitDuration("checkNodeUp", 10, 10000);
+    Runnable decorated = Retry.decorateRunnable(retry, () -> execCommand(node, checkCommand));
+
+    logInfo("Checking Cassandra on " + node);
+    try {
+      decorated.run();
+    } catch (Exception e) {
+      restart(node);
+      throw e;
+    }
+
+    logInfo("Cassandra is running on " + node);
+  }
+
+  private void execCommand(String node, String[] commandStr) throws CommandException {
     SshHostAccessor accessor = accessors.get(node);
 
     try (HostControlSystem hcs = accessor.open()) {
       Command.Builder builder = hcs.getExecutionSystem().getCommandBuilder("sudo");
-      Arrays.stream(commandStr.split(" ")).forEach(arg -> builder.addArgument(arg));
+      Arrays.stream(commandStr).forEach(arg -> builder.addArgument(arg));
       Commands.execute(builder.build());
     } catch (CommandException e) {
-      logWarn("kill/restart command failed");
+      throw e;
     } catch (IOException e) {
       throw new InjectionException("SSH connection failed", e);
     }
