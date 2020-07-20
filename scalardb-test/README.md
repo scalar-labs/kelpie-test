@@ -26,7 +26,7 @@
     1. Start a transaction
     2. Read 2 accounts
     3. Calculate new balances
-    4. Update 2 accounts with new balances
+    4. Update 2 accounts with the new balances
     5. Commit the transaction
 
 - Account
