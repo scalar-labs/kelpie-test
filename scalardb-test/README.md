@@ -1,4 +1,4 @@
-# Benchmark/Verification Test for Scalar DB
+# Benchmark and verification Test for Scalar DB
 
 ## Usage
 1. Set up an environment
@@ -11,7 +11,7 @@
 
 3. Make your config file based on `benchmark-config.toml` or `verification-config.toml`
 
-4. Kelpie binary (zip) from https://github.com/scalar-labs/kelpie/releases/ and unzip
+4. Download Kelpie binary (zip) from https://github.com/scalar-labs/kelpie/releases/ and unzip it
     - You can also build Kelpie from the source
 
 
@@ -21,7 +21,7 @@
     ```
 
 ## Workload
-- Transaction
+- Payment transaction
   - Transfer money between randomly selected 2 accounts
     1. Start a transaction
     2. Read 2 accounts
@@ -36,8 +36,8 @@
   - The number of accounts can be set at `[test_config]` `num_accounts` in your config file
 
 ## Cassandra Killer
-- Cassandra Killer is an injector to make nodes crash randomly and restart the nodes
-  - The nodes to be crashed are selected randomly from `[killer_config]` `contact_points`
+- Cassandra Killer is an injector to kill nodes randomly and restart the nodes
+  - The nodes to be killed are selected randomly from `[killer_config]` `contact_points`
   - The interval is set at `[killer_config]` `max_kill_interval_sec`
 
 ### How to inject Cassandra Killer
