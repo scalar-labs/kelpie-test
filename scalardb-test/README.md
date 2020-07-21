@@ -3,6 +3,8 @@
 ## Usage
 1. Set up an environment
     - This job requires a client to execute this job and Cassandra cluster or Cosmos DB which can be accessed from the client
+    - The schema for this job is in `schema/` directory
+      - Check the replication factor for your environment
 
 2. Build
     ```console
