@@ -1,4 +1,4 @@
-package scalardb.transfer;
+package kelpie.scalardb.transfer;
 
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.PostProcessor;

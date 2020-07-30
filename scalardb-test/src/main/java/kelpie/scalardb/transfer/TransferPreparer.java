@@ -1,4 +1,4 @@
-package scalardb.transfer;
+package kelpie.scalardb.transfer;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
-import scalardb.Common;
+import kelpie.scalardb.Common;
 
 public class TransferPreparer extends PreProcessor {
   private static final long DEFAULT_POPULATION_CONCURRENCY = 32L;
@@ -22,7 +22,7 @@ public class TransferPreparer extends PreProcessor {
 
   public TransferPreparer(Config config) {
     super(config);
-    this.manager = Common.getTransactionManager(config);
+    this.manager = TransferCommon.getTransactionManager(config);
   }
 
   @Override
@@ -86,10 +86,11 @@ public class TransferPreparer extends PreProcessor {
             IntStream.range(startId, endId)
                 .forEach(
                     i -> {
-                      IntStream.range(0, Common.NUM_TYPES)
+                      IntStream.range(0, TransferCommon.NUM_TYPES)
                           .forEach(
                               j -> {
-                                Put put = Common.preparePut(i, j, Common.INITIAL_BALANCE);
+                                Put put =
+                                    TransferCommon.preparePut(i, j, TransferCommon.INITIAL_BALANCE);
                                 transaction.put(put);
                               });
                     });
