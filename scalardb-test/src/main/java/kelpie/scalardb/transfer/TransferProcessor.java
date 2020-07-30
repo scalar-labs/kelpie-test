@@ -1,4 +1,4 @@
-package scalardb.transfer;
+package kelpie.scalardb.transfer;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
-import scalardb.Common;
 
 public class TransferProcessor extends TimeBasedProcessor {
   private final DistributedTransactionManager manager;
@@ -29,7 +28,7 @@ public class TransferProcessor extends TimeBasedProcessor {
 
   public TransferProcessor(Config config) {
     super(config);
-    this.manager = Common.getTransactionManager(config);
+    this.manager = TransferCommon.getTransactionManager(config);
 
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
     this.isVerification = config.getUserBoolean("test_config", "is_verification", false);
@@ -73,16 +72,16 @@ public class TransferProcessor extends TimeBasedProcessor {
       toType = 1; // transfer between the same account
     }
 
-    Get fromGet = Common.prepareGet(fromId, fromType);
-    Get toGet = Common.prepareGet(toId, toType);
+    Get fromGet = TransferCommon.prepareGet(fromId, fromType);
+    Get toGet = TransferCommon.prepareGet(toId, toType);
 
     Optional<Result> fromResult = transaction.get(fromGet);
     Optional<Result> toResult = transaction.get(toGet);
-    int fromBalance = Common.getBalanceFromResult(fromResult.get());
-    int toBalance = Common.getBalanceFromResult(toResult.get());
+    int fromBalance = TransferCommon.getBalanceFromResult(fromResult.get());
+    int toBalance = TransferCommon.getBalanceFromResult(toResult.get());
 
-    Put fromPut = Common.preparePut(fromId, fromType, fromBalance - amount);
-    Put toPut = Common.preparePut(toId, toType, toBalance + amount);
+    Put fromPut = TransferCommon.preparePut(fromId, fromType, fromBalance - amount);
+    Put toPut = TransferCommon.preparePut(toId, toType, toBalance + amount);
     transaction.put(fromPut);
     transaction.put(toPut);
 

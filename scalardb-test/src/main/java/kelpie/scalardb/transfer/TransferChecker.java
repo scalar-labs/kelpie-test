@@ -1,4 +1,4 @@
-package scalardb.transfer;
+package kelpie.scalardb.transfer;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
@@ -19,7 +19,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import scalardb.Common;
+import kelpie.scalardb.Common;
 
 public class TransferChecker extends PostProcessor {
   private final DistributedTransactionManager manager;
@@ -27,7 +27,7 @@ public class TransferChecker extends PostProcessor {
 
   public TransferChecker(Config config) {
     super(config);
-    this.manager = Common.getTransactionManager(config);
+    this.manager = TransferCommon.getTransactionManager(config);
     this.coordinator = new Coordinator(Common.getStorage(config));
   }
 
@@ -65,8 +65,8 @@ public class TransferChecker extends PostProcessor {
     boolean isFailed = false;
     DistributedTransaction transaction = manager.start();
     for (int i = 0; i < numAccounts; i++) {
-      for (int j = 0; j < Common.NUM_TYPES; j++) {
-        Get get = Common.prepareGet(i, j);
+      for (int j = 0; j < TransferCommon.NUM_TYPES; j++) {
+        Get get = TransferCommon.prepareGet(i, j);
         try {
           transaction.get(get).ifPresent(r -> results.add(r));
         } catch (CrudException e) {
@@ -127,10 +127,10 @@ public class TransferChecker extends PostProcessor {
   }
 
   private boolean isConsistent(List<Result> results, int committed) {
-    int totalVersion = Common.getActualTotalVersion(results);
-    int totalBalance = Common.getActualTotalBalance(results);
+    int totalVersion = TransferCommon.getActualTotalVersion(results);
+    int totalBalance = TransferCommon.getActualTotalBalance(results);
     int expectedTotalVersion = ((int) getStats().getSuccessCount() + committed) * 2;
-    int expectedTotalBalance = Common.getTotalInitialBalance(config);
+    int expectedTotalBalance = TransferCommon.getTotalInitialBalance(config);
 
     logInfo("total version: " + totalVersion);
     logInfo("expected total version: " + expectedTotalVersion);

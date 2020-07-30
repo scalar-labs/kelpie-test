@@ -1,4 +1,4 @@
-package scalardb.injector;
+package kelpie.scalardb.injector;
 
 import com.palantir.giraffe.command.Command;
 import com.palantir.giraffe.command.CommandException;
@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import scalardb.Common;
+import kelpie.scalardb.Common;
 
 public class CassandraKiller extends Injector {
   private final Random random = new Random(System.currentTimeMillis());
