@@ -3,10 +3,10 @@
     name = "kelpie.scalardb.transfer.TransferPreparer"
     path = "build/libs/scalardb-test-all.jar"
   [modules.processor]
-    name = "kelpie.scalardb.transfer.TransferProcessor"
+    name = "kelpie.scalardb.transfer.WriteSkewProcessor"
     path = "build/libs/scalardb-test-all.jar"
   [modules.postprocessor]
-    name = "kelpie.scalardb.transfer.TransferChecker"
+    name = "kelpie.scalardb.transfer.WriteSkewChecker"
     path = "build/libs/scalardb-test-all.jar"
   [[modules.injectors]]
     name = "kelpie.scalardb.injector.CassandraKiller"
@@ -22,6 +22,8 @@
 
 [test_config]
   is_verification = true
+  is_serializable = false
+  is_extra_read = false
   num_accounts = 10
   population_concurrency = 8
 

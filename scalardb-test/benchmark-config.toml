@@ -1,12 +1,12 @@
 [modules]
   [modules.preprocessor]
-    name = "scalardb.transfer.TransferPreparer"
+    name = "kelpie.scalardb.transfer.TransferPreparer"
     path = "build/libs/scalardb-test-all.jar"
   [modules.processor]
-    name = "scalardb.transfer.TransferProcessor"
+    name = "kelpie.scalardb.transfer.TransferProcessor"
     path = "build/libs/scalardb-test-all.jar"
   [modules.postprocessor]
-    name = "scalardb.transfer.TransferReporter"
+    name = "kelpie.scalardb.transfer.TransferReporter"
     path = "build/libs/scalardb-test-all.jar"
 
 [common]
