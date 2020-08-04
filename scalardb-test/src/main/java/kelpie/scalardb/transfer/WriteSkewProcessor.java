@@ -140,7 +140,7 @@ public class WriteSkewProcessor extends TimeBasedProcessor {
   private void logSuccess(String txId, int fromId, int fromType, int toId, int toType, int amount) {
     if (isVerification.get()) {
       logTxInfo("succeeded", txId, fromId, fromType, toId, toType, amount);
-      if (isSerializable.get()) {
+      if (isSerializable.get() && !isExtraRead.get()) {
         if (fromId != toId) {
           numUpdates.getAndAdd(TransferCommon.NUM_TYPES + 1);
         } else {

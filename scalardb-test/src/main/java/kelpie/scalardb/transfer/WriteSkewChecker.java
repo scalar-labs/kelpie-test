@@ -13,10 +13,12 @@ import kelpie.scalardb.Common;
 
 public class WriteSkewChecker extends PostProcessor {
   private final boolean isSerializable;
+  private final boolean isExtraRead;
 
   public WriteSkewChecker(Config config) {
     super(config);
     this.isSerializable = config.getUserBoolean("test_config", "is_serializable", false);
+    this.isExtraRead = config.getUserBoolean("test_config", "is_extra_read", false);
   }
 
   @Override
@@ -71,7 +73,7 @@ public class WriteSkewChecker extends PostProcessor {
                 + ","
                 + toType
                 + " succeeded, not failed");
-        if (isSerializable) {
+        if (isSerializable && !isExtraRead) {
           if (fromId != toId) {
             numUpdates += TransferCommon.NUM_TYPES + 1;
           } else {
