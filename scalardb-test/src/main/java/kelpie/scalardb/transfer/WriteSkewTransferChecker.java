@@ -11,11 +11,11 @@ import javax.json.JsonArray;
 import javax.json.JsonObject;
 import kelpie.scalardb.Common;
 
-public class WriteSkewChecker extends PostProcessor {
+public class WriteSkewTransferChecker extends PostProcessor {
   private final boolean isSerializable;
   private final boolean isExtraRead;
 
-  public WriteSkewChecker(Config config) {
+  public WriteSkewTransferChecker(Config config) {
     super(config);
     this.isSerializable = config.getUserBoolean("test_config", "is_serializable", false);
     this.isExtraRead = config.getUserBoolean("test_config", "is_extra_read", false);
@@ -45,11 +45,11 @@ public class WriteSkewChecker extends PostProcessor {
 
   private int getNumOfUpdatesFromCoordinator(Config config) {
     Coordinator coordinator = new Coordinator(Common.getStorage(config));
-    JsonObject unknownTransactions = getPreviousState().getJsonObject("unknown_transaction");
-    if (unknownTransactions == null) {
+    if (getPreviousState().isNull("unknown_transaction")) {
       // for --only-post
       return 0;
     }
+    JsonObject unknownTransactions = getPreviousState().getJsonObject("unknown_transaction");
 
     int numUpdates = 0;
     for (String txId : unknownTransactions.keySet()) {
@@ -93,10 +93,10 @@ public class WriteSkewChecker extends PostProcessor {
     int totalBalance = TransferCommon.getActualTotalBalance(results);
 
     int numUpdates = 0;
-    try {
-      numUpdates = getPreviousState().getInt("num_updates");
-    } catch (NullPointerException e) {
+    if (getPreviousState().isNull("num_updates")) {
       logWarn("There is no num_updates since you use `--only-post`");
+    } else {
+      numUpdates = getPreviousState().getInt("num_updates");
     }
     int expectedTotalVersion = numUpdates + addedNumUpdates;
     int expectedTotalBalance = TransferCommon.getTotalInitialBalance(config);

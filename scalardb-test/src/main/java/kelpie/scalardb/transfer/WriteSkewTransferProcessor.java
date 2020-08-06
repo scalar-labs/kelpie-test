@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
 
-public class WriteSkewProcessor extends TimeBasedProcessor {
+public class WriteSkewTransferProcessor extends TimeBasedProcessor {
   private final DistributedTransactionManager manager;
   private final int numAccounts;
   private final AtomicBoolean isVerification;
@@ -35,7 +35,7 @@ public class WriteSkewProcessor extends TimeBasedProcessor {
   // for verification
   private final Map<String, List<Integer>> unknownTransactions = new ConcurrentHashMap<>();
 
-  public WriteSkewProcessor(Config config) {
+  public WriteSkewTransferProcessor(Config config) {
     super(config);
     this.manager = TransferCommon.getTransactionManager(config);
 
