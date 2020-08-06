@@ -1,15 +1,20 @@
 package kelpie.scalardb.transfer;
 
 import com.scalar.db.api.Consistency;
+import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.Get;
 import com.scalar.db.api.Put;
 import com.scalar.db.api.Result;
+import com.scalar.db.exception.transaction.CrudException;
 import com.scalar.db.io.IntValue;
 import com.scalar.db.io.Key;
 import com.scalar.db.transaction.consensuscommit.TransactionResult;
 import com.scalar.kelpie.config.Config;
+import io.github.resilience4j.retry.Retry;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import kelpie.scalardb.Common;
 
 public class TransferCommon {
@@ -39,6 +44,45 @@ public class TransferCommon {
     return new Put(partitionKey, clusteringKey)
         .withConsistency(Consistency.LINEARIZABLE)
         .withValue(new IntValue(BALANCE, amount));
+  }
+
+  public static List<Result> readRecordsWithRetry(Config config) {
+    DistributedTransactionManager manager = getTransactionManager(config);
+    Retry retry = Common.getRetryWithExponentialBackoff("readRecords");
+    Supplier<List<Result>> decorated =
+        Retry.decorateSupplier(retry, () -> readRecords(manager, config));
+
+    try {
+      return decorated.get();
+    } catch (Exception e) {
+      throw new RuntimeException("Reading records failed repeatedly", e);
+    }
+  }
+
+  private static List<Result> readRecords(DistributedTransactionManager manager, Config config) {
+    int numAccounts = (int) config.getUserLong("test_config", "num_accounts");
+    List<Result> results = new ArrayList<>();
+
+    boolean isFailed = false;
+    DistributedTransaction transaction = manager.start();
+    for (int i = 0; i < numAccounts; i++) {
+      for (int j = 0; j < TransferCommon.NUM_TYPES; j++) {
+        Get get = TransferCommon.prepareGet(i, j);
+        try {
+          transaction.get(get).ifPresent(r -> results.add(r));
+        } catch (CrudException e) {
+          // continue to read other records
+          isFailed = true;
+        }
+      }
+    }
+
+    if (isFailed) {
+      // for Retry
+      throw new RuntimeException("at least 1 record couldn't be read");
+    }
+
+    return results;
   }
 
   public static int getBalanceFromResult(Result result) {

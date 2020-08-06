@@ -4,17 +4,22 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.scalar.db.api.DistributedStorage;
 import com.scalar.db.api.DistributedTransactionManager;
+import com.scalar.db.api.TransactionState;
 import com.scalar.db.config.DatabaseConfig;
+import com.scalar.db.exception.transaction.CoordinatorException;
 import com.scalar.db.service.StorageModule;
 import com.scalar.db.service.StorageService;
 import com.scalar.db.service.TransactionModule;
 import com.scalar.db.service.TransactionService;
+import com.scalar.db.transaction.consensuscommit.Coordinator;
 import com.scalar.kelpie.config.Config;
 import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.function.Function;
 
 public class Common {
   private static final int WAIT_MILLS = 1000;
@@ -50,6 +55,30 @@ public class Common {
     props.setProperty("scalar.db.storage", storage);
 
     return new DatabaseConfig(props);
+  }
+
+  public static boolean isCommitted(Coordinator coordinator, String txId) {
+    Retry retry = Common.getRetryWithExponentialBackoff("checkCoordinator");
+    Function<String, Optional<Coordinator.State>> decorated =
+        Retry.decorateFunction(retry, id -> getState(coordinator, id));
+
+    Optional<Coordinator.State> state;
+    try {
+      state = decorated.apply(txId);
+    } catch (Exception e) {
+      throw new RuntimeException("Reading the status failed repeatedly", e);
+    }
+
+    return state.isPresent() && state.get().getState().equals(TransactionState.COMMITTED);
+  }
+
+  private static Optional<Coordinator.State> getState(Coordinator coordinator, String txId) {
+    try {
+      return coordinator.getState(txId);
+    } catch (CoordinatorException e) {
+      // convert the exception for Retry
+      throw new RuntimeException("Failed to read the state from the coordinator", e);
+    }
   }
 
   public static Retry getRetryWithFixedWaitDuration(String name) {
