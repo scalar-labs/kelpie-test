@@ -53,7 +53,7 @@ public class SensorCommon {
   public static int getMaxRevision(List<Result> results) {
     OptionalInt maxRevision = results.stream().mapToInt(r -> getRevisionFromResult(r)).max();
 
-    return maxRevision.isPresent() ? maxRevision.getAsInt() : 0;
+    return maxRevision.orElse(0);
   }
 
   private static int getRevisionFromResult(Result result) {
