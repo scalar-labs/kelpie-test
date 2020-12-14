@@ -1,0 +1,33 @@
+{
+
+  "BatchCreate": {
+    "class_file": "build/classes/java/main/sample_contract/BatchCreate.class",
+    "properties": {
+      "num_per_group": 100
+    },
+    "arguments": {
+      "group_id": "_group_id_",
+      "balance": 10000
+    }
+  },
+
+  "Transfer": {
+    "class_file": "build/classes/java/main/sample_contract/Transfer.class",
+    "properties": {},
+    "arguments": {
+      "asset_ids": ["_from_", "_to_"],
+      "amount": "_amount_",
+      "order_id": "_order_id_",
+      "paid_for": "_paid_for_",
+      "paid_at": "_paid_at_"
+    }
+  },
+
+  "GetBalance": {
+    "class_file": "build/classes/java/main/sample_contract/GetBalance.class",
+    "properties": {},
+    "arguments": {
+      "asset_ids": "_id_"
+    }
+  }
+}

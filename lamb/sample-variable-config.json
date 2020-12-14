@@ -1,0 +1,52 @@
+{
+  "BatchCreate": {
+    "group_id": {
+      "type": "STRING",
+      "pattern": "SEQUENTIAL",
+      "start": 0,
+      "end": 10000
+    }
+  },
+
+  "Transfer": {
+    "from": {
+      "type": "STRING",
+      "pattern": "RANDOM",
+      "start": 0,
+      "end": 10000
+    },
+    "to": {
+      "type": "STRING",
+      "pattern": "RANDOM",
+      "start": 0,
+      "end": 10000
+    },
+    "amount": {
+      "type": "INT",
+      "pattern": "RANDOM",
+      "start": 0,
+      "end": 1000
+    },
+    "order_id": {
+      "type": "STRING",
+      "pattern": "RANDOM",
+      "length": 16
+    },
+    "paid_for": {
+      "type": "STRING",
+      "pattern": "RANDOM",
+      "list": ["Desktop", "Laptop", "Peripheral"]
+    },
+    "paid_at": {
+      "type": "BIGINT",
+      "pattern": "TIMESTAMP"
+    }
+  },
+
+  "GetBalance": {
+    "type": "STRING",
+    "pattern": "SEQUENTIAL",
+    "start": 0,
+    "end": 10000
+  }
+}

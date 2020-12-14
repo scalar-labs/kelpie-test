@@ -1,0 +1,36 @@
+plugins {
+    id 'java-library-distribution'
+    id "com.github.johnrengelman.shadow" version "5.2.0"
+    id 'com.palantir.docker' version '0.25.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'com.scalar-labs', name: 'kelpie', version: '1.1.0'
+    implementation group: 'com.scalar-labs', name: 'scalardl-java-client-sdk', version: '2.0.5'
+    implementation group: "io.github.resilience4j", name: "resilience4j-retry", version: "1.3.1"
+    testImplementation group: 'junit', name: 'junit', version: '4.13'
+    testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.14.0'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.2.4'
+}
+
+shadowJar {
+    exclude 'sample_contract/*'
+}
+
+docker {
+    name 'scalarlabs/kelpie-lamb'
+    files tasks.shadowJar.outputs, 'lamb-config.toml'
+    copySpec.with {
+        from('.') {
+            include 'sample-keys/**'
+            into '.'
+        }
+    }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
