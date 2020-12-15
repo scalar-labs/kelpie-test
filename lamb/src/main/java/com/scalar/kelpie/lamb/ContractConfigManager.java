@@ -36,11 +36,11 @@ public class ContractConfigManager {
   }
 
   public String getClassPath(String contractName) {
-    return contractConfig.getString(CLASS_FILE);
+    return contractConfig.getJsonObject(contractName).getString(CLASS_FILE);
   }
 
   public Optional<JsonObject> getProperties(String contractName) {
-    JsonObject properties = contractConfig.getJsonObject(PROPERTIES);
+    JsonObject properties = contractConfig.getJsonObject(contractName).getJsonObject(PROPERTIES);
 
     return Optional.ofNullable(properties);
   }

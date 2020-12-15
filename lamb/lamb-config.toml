@@ -1,12 +1,12 @@
 [modules]
   [modules.preprocessor]
-    name = "lamb.LambPreparer"
+    name = "com.scalar.kelpie.lamb.LambPreparer"
     path = "build/libs/lamb-all.jar"
   [modules.processor]
-    name = "lamb.LambProcessor"
+    name = "com.scalar.kelpie.lamb.LambProcessor"
     path = "build/libs/lamb-all.jar"
   [modules.postprocessor]
-    name = "lamb.LambReporter"
+    name = "com.scalar.kelpie.lamb.LambReporter"
     path = "build/libs/lamb-all.jar"
 
 [common]
@@ -22,7 +22,7 @@
   contract_config = "/lamb/contract_config.json"
   variable_config = "/lamb/variable_config.json"
   population_contract = "BatchCreate"
-  target_contract = "Transfer";
+  target_contract = "Transfer"
   #population_concurrency = 32
   #num_populations = 100
 

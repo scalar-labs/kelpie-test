@@ -9,7 +9,7 @@ import javax.json.JsonObject;
 
 public class LambProcessor extends TimeBasedProcessor {
   private static final String TEST_CONFIG_TABLE = "benchmark_config";
-  private static final String CONTRACTS = "measured_contract";
+  private static final String CONTRACTS = "target_contract";
 
   private final ClientService service;
   private final String contractName;
