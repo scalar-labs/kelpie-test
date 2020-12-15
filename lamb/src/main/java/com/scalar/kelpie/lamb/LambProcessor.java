@@ -8,7 +8,7 @@ import java.io.IOException;
 import javax.json.JsonObject;
 
 public class LambProcessor extends TimeBasedProcessor {
-  private static final String TEST_CONFIG_TABLE = "test_config";
+  private static final String TEST_CONFIG_TABLE = "benchmark_config";
   private static final String CONTRACTS = "measured_contract";
 
   private final ClientService service;

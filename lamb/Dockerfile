@@ -8,8 +8,11 @@ RUN apt-get update && apt-get install wget unzip -y && \
     mv /kelpie-${KELPIE_VERSION}/lib/* /usr/local/lib/ && \
     rm -rf /tmp/kelpie.zip kelpie-${KELPIE_VERSION} /var/lib/apt/lists/*
 
-RUN mkdir -p /client-test/build/libs/
+RUN mkdir -p /lamb/build/libs/
 
 COPY lamb-all.jar /lamb/build/libs/
 COPY sample-keys /lamb/sample-keys
-COPY lamb-config.toml /lamb/
+COPY entrypoint.sh /lamb/
+
+RUN chmod +x /lamb/entrypoint.sh
+ENTRYPOINT ["/lamb/entrypoint.sh"]

@@ -5,13 +5,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
-import java.util.Optional;
 
 public class ContractConfigManager {
-  private static final String TEST_CONFIG_TABLE = "test_config";
+  private static final String TEST_CONFIG_TABLE = "benchmark_config";
   private static final String CONTRACT_CONFIG = "contract_config";
   private static final String VARIABLE_CONFIG = "variable_config";
   private static final String CLASS_FILE = "class_file";
@@ -40,7 +40,7 @@ public class ContractConfigManager {
   }
 
   public Optional<JsonObject> getProperties(String contractName) {
-    JsonObject properties =  contractConfig.getJsonObject(PROPERTIES);
+    JsonObject properties = contractConfig.getJsonObject(PROPERTIES);
 
     return Optional.ofNullable(properties);
   }

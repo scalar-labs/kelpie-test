@@ -10,11 +10,11 @@ repositories {
 
 dependencies {
     implementation group: 'com.scalar-labs', name: 'kelpie', version: '1.1.0'
-    implementation group: 'com.scalar-labs', name: 'scalardl-java-client-sdk', version: '2.0.5'
-    implementation group: "io.github.resilience4j", name: "resilience4j-retry", version: "1.3.1"
-    testImplementation group: 'junit', name: 'junit', version: '4.13'
-    testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.14.0'
-    testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.2.4'
+    implementation group: 'com.scalar-labs', name: 'scalardl-java-client-sdk', version: '2.0.9'
+    implementation group: "io.github.resilience4j", name: "resilience4j-retry", version: "1.6.1"
+    testImplementation group: 'junit', name: 'junit', version: '4.13.1'
+    testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.18.1'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.6.28'
 }
 
 shadowJar {
@@ -23,7 +23,7 @@ shadowJar {
 
 docker {
     name 'scalarlabs/kelpie-lamb'
-    files tasks.shadowJar.outputs, 'lamb-config.toml'
+    files tasks.shadowJar.outputs, 'entrypoint.sh'
     copySpec.with {
         from('.') {
             include 'sample-keys/**'

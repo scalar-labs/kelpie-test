@@ -19,7 +19,7 @@ import javax.json.JsonObject;
 public class LambPreparer extends PreProcessor {
   private final long DEFAULT_POPULATION_CONCURRENCY = 1L;
   private final long DEFAULT_NUM_POPULATIONS = 1L;
-  private static final String TEST_CONFIG_TABLE = "test_config";
+  private static final String TEST_CONFIG_TABLE = "benchmark_config";
   private static final String POPULATION_CONTRACT = "population_contract";
   private static final String POPULATION_CONCURRENCY = "population_concurrency";
   private static final String NUM_POPULATIONS = "num_populations";
