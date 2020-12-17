@@ -11,4 +11,5 @@ if [ ! -f "${LAMB_CONFIG}" ] \
   exit 1
 fi
 
+cd /lamb
 kelpie --config ${LAMB_CONFIG}

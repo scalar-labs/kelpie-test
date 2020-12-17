@@ -13,15 +13,14 @@ public class LambProcessor extends TimeBasedProcessor {
 
   private final ClientService service;
   private final String contractName;
-  private final ContractConfigManager configManager;
   private final ArgumentBuilder argumentBuilder;
 
   public LambProcessor(Config config) throws IOException, FileNotFoundException {
     super(config);
     this.service = Common.getClientService(config);
-    this.configManager = new ContractConfigManager(config);
     // TODO: multiple contracts
     this.contractName = config.getUserString(TEST_CONFIG_TABLE, CONTRACTS);
+    ContractConfigManager configManager = new ContractConfigManager(config);
     this.argumentBuilder = configManager.getArgumentBuilder(contractName);
   }
 

@@ -19,8 +19,8 @@
   #latency_log_enabled = true
 
 [benchmark_config]
-  contract_config = "/lamb/contract_config.json"
-  variable_config = "/lamb/variable_config.json"
+  contract_config = "contract_config.json"
+  variable_config = "variable_config.json"
   population_contract = "sample_contract.BatchCreate"
   target_contract = "sample_contract.Transfer"
   population_concurrency = 10
@@ -28,5 +28,5 @@
 
 [client_config]
   dl_server = "localhost"
-  certificate = "/lamb/sample-keys/certificate.pem"
-  private_key = "/lamb/sample-keys/private-key.pem"
+  certificate = "sample-keys/certificate.pem"
+  private_key = "sample-keys/private-key.pem"
