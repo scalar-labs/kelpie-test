@@ -12,4 +12,5 @@ if [ ! -f "${LAMB_CONFIG}" ] \
 fi
 
 cd /lamb
+# TODO: skip the pre or main process
 kelpie --config ${LAMB_CONFIG}

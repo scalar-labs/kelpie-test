@@ -5,6 +5,7 @@ usage_exit() {
   exit 1
 }
 
+# TODO: skip the pre or main process
 while getopts l:c:v:p:t:h OPT
 do
   case ${OPT} in
