@@ -259,7 +259,7 @@ public class ArgumentBuilder {
 
   private JsonNumber makeTimestamp(String name, JsonObject config) {
     String type = config.getString(TYPE);
-    if (type != "BIGINT") {
+    if (!type.equals("BIGINT")) {
       throw new IllegalArgumentException("The type of TIMESTAMP should be BIGINT for " + name);
     }
 

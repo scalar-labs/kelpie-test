@@ -31,6 +31,7 @@ public class LambProcessor extends TimeBasedProcessor {
       JsonObject arguments = argumentBuilder.build();
       service.executeContract(contractName, arguments);
     } catch (Exception e) {
+      logWarn(e.getMessage());
       throw e;
     }
   }
