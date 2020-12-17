@@ -1,6 +1,6 @@
 {
 
-  "BatchCreate": {
+  "sample_contract.BatchCreate": {
     "class_file": "build/classes/java/main/sample_contract/BatchCreate.class",
     "properties": {
       "num_per_group": 100
@@ -11,7 +11,7 @@
     }
   },
 
-  "Transfer": {
+  "sample_contract.Transfer": {
     "class_file": "build/classes/java/main/sample_contract/Transfer.class",
     "properties": {},
     "arguments": {
@@ -23,7 +23,7 @@
     }
   },
 
-  "GetBalance": {
+  "sample_contract.GetBalance": {
     "class_file": "build/classes/java/main/sample_contract/GetBalance.class",
     "properties": {},
     "arguments": {

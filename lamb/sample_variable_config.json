@@ -1,22 +1,22 @@
 {
-  "BatchCreate": {
+  "sample_contract.BatchCreate": {
     "group_id": {
-      "type": "STRING",
+      "type": "INT",
       "pattern": "SEQUENTIAL",
       "start": 0,
       "end": 10000
     }
   },
 
-  "Transfer": {
+  "sample_contract.Transfer": {
     "from": {
-      "type": "STRING",
+      "type": "INT",
       "pattern": "RANDOM",
       "start": 0,
       "end": 10000
     },
     "to": {
-      "type": "STRING",
+      "type": "INT",
       "pattern": "RANDOM",
       "start": 0,
       "end": 10000
@@ -43,8 +43,8 @@
     }
   },
 
-  "GetBalance": {
-    "type": "STRING",
+  "sample_contract.GetBalance": {
+    "type": "INT",
     "pattern": "SEQUENTIAL",
     "start": 0,
     "end": 10000

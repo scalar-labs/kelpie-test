@@ -21,10 +21,10 @@
 [benchmark_config]
   contract_config = "/lamb/contract_config.json"
   variable_config = "/lamb/variable_config.json"
-  population_contract = "BatchCreate"
-  target_contract = "Transfer"
-  #population_concurrency = 32
-  #num_populations = 100
+  population_contract = "sample_contract.BatchCreate"
+  target_contract = "sample_contract.Transfer"
+  population_concurrency = 10
+  num_populations = 100
 
 [client_config]
   dl_server = "localhost"

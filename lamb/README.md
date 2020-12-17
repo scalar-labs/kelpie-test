@@ -1,4 +1,5 @@
-# Benchmark test for Scalar DL contract
+# Kelpie Lamb
+You can benchmark your contract with Lamb.
 
 ## Build
 
@@ -7,13 +8,13 @@ $ ./gradlew shadowJar
 ```
 
 ## How to run a test
-1. Edit lamb-configuration.toml
-2. Edit contract-list.json
-3. Edit argument-configuration.toml
+1. Edit lamb_config.toml
+2. Edit contract_config.json
+3. Edit variable_config.json
 4. Run a test with Kelpie
 
 ```console
-$ ${KELPIE}/bin/kelpie --config lamb-config.toml
+$ ${KELPIE}/bin/kelpie --config lamb_config.toml
 ```
 
 ### With docker
@@ -35,7 +36,7 @@ $ docker run scalarlabs/kelpie-lamb \
 ```
 
 ## Benchmark configuration
-You can configure a benchmark job by a toml file like `lamb-config.toml`.
+You can configure a benchmark job by a toml file like `lamb_config.toml`.
 It's a Kelpie configuration file. You don't have to modify `[modules]` for your benchmark. You can refer to Kelpie's [README](https://github.com/scalar-labs/kelpie) about `[common]` and `[stats]` table.
 
 ### [benchmark_config]
@@ -56,4 +57,4 @@ They are information for your Scalar DL server.
 ## Contract configuration
 
 
-## Argument configuration
+## Variable configuration

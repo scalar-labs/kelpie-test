@@ -70,14 +70,12 @@ public class LambPreparer extends PreProcessor {
         (int)
             config.getUserLong(
                 TEST_CONFIG_TABLE, POPULATION_CONCURRENCY, DEFAULT_POPULATION_CONCURRENCY);
-    int numPopulations =
-        (int) config.getUserLong(TEST_CONFIG_TABLE, NUM_POPULATIONS, DEFAULT_NUM_POPULATIONS);
     ArgumentBuilder argumentBuilder =
         contractConfigManager.getArgumentBuilder(populationContractName);
     ExecutorService es = Executors.newFixedThreadPool(populationConcurrency);
 
     List<CompletableFuture> futures = new ArrayList<>();
-    IntStream.range(0, numPopulations)
+    IntStream.range(0, populationConcurrency)
         .forEach(
             i -> {
               CompletableFuture<Void> future =
@@ -93,17 +91,24 @@ public class LambPreparer extends PreProcessor {
   private class PopulationRunner implements Runnable {
     private final ClientService service;
     private final int threadId;
+    private final int numPopulations;
     private final ArgumentBuilder argumentBuilder;
 
     public PopulationRunner(int threadId, ArgumentBuilder argumentBuilder) {
       this.service = Common.getClientService(config);
       this.threadId = threadId;
       this.argumentBuilder = argumentBuilder;
+      this.numPopulations =
+          (int) config.getUserLong(TEST_CONFIG_TABLE, NUM_POPULATIONS, DEFAULT_NUM_POPULATIONS);
     }
 
     public void run() {
       try {
-        populateWithRetry();
+        IntStream.range(0, numPopulations)
+            .forEach(
+                i -> {
+                  populateWithRetry();
+                });
       } catch (Exception e) {
         throw new PreProcessException("Population failed", e);
       } finally {
