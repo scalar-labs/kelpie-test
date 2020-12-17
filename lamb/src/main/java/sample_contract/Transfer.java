@@ -33,13 +33,13 @@ public class Transfer extends Contract {
     JsonObjectBuilder fromBuilder = Json.createObjectBuilder(fromData);
     fromBuilder.add("balance", fromBalance - amount);
     fromBuilder.add("order_id", argument.getString("order_id"));
-    fromBuilder.add("paid_for", argument.getString("paif_for"));
+    fromBuilder.add("paid_for", argument.getString("paid_for"));
     fromBuilder.add("paid_at", argument.getJsonNumber("paid_at"));
 
     JsonObjectBuilder toBuilder = Json.createObjectBuilder(toData);
     toBuilder.add("balance", toBalance + amount);
     toBuilder.add("order_id", argument.getString("order_id"));
-    toBuilder.add("paid_for", argument.getString("paif_for"));
+    toBuilder.add("paid_for", argument.getString("paid_for"));
     toBuilder.add("paid_at", argument.getJsonNumber("paid_at"));
 
     ledger.put(from.id(), fromBuilder.build());
