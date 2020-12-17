@@ -570,6 +570,33 @@ public class ArgumentBuilderTest {
   }
 
   @Test
+  public void build_sequentialStringWithRangeGiven_shouldBuildProperty() {
+    // Arrange
+    JsonObjectBuilder baseBuilder = Json.createObjectBuilder(baseArguments);
+    baseBuilder.add(ARGUMENT_0, "_" + ARGUMENT_0 + "_");
+    JsonObjectBuilder argumentConfig = Json.createObjectBuilder();
+    argumentConfig.add("type", "STRING");
+    argumentConfig.add("pattern", "SEQUENTIAL");
+    argumentConfig.add("start", 0);
+    argumentConfig.add("end", 3);
+    JsonObjectBuilder target = Json.createObjectBuilder();
+    target.add(ARGUMENT_0, argumentConfig);
+    ArgumentBuilder builder = new ArgumentBuilder(baseBuilder.build(), target.build());
+
+    // Act
+    JsonObject actual0 = builder.build();
+    JsonObject actual1 = builder.build();
+    JsonObject actual2 = builder.build();
+    JsonObject actual3 = builder.build();
+
+    // Assert
+    assertThat(actual0.getString(ARGUMENT_0)).isEqualTo("0");
+    assertThat(actual1.getString(ARGUMENT_0)).isEqualTo("1");
+    assertThat(actual2.getString(ARGUMENT_0)).isEqualTo("2");
+    assertThat(actual3.getString(ARGUMENT_0)).isEqualTo("0");
+  }
+
+  @Test
   public void build_randomStringWithLengthGiven_shouldBuildProperty() {
     // Arrange
     JsonObjectBuilder baseBuilder = Json.createObjectBuilder(baseArguments);

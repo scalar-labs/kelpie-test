@@ -27,8 +27,8 @@ public class LambProcessor extends TimeBasedProcessor {
 
   @Override
   public void executeEach() {
-    JsonObject arguments = argumentBuilder.build();
     try {
+      JsonObject arguments = argumentBuilder.build();
       service.executeContract(contractName, arguments);
     } catch (Exception e) {
       throw e;

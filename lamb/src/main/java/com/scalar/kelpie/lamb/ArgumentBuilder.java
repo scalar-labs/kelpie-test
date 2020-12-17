@@ -165,27 +165,9 @@ public class ArgumentBuilder {
     try {
       switch (type) {
         case "INT":
-          int start = config.getInt(START);
-          int end = config.getInt(END);
-          int count = end > start ? end - start : start - end;
-          int value;
-          if (end > start) {
-            value = start + getAndIncrementStateCounter(name) % count;
-          } else {
-            value = start - getAndIncrementStateCounter(name) % count;
-          }
-          return Json.createValue(value);
+          return Json.createValue(makeSequentialInt(name, config));
         case "BIGINT":
-          long longStart = config.getJsonNumber(START).longValue();
-          long longEnd = config.getJsonNumber(END).longValue();
-          long longCount = longEnd > longStart ? longEnd - longStart : longStart - longEnd;
-          long longValue;
-          if (longEnd > longStart) {
-            longValue = longStart + getAndIncrementStateCounter(name) % longCount;
-          } else {
-            longValue = longStart - getAndIncrementStateCounter(name) % longCount;
-          }
-          return Json.createValue(longValue);
+          return Json.createValue(makeSequentialBigint(name, config));
         default:
           throw new IllegalArgumentException(
               type + " is not supported for the number with the range for " + name);
@@ -208,20 +190,11 @@ public class ArgumentBuilder {
       String type = config.getString(TYPE);
       switch (type) {
         case "INT":
-          int start = config.getInt(START);
-          int end = config.getInt(END);
-          int intValue = ThreadLocalRandom.current().nextInt(start, end);
-          return Json.createValue(intValue);
+          return Json.createValue(makeRandomInt(name, config));
         case "BIGINT":
-          long longStart = config.getJsonNumber(START).longValue();
-          long longEnd = config.getJsonNumber(END).longValue();
-          long longValue = ThreadLocalRandom.current().nextLong(longStart, longEnd);
-          return Json.createValue(longValue);
+          return Json.createValue(makeRandomBigint(name, config));
         case "DOUBLE":
-          double doubleStart = config.getJsonNumber(START).doubleValue();
-          double doubleEnd = config.getJsonNumber(END).doubleValue();
-          double doubleValue = ThreadLocalRandom.current().nextDouble(doubleStart, doubleEnd);
-          return Json.createValue(doubleValue);
+          return Json.createValue(makeRandomDouble(name, config));
         default:
           throw new IllegalArgumentException(type + " is non-supported type for " + name);
       }
@@ -230,6 +203,55 @@ public class ArgumentBuilder {
           "Sequential number variable requires a `list` or a pair of `start` and `end` for "
               + name);
     }
+  }
+
+  private int makeSequentialInt(String name, JsonObject config) {
+    int start = config.getInt(START);
+    int end = config.getInt(END);
+    int count = end > start ? end - start : start - end;
+    int value;
+    if (end > start) {
+      value = start + getAndIncrementStateCounter(name) % count;
+    } else {
+      value = start - getAndIncrementStateCounter(name) % count;
+    }
+
+    return value;
+  }
+
+  private long makeSequentialBigint(String name, JsonObject config) {
+    long start = config.getJsonNumber(START).longValue();
+    long end = config.getJsonNumber(END).longValue();
+    long count = end > start ? end - start : start - end;
+    long value;
+    if (end > start) {
+      value = start + getAndIncrementStateCounter(name) % count;
+    } else {
+      value = start - getAndIncrementStateCounter(name) % count;
+    }
+
+    return value;
+  }
+
+  private int makeRandomInt(String name, JsonObject config) {
+    int start = config.getInt(START);
+    int end = config.getInt(END);
+
+    return ThreadLocalRandom.current().nextInt(start, end);
+  }
+
+  private long makeRandomBigint(String name, JsonObject config) {
+    long start = config.getJsonNumber(START).longValue();
+    long end = config.getJsonNumber(END).longValue();
+
+    return ThreadLocalRandom.current().nextLong(start, end);
+  }
+
+  private double makeRandomDouble(String name, JsonObject config) {
+    double start = config.getJsonNumber(START).doubleValue();
+    double end = config.getJsonNumber(END).doubleValue();
+
+    return ThreadLocalRandom.current().nextDouble(start, end);
   }
 
   private JsonNumber makeTimestamp(String name, JsonObject config) {
@@ -243,13 +265,21 @@ public class ArgumentBuilder {
 
   private JsonString makeSequentialString(String name, JsonObject config) {
     JsonArray list = config.getJsonArray(LIST);
-    if (list == null) {
-      throw new IllegalArgumentException(
-          "Sequential string variable requires a `list` for " + name);
+    if (list != null) {
+      int index = getAndIncrementStateCounter(name) % list.size();
+      return list.getJsonString(index);
     }
-    int index = getAndIncrementStateCounter(name) % list.size();
 
-    return list.getJsonString(index);
+    int value;
+    try {
+      value = makeSequentialInt(name, config);
+    } catch (NullPointerException e) {
+      throw new IllegalArgumentException(
+          "Sequential string variable requires a `list` or a pair of `start` and `end` for "
+              + name);
+    }
+
+    return Json.createValue(String.valueOf(value));
   }
 
   private JsonString makeRandomString(String name, JsonObject config) {

@@ -10,13 +10,13 @@
 
   "sample_contract.Transfer": {
     "from": {
-      "type": "INT",
+      "type": "STRING",
       "pattern": "RANDOM",
       "start": 0,
       "end": 10000
     },
     "to": {
-      "type": "INT",
+      "type": "STRING",
       "pattern": "RANDOM",
       "start": 0,
       "end": 10000
@@ -43,10 +43,12 @@
     }
   },
 
-  "sample_contract.GetBalance": {
-    "type": "INT",
-    "pattern": "SEQUENTIAL",
-    "start": 0,
-    "end": 10000
+  "sample_contract.Balance": {
+    "id": {
+      "type": "STRING",
+      "pattern": "SEQUENTIAL",
+      "start": 0,
+      "end": 10000
+    }
   }
 }

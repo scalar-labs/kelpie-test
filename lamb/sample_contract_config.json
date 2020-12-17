@@ -23,11 +23,11 @@
     }
   },
 
-  "sample_contract.GetBalance": {
-    "class_file": "build/classes/java/main/sample_contract/GetBalance.class",
+  "sample_contract.Balance": {
+    "class_file": "build/classes/java/main/sample_contract/Balance.class",
     "properties": {},
     "arguments": {
-      "asset_ids": "_id_"
+      "asset_id": "_id_"
     }
   }
 }
