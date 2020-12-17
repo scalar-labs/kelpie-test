@@ -140,11 +140,12 @@ public class ArgumentBuilder {
   }
 
   private JsonValue makeSequentialBoolean(String name, JsonObject config) {
-    JsonArray list = config.getJsonArray(LIST);
-    if (list == null) {
+    if (!config.containsKey(LIST)) {
       throw new IllegalArgumentException(
           "Sequential boolean variable requires a `list` for " + name);
     }
+
+    JsonArray list = config.getJsonArray(LIST);
     int index = getAndIncrementStateCounter(name) % list.size();
 
     return list.getBoolean(index) ? JsonValue.TRUE : JsonValue.FALSE;
@@ -155,53 +156,55 @@ public class ArgumentBuilder {
   }
 
   private JsonNumber makeSequentialNumber(String name, JsonObject config) {
-    JsonArray list = config.getJsonArray(LIST);
-    if (list != null) {
+    if (config.containsKey(LIST)) {
+      JsonArray list = config.getJsonArray(LIST);
       int index = getAndIncrementStateCounter(name) % list.size();
+
       return list.getJsonNumber(index);
     }
 
-    String type = config.getString(TYPE);
-    try {
-      switch (type) {
-        case "INT":
-          return Json.createValue(makeSequentialInt(name, config));
-        case "BIGINT":
-          return Json.createValue(makeSequentialBigint(name, config));
-        default:
-          throw new IllegalArgumentException(
-              type + " is not supported for the number with the range for " + name);
-      }
-    } catch (NullPointerException e) {
+    if (!config.containsKey(START) || !config.containsKey(END)) {
       throw new IllegalArgumentException(
           "Sequential number variable requires a `list` or a pair of `start` and `end` for "
               + name);
+    }
+
+    String type = config.getString(TYPE);
+    switch (type) {
+      case "INT":
+        return Json.createValue(makeSequentialInt(name, config));
+      case "BIGINT":
+        return Json.createValue(makeSequentialBigint(name, config));
+      default:
+        throw new IllegalArgumentException(
+            type + " is not supported for the number with the range for " + name);
     }
   }
 
   private JsonNumber makeRandomNumber(String name, JsonObject config) {
-    JsonArray list = config.getJsonArray(LIST);
-    if (list != null) {
+    if (config.containsKey(LIST)) {
+      JsonArray list = config.getJsonArray(LIST);
       int index = ThreadLocalRandom.current().nextInt(list.size());
+
       return list.getJsonNumber(index);
     }
 
-    try {
-      String type = config.getString(TYPE);
-      switch (type) {
-        case "INT":
-          return Json.createValue(makeRandomInt(name, config));
-        case "BIGINT":
-          return Json.createValue(makeRandomBigint(name, config));
-        case "DOUBLE":
-          return Json.createValue(makeRandomDouble(name, config));
-        default:
-          throw new IllegalArgumentException(type + " is non-supported type for " + name);
-      }
-    } catch (NullPointerException e) {
+    if (!config.containsKey(START) || !config.containsKey(END)) {
       throw new IllegalArgumentException(
           "Sequential number variable requires a `list` or a pair of `start` and `end` for "
               + name);
+    }
+
+    String type = config.getString(TYPE);
+    switch (type) {
+      case "INT":
+        return Json.createValue(makeRandomInt(name, config));
+      case "BIGINT":
+        return Json.createValue(makeRandomBigint(name, config));
+      case "DOUBLE":
+        return Json.createValue(makeRandomDouble(name, config));
+      default:
+        throw new IllegalArgumentException(type + " is non-supported type for " + name);
     }
   }
 
@@ -264,47 +267,58 @@ public class ArgumentBuilder {
   }
 
   private JsonString makeSequentialString(String name, JsonObject config) {
-    JsonArray list = config.getJsonArray(LIST);
-    if (list != null) {
+    if (config.containsKey(LIST)) {
+      JsonArray list = config.getJsonArray(LIST);
       int index = getAndIncrementStateCounter(name) % list.size();
+
       return list.getJsonString(index);
     }
 
-    int value;
-    try {
-      value = makeSequentialInt(name, config);
-    } catch (NullPointerException e) {
+    if (!config.containsKey(START) || !config.containsKey(END)) {
       throw new IllegalArgumentException(
           "Sequential string variable requires a `list` or a pair of `start` and `end` for "
               + name);
     }
 
+    int value = makeSequentialInt(name, config);
+
     return Json.createValue(String.valueOf(value));
   }
 
   private JsonString makeRandomString(String name, JsonObject config) {
-    JsonArray list = config.getJsonArray(LIST);
-    if (list != null) {
+    if (config.containsKey(LIST)) {
+      JsonArray list = config.getJsonArray(LIST);
       int index = ThreadLocalRandom.current().nextInt(list.size());
+
       return list.getJsonString(index);
     }
 
-    try {
-      int length = config.getInt(LENGTH);
-      if (length <= 0) {
-        throw new IllegalArgumentException(
-            "The length of random string should be positive for " + name);
-      }
-      StringBuilder builder = new StringBuilder(length);
-      for (int i = 0; i < length; i++) {
-        int index = ThreadLocalRandom.current().nextInt(CHARACTERS.length());
-        builder.append(CHARACTERS.charAt(index));
-      }
-      return Json.createValue(builder.toString());
-    } catch (NullPointerException e) {
+    if (config.containsKey(START) && config.containsKey(END)) {
+      long start = config.getJsonNumber(START).longValue();
+      long end = config.getJsonNumber(END).longValue();
+      long value = ThreadLocalRandom.current().nextLong(start, end);
+
+      return Json.createValue(String.valueOf(value));
+    }
+
+    if (!config.containsKey(LENGTH)) {
       throw new IllegalArgumentException(
           "Random string variable requires `length` of the string for " + name);
     }
+
+    int length = config.getInt(LENGTH);
+    if (length <= 0) {
+      throw new IllegalArgumentException(
+          "The length of random string should be positive for " + name);
+    }
+
+    StringBuilder builder = new StringBuilder(length);
+    for (int i = 0; i < length; i++) {
+      int index = ThreadLocalRandom.current().nextInt(CHARACTERS.length());
+      builder.append(CHARACTERS.charAt(index));
+    }
+
+    return Json.createValue(builder.toString());
   }
 
   private int getAndIncrementStateCounter(String name) {

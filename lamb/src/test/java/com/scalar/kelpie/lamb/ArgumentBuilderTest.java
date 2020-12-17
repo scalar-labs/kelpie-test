@@ -617,6 +617,33 @@ public class ArgumentBuilderTest {
   }
 
   @Test
+  public void build_randomStringWithRangeGiven_shouldBuildProperty() {
+    // Arrange
+    JsonObjectBuilder baseBuilder = Json.createObjectBuilder(baseArguments);
+    baseBuilder.add(ARGUMENT_0, "_" + ARGUMENT_0 + "_");
+    JsonObjectBuilder argumentConfig = Json.createObjectBuilder();
+    argumentConfig.add("type", "STRING");
+    argumentConfig.add("pattern", "RANDOM");
+    argumentConfig.add("start", ANY_BIGINT_0);
+    argumentConfig.add("end", ANY_BIGINT_1);
+    JsonObjectBuilder target = Json.createObjectBuilder();
+    target.add(ARGUMENT_0, argumentConfig);
+    ArgumentBuilder builder = new ArgumentBuilder(baseBuilder.build(), target.build());
+
+    // Act
+    JsonObject actual0 = builder.build();
+    JsonObject actual1 = builder.build();
+
+    // Assert
+    long value0 = Long.valueOf(actual0.getString(ARGUMENT_0));
+    assertThat(value0).isGreaterThanOrEqualTo(ANY_BIGINT_0);
+    assertThat(value0).isLessThan(ANY_BIGINT_1);
+    long value1 = Long.valueOf(actual1.getString(ARGUMENT_0));
+    assertThat(value1).isGreaterThanOrEqualTo(ANY_BIGINT_0);
+    assertThat(value1).isLessThan(ANY_BIGINT_1);
+  }
+
+  @Test
   public void build_sequentialStringWithoutListGiven_shouldThrowIllegalArgumentException() {
     // Arrange
     JsonObjectBuilder baseBuilder = Json.createObjectBuilder(baseArguments);
