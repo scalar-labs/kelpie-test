@@ -10,9 +10,11 @@ $ ./gradlew shadowJar
 ## How to run a test
 Before benchmarking, you have to set up your Scalar DL environment.
 1. Make Lamb configuration file like [lamb_config.toml](./lamb_config.toml)
-2. Make a contract configuration file `CONTRACT_CONFIG` to specify your contract
+2. Make a contract configuration file to specify your contract
+    - Refer to [Contract configuration](#Contract-configuration)
     - [sample_contract_config.json](./sample_contract_config.json) is a sample configuration
-3. Make a variable configuration file `VARIABLE_CONFIG` to configure variables in the contract configuration file
+3. Make a variable configuration file to configure variables in the contract configuration file
+    - Refer to [Variable configuration](#Variable-configuration)
     - [sample_variable_config.json](./sample_variable_config.json_config.json) is a sample configuration
 4. Run a test with Kelpie
     ```console
@@ -39,7 +41,7 @@ $ ./docker_run.sh -l <LAMB_CONFIG> -c <CONTRACT_CONFIG> -v <VARIABLE_CONFIG> -p 
       }
     }
     ```
-- You don't have to change the paths like the contract configuration file and the variable configuration file in the default `lamb_config.toml`
+- You don't have to change the paths like the contract configuration file and the variable configuration file in the default [lamb_config.toml](./lamb_config.toml)
 
 ## Benchmark configuration
 You can configure a benchmark job by a toml file like [lamb_config.toml](./lamb_config.toml).
@@ -60,7 +62,7 @@ They are information for your Scalar DL server.
 - `certificate`: A certificate file that will be registered to the server to register and execute contracts
 - `private_key`: The corresponding private key with the certificate to handle your contracts
 
-## Contract configuration file
+## Contract configuration
 The contract configuration file configures your contracts by the class file location, properties and arguments.
 
 - `class_file`: The contract class file
