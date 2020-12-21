@@ -1,7 +1,7 @@
 ![Lamb](https://github.com/scalar-labs/kelpie-test/workflows/Lamb/badge.svg)
 
 # Kelpie Lamb
-You can benchmark your contract with Lamb. Lamb can set values to the contract's arguments for each contract execution.
+Kelpie Lamb is a Kelpie extension for benchmarking of Scalar DL contracts.
 
 ## Build
 
@@ -10,12 +10,12 @@ $ ./gradlew shadowJar
 ```
 
 ## How to run a test
-Before benchmarking, you have to set up your Scalar DL environment.
-1. Make Lamb configuration file like [lamb_config.toml](./lamb_config.toml)
+Before benchmarking, you first have to set up your Scalar DL environment.
+1. Make Lamb configuration file. See [lamb_config.toml](./lamb_config.toml) as a sample.
 2. Make a contract configuration file to specify your contract
     - Refer to [Contract configuration](#Contract-configuration)
     - [sample_contract_config.json](./sample_contract_config.json) is a sample configuration
-3. Make a variable configuration file to configure variables in the contract configuration file
+3. Make a variable configuration file to configure variables defined in the contract configuration file
     - Refer to [Variable configuration](#Variable-configuration)
     - [sample_variable_config.json](./sample_variable_config.json_config.json) is a sample configuration
 4. Run a test with Kelpie
@@ -33,7 +33,7 @@ $ ./gradlew docker
 ```console
 $ ./docker_run.sh -l <LAMB_CONFIG> -c <CONTRACT_CONFIG> -v <VARIABLE_CONFIG> -p <POPULATION_CONTRACT> -t <TARGET_CONTRACT>
 ```
-- Your contract class paths in the contract configuration file should be under `/lamb` directory because the script places your contracs to `/lamb` directory on docker. For example:
+- Your contract classpaths in the contract configuration file should be under `/lamb` directory because the script places your contracts to `/lamb` directory on docker, as seen below, for example.
     ```json
     "sample_contract.Balance": {
       "class_file": "/lamb/Balance.class",
@@ -46,8 +46,8 @@ $ ./docker_run.sh -l <LAMB_CONFIG> -c <CONTRACT_CONFIG> -v <VARIABLE_CONFIG> -p 
 - You don't have to change the paths like the contract configuration file and the variable configuration file in the default [lamb_config.toml](./lamb_config.toml)
 
 ## Benchmark configuration
-You can configure a benchmark job by a toml file like [lamb_config.toml](./lamb_config.toml).
-It's a Kelpie configuration file. Basically, you don't have to modify `[modules]` for your benchmark. You can refer to Kelpie's [README](https://github.com/scalar-labs/kelpie) about `[modules]`, `[common]` and `[stats]` table.
+You can configure a benchmark job by a toml file just like usual Kelpie applications.
+As you can see in the sample configuration file [lamb_config.toml](./lamb_config.toml), it must specify pre-defined `LambPreparer`, `LambProcessor`, and `LambReporter` modules to make benchmarking Lamb-based. You can refer to Kelpie's [README](https://github.com/scalar-labs/kelpie) about `[modules]`, `[common]` and `[stats]` table.
 
 ### [benchmark_config]
 A population contract, a target contract and your contract information are specified in this table. They are used for executing contracts in your benchmark.

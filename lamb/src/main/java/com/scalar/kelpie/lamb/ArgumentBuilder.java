@@ -31,6 +31,12 @@ public class ArgumentBuilder {
   private static final String RANDOM_PATTERN = "RANDOM";
   private static final String TIMESTAMP_PATTERN = "TIMESTAMP";
 
+  private static final String INT_TYPE = "INT";
+  private static final String BIGINT_TYPE = "BIGINT";
+  private static final String DOUBLE_TYPE = "DOUBLE";
+  private static final String BOOLEAN_TYPE = "BOOLEAN";
+  private static final String STRING_TYPE = "STRING";
+
   private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789";
 
   public ArgumentBuilder(JsonObject baseArguments, JsonObject variableConfig) {
@@ -85,13 +91,13 @@ public class ArgumentBuilder {
     JsonObject config = variableConfig.getJsonObject(name);
     String type = config.getString(TYPE);
     switch (type) {
-      case "INT":
-      case "BIGINT":
-      case "DOUBLE":
+      case INT_TYPE:
+      case BIGINT_TYPE:
+      case DOUBLE_TYPE:
         return makeNumberValue(name, config);
-      case "BOOLEAN":
+      case BOOLEAN_TYPE:
         return makeBooleanValue(name, config);
-      case "STRING":
+      case STRING_TYPE:
         return makeStringValue(name, config);
       default:
         throw new IllegalArgumentException(type + " is not supported for " + name);
@@ -171,9 +177,9 @@ public class ArgumentBuilder {
 
     String type = config.getString(TYPE);
     switch (type) {
-      case "INT":
+      case INT_TYPE:
         return Json.createValue(makeSequentialInt(name, config));
-      case "BIGINT":
+      case BIGINT_TYPE:
         return Json.createValue(makeSequentialBigint(name, config));
       default:
         throw new IllegalArgumentException(
@@ -197,11 +203,11 @@ public class ArgumentBuilder {
 
     String type = config.getString(TYPE);
     switch (type) {
-      case "INT":
+      case INT_TYPE:
         return Json.createValue(makeRandomInt(name, config));
-      case "BIGINT":
+      case BIGINT_TYPE:
         return Json.createValue(makeRandomBigint(name, config));
-      case "DOUBLE":
+      case DOUBLE_TYPE:
         return Json.createValue(makeRandomDouble(name, config));
       default:
         throw new IllegalArgumentException(type + " is non-supported type for " + name);
@@ -259,7 +265,7 @@ public class ArgumentBuilder {
 
   private JsonNumber makeTimestamp(String name, JsonObject config) {
     String type = config.getString(TYPE);
-    if (!type.equals("BIGINT")) {
+    if (!type.equals(BIGINT_TYPE)) {
       throw new IllegalArgumentException("The type of TIMESTAMP should be BIGINT for " + name);
     }
 
