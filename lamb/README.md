@@ -1,3 +1,5 @@
+![Lamb](https://github.com/scalar-labs/kelpie-test/workflows/Lamb/badge.svg)
+
 # Kelpie Lamb
 You can benchmark your contract with Lamb. Lamb can set values to the contract's arguments for each contract execution.
 

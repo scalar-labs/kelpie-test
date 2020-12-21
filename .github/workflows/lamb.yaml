@@ -1,0 +1,40 @@
+name: Lamb
+
+on:
+  push:
+    paths:
+      - "lamb/**"
+  pull_request:
+    paths:
+      - "lamb/**"
+
+jobs:
+  ci-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lamb
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Cache repository
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Setup Java
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+
+    - name: Build Lamb
+      run: ./gradlew shadowJar
+
+    - name: Test
+      run: ./gradlew test
