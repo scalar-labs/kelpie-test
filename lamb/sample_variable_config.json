@@ -1,0 +1,54 @@
+{
+  "sample_contract.BatchCreate": {
+    "group_id": {
+      "type": "INT",
+      "pattern": "SEQUENTIAL",
+      "start": 0,
+      "end": 10000
+    }
+  },
+
+  "sample_contract.Transfer": {
+    "from": {
+      "type": "STRING",
+      "pattern": "RANDOM",
+      "start": 0,
+      "end": 10000
+    },
+    "to": {
+      "type": "STRING",
+      "pattern": "RANDOM",
+      "start": 0,
+      "end": 10000
+    },
+    "amount": {
+      "type": "INT",
+      "pattern": "RANDOM",
+      "start": 0,
+      "end": 1000
+    },
+    "order_id": {
+      "type": "STRING",
+      "pattern": "RANDOM",
+      "length": 16
+    },
+    "paid_for": {
+      "type": "STRING",
+      "pattern": "RANDOM",
+      "list": ["Desktop", "Laptop", "Peripheral"]
+    },
+    "paid_at": {
+      "type": "BIGINT",
+      "pattern": "TIMESTAMP"
+    }
+  },
+
+  "sample_contract.Balance": {
+    "id": {
+      "type": "STRING",
+      "pattern": "SEQUENTIAL",
+      "start": 0,
+      "end": 10000
+    }
+  }
+}
