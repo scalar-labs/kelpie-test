@@ -3,7 +3,6 @@ package com.scalar.kelpie.lamb;
 import com.scalar.dl.client.service.ClientService;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import javax.json.JsonObject;
 
@@ -15,7 +14,7 @@ public class LambProcessor extends TimeBasedProcessor {
   private final String contractName;
   private final ArgumentBuilder argumentBuilder;
 
-  public LambProcessor(Config config) throws IOException, FileNotFoundException {
+  public LambProcessor(Config config) throws IOException {
     super(config);
     this.service = Common.getClientService(config);
     // TODO: multiple contracts
