@@ -6,19 +6,17 @@ import com.scalar.dl.client.config.ClientConfig;
 import com.scalar.dl.client.service.ClientModule;
 import com.scalar.dl.client.service.ClientService;
 import com.scalar.kelpie.config.Config;
-import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import java.time.Duration;
 import java.util.Properties;
 
 public class Common {
-  private static String HOST = "localhost";
-  private static String PORT = "50051";
+  private static final String HOST = "localhost";
+  private static final String PORT = "50051";
   private static final String CERT_HOLDER_ID = "test_holder";
   private static final int MAX_RETRIES = 10;
   private static final Duration WAIT_DURATION = Duration.ofMillis(1000);
-  private static final long SLEEP_BASE_MILLIS = 100L;
 
   public static ClientConfig getClientConfig(Config config) {
     String host = config.getUserString("client_config", "dl_server", HOST);

@@ -13,8 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class ArgumentBuilderTest {
-  private JsonObject baseArguments;
-
   private static final String CONSTANT_ARGUMENT_0 = "constant0";
   private static final String CONSTANT_ARGUMENT_1 = "constant1";
   private static final String CONSTANT_ARGUMENT_2 = "constant2";
@@ -23,7 +21,6 @@ public class ArgumentBuilderTest {
   private static final String ANY_STRING_0 = "test0";
   private static final String ANY_STRING_1 = "test1";
   private static final String ANY_STRING_2 = "test2";
-  private static final String ANY_STRING_3 = "test2";
   private static final int ANY_INT_0 = 0;
   private static final int ANY_INT_1 = 111;
   private static final int ANY_INT_2 = 222;
@@ -36,9 +33,8 @@ public class ArgumentBuilderTest {
   private static final String ARGUMENT_0 = "arg0";
   private static final String ARGUMENT_1 = "arg1";
   private static final String ARGUMENT_2 = "arg2";
-  private static final String ARGUMENT_3 = "arg3";
-  private static final String ARGUMENT_4 = "arg4";
-  private static final String ARGUMENT_5 = "arg5";
+
+  private JsonObject baseArguments;
 
   @Before
   public void setUp() throws Exception {

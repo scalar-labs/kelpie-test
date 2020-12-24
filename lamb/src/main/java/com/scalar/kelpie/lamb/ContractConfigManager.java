@@ -2,7 +2,6 @@ package com.scalar.kelpie.lamb;
 
 import com.scalar.kelpie.config.Config;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
@@ -21,7 +20,7 @@ public class ContractConfigManager {
   private final JsonObject contractConfig;
   private final JsonObject variableConfig;
 
-  public ContractConfigManager(Config config) throws IOException, FileNotFoundException {
+  public ContractConfigManager(Config config) throws IOException {
     String contractConfigFile = config.getUserString(TEST_CONFIG_TABLE, CONTRACT_CONFIG);
     try (InputStream stream = new FileInputStream(contractConfigFile);
         JsonReader reader = Json.createReader(stream)) {

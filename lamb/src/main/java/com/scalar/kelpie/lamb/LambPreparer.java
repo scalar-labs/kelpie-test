@@ -5,7 +5,6 @@ import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.PreProcessException;
 import com.scalar.kelpie.modules.PreProcessor;
 import io.github.resilience4j.retry.Retry;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +29,7 @@ public class LambPreparer extends PreProcessor {
   private final String populationContractName;
   private final String targetContractName;
 
-  public LambPreparer(Config config) throws IOException, FileNotFoundException {
+  public LambPreparer(Config config) throws IOException {
     super(config);
     this.service = Common.getClientService(config);
     this.contractConfigManager = new ContractConfigManager(config);
@@ -74,12 +73,12 @@ public class LambPreparer extends PreProcessor {
         contractConfigManager.getArgumentBuilder(populationContractName);
     ExecutorService es = Executors.newFixedThreadPool(populationConcurrency);
 
-    List<CompletableFuture> futures = new ArrayList<>();
+    List<CompletableFuture<Void>> futures = new ArrayList<>();
     IntStream.range(0, populationConcurrency)
         .forEach(
             i -> {
               CompletableFuture<Void> future =
-                  CompletableFuture.runAsync(new PopulationRunner(i, argumentBuilder), es);
+                  CompletableFuture.runAsync(new PopulationRunner(argumentBuilder), es);
               futures.add(future);
             });
 
@@ -90,13 +89,11 @@ public class LambPreparer extends PreProcessor {
 
   private class PopulationRunner implements Runnable {
     private final ClientService service;
-    private final int threadId;
     private final int numPopulations;
     private final ArgumentBuilder argumentBuilder;
 
-    public PopulationRunner(int threadId, ArgumentBuilder argumentBuilder) {
+    public PopulationRunner(ArgumentBuilder argumentBuilder) {
       this.service = Common.getClientService(config);
-      this.threadId = threadId;
       this.argumentBuilder = argumentBuilder;
       this.numPopulations =
           (int) config.getUserLong(TEST_CONFIG_TABLE, NUM_POPULATIONS, DEFAULT_NUM_POPULATIONS);

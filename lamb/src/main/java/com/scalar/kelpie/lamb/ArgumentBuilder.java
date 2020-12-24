@@ -16,10 +16,6 @@ import javax.json.JsonValue;
 
 @ThreadSafe
 public class ArgumentBuilder {
-  private final JsonObject baseArguments;
-  private final JsonObject variableConfig;
-  private final Map<String, AtomicInteger> stateCounters = new ConcurrentHashMap<>();
-
   private static final String TYPE = "type";
   private static final String PATTERN = "pattern";
   private static final String LIST = "list";
@@ -38,6 +34,10 @@ public class ArgumentBuilder {
   private static final String STRING_TYPE = "STRING";
 
   private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+  private final JsonObject baseArguments;
+  private final JsonObject variableConfig;
+  private final Map<String, AtomicInteger> stateCounters = new ConcurrentHashMap<>();
 
   public ArgumentBuilder(JsonObject baseArguments, JsonObject variableConfig) {
     this.baseArguments = baseArguments;

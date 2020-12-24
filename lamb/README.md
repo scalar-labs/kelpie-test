@@ -9,8 +9,11 @@ Kelpie Lamb is a Kelpie extension for benchmarking of Scalar DL contracts.
 $ ./gradlew shadowJar
 ```
 
+## Prerequisite
+You first have to set up your Scalar DL environment before benchmarking.
+You can set up the environment with [scalar-terraform](https://github.com/scalar-labs/scalar-terraform) easily.
+
 ## How to run a test
-Before benchmarking, you first have to set up your Scalar DL environment.
 1. Make Lamb configuration file. See [lamb_config.toml](./lamb_config.toml) as a sample.
 2. Make a contract configuration file to specify your contract
     - Refer to [Contract configuration](#Contract-configuration)
@@ -43,7 +46,7 @@ $ ./docker_run.sh -l <LAMB_CONFIG> -c <CONTRACT_CONFIG> -v <VARIABLE_CONFIG> -p 
       }
     }
     ```
-- You don't have to change the paths like the contract configuration file and the variable configuration file in the default [lamb_config.toml](./lamb_config.toml)
+- You don't have to change the paths of the contract configuration file and the variable configuration file in the default [lamb_config.toml](./lamb_config.toml)
 
 ## Benchmark configuration
 You can configure a benchmark job by a toml file just like usual Kelpie applications.
