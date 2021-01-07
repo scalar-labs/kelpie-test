@@ -22,7 +22,7 @@ scalarlabs/kelpie-test-client     latest                   164f177e8f1a        6
 ## How to run kelpie inside docker
 
 ```console
-$ docker run -ti scalarlabs/kelpie-test-client
+$ docker run -ti ghcr.io/scalar-labs/kelpie-test-client
 root@04953c357473:/# kelpie --config client-test/benchmark-config.toml
 2020-07-16 00:25:25,725 [INFO  com.scalar.kelpie.Kelpie] Checking a job config...
 2020-07-16 00:25:25,838 [INFO  com.scalar.kelpie.Kelpie] Loading modules...

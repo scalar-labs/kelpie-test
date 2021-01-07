@@ -32,4 +32,4 @@ docker run \
   -v ${VARIABLE_CONFIG}:/lamb/variable_config.json \
   -v ${POPULATION_CONTRACT}:/lamb/${POPULATION_CONTRACT##*/} \
   -v ${TARGET_CONTRACT}:/lamb/${TARGET_CONTRACT##*/} \
-  scalarlabs/kelpie-lamb
+  ghcr.io/scalar-labs/kelpie-lamb
