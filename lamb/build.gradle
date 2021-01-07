@@ -22,7 +22,7 @@ shadowJar {
 }
 
 docker {
-    name 'scalarlabs/kelpie-lamb'
+    name 'ghcr.io/scalar-labs/kelpie-lamb'
     files tasks.shadowJar.outputs, 'entrypoint.sh'
     copySpec.with {
         from('.') {
