@@ -1,4 +1,4 @@
-# Kelpie client-test
+# Kelpie ledger-test
 
 ## How to build docker images
 
