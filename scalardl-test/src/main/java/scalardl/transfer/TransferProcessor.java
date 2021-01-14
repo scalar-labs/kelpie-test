@@ -1,6 +1,6 @@
-package client.transfer;
+package scalardl.transfer;
 
-import client.Common;
+import scalardl.Common;
 import com.scalar.dl.client.exception.ClientException;
 import com.scalar.dl.client.service.ClientService;
 import com.scalar.dl.ledger.service.StatusCode;

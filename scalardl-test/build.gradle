@@ -20,7 +20,7 @@ shadowJar {
 }
 
 docker {
-    name 'ghcr.io/scalar-labs/kelpie-test-client'
+    name 'ghcr.io/scalar-labs/kelpie-test-scalardl'
     files tasks.shadowJar.outputs, 'benchmark-config.toml'
     copySpec.with {
         from('.') {

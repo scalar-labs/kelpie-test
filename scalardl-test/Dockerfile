@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install wget unzip -y && \
     mv /kelpie-${KELPIE_VERSION}/lib/* /usr/local/lib/ && \
     rm -rf /tmp/kelpie.zip kelpie-${KELPIE_VERSION} /var/lib/apt/lists/*
 
-RUN mkdir -p /ledger-test/build/libs/
+RUN mkdir -p /scalardl-test/build/libs/
 
-COPY ledger-test-all.jar /ledger-test/build/libs/
-COPY sample-keys /ledger-test/sample-keys
-COPY benchmark-config.toml /ledger-test/
+COPY scalardl-test-all.jar /scalardl-test/build/libs/
+COPY sample-keys /scalardl-test/sample-keys
+COPY benchmark-config.toml /scalardl-test/

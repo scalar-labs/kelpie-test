@@ -1,6 +1,6 @@
-package client.transfer;
+package scalardl.transfer;
 
-import client.Common;
+import scalardl.Common;
 import com.scalar.dl.client.service.ClientService;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.PreProcessException;

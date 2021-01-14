@@ -1,4 +1,4 @@
-package client.transfer;
+package scalardl.transfer;
 
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.PostProcessor;
