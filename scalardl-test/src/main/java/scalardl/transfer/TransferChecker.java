@@ -1,6 +1,6 @@
-package client.transfer;
+package scalardl.transfer;
 
-import client.Common;
+import scalardl.Common;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.scalar.db.api.TransactionState;

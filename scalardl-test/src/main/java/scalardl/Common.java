@@ -1,4 +1,4 @@
-package client;
+package scalardl;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
