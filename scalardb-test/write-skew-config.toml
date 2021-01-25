@@ -32,6 +32,8 @@
   #username = "cassandra"
   #password = "cassandra"
   #storage = "cassandra"
+  isolation_level = "SERIALIZABLE"
+  serializable_strategy = "EXTRA_READ"
 
 [killer_config]
   ssh_user = "centos"

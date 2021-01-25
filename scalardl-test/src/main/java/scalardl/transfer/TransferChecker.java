@@ -1,6 +1,5 @@
 package scalardl.transfer;
 
-import scalardl.Common;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.scalar.db.api.TransactionState;
@@ -24,6 +23,7 @@ import java.util.function.Supplier;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import scalardl.Common;
 
 public class TransferChecker extends PostProcessor {
 
@@ -124,16 +124,22 @@ public class TransferChecker extends PostProcessor {
 
   private Coordinator getCoordinator() {
     Properties props = new Properties();
-    String contactPoints = config.getUserString("test_config", "contact_points");
+    String contactPoints = config.getUserString("storage_config", "contact_points");
+    String username = config.getUserString("storage_config", "username", "cassandra");
+    String password = config.getUserString("storage_config", "password", "cassandra");
+    String storage = config.getUserString("storage_config", "storage", "cassandra");
+    String prefix = config.getUserString("storage_config", "namespace_prefix", "");
     props.setProperty("scalar.db.contact_points", contactPoints);
-    props.setProperty("scalar.db.username", "cassandra");
-    props.setProperty("scalar.db.password", "cassandra");
+    props.setProperty("scalar.db.username", username);
+    props.setProperty("scalar.db.password", password);
+    props.setProperty("scalar.db.storage", storage);
+    props.setProperty("scalar.db.namespace_prefix", prefix);
 
     DatabaseConfig dbConfig = new DatabaseConfig(props);
     Injector injector = Guice.createInjector(new StorageModule(dbConfig));
-    StorageService storage = injector.getInstance(StorageService.class);
+    StorageService storageService = injector.getInstance(StorageService.class);
 
-    return new Coordinator(storage);
+    return new Coordinator(storageService);
   }
 
   private Optional<Coordinator.State> getState(Coordinator coordinator, String txId) {

@@ -2,29 +2,23 @@ package kelpie.scalardb.sensor;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
-import com.scalar.db.api.Isolation;
 import com.scalar.db.api.Put;
 import com.scalar.db.api.Result;
 import com.scalar.db.api.Scan;
 import com.scalar.db.exception.transaction.TransactionException;
 import com.scalar.db.exception.transaction.UnknownTransactionStatusException;
-import com.scalar.db.transaction.consensuscommit.SerializableStrategy;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.ProcessFatalException;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.json.Json;
 
 public class SensorProcessor extends TimeBasedProcessor {
   private final DistributedTransactionManager manager;
   private final int numDevices;
   private final AtomicBoolean isVerification;
-  private final AtomicBoolean isSerializable;
-  private final AtomicBoolean isExtraRead;
-  private final AtomicInteger numUpdates = new AtomicInteger(0);
   private final int startTimestamp;
 
   public SensorProcessor(Config config) {
@@ -33,19 +27,12 @@ public class SensorProcessor extends TimeBasedProcessor {
     this.numDevices = (int) config.getUserLong("test_config", "num_devices");
     this.isVerification =
         new AtomicBoolean(config.getUserBoolean("test_config", "is_verification", false));
-    this.isSerializable =
-        new AtomicBoolean(config.getUserBoolean("test_config", "is_serializable", false));
-    this.isExtraRead =
-        new AtomicBoolean(config.getUserBoolean("test_config", "is_extra_read", false));
     this.startTimestamp = (int) (System.currentTimeMillis() / 1000L);
   }
 
   @Override
   public void executeEach() throws Exception {
-    Isolation isolation = isSerializable.get() ? Isolation.SERIALIZABLE : Isolation.SNAPSHOT;
-    SerializableStrategy strategy =
-        isExtraRead.get() ? SerializableStrategy.EXTRA_READ : SerializableStrategy.EXTRA_WRITE;
-    DistributedTransaction transaction = manager.start(isolation, strategy);
+    DistributedTransaction transaction = manager.start();
 
     String txId = transaction.getId();
     int timestamp = (int) (System.currentTimeMillis() / 1000L);

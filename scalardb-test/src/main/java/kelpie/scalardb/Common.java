@@ -49,10 +49,16 @@ public class Common {
     String username = config.getUserString("storage_config", "username", "cassandra");
     String password = config.getUserString("storage_config", "password", "cassandra");
     String storage = config.getUserString("storage_config", "storage", "cassandra");
+    String prefix = config.getUserString("storage_config", "namespace_prefix", "");
+    String isolationLevel = config.getUserString("storage_config", "isolation_level", "SNAPSHOT");
+    String serializableStrategy = config.getUserString("storage_config", "serializable_strategy", "EXTRA_READ");
     props.setProperty("scalar.db.contact_points", contactPoints);
     props.setProperty("scalar.db.username", username);
     props.setProperty("scalar.db.password", password);
     props.setProperty("scalar.db.storage", storage);
+    props.setProperty("scalar.db.namespace_prefix", prefix);
+    props.setProperty("scalar.db.isolation_level", isolationLevel);
+    props.setProperty("scalar.db.consensuscommit.serializable_strategy", serializableStrategy);
 
     return new DatabaseConfig(props);
   }
