@@ -1,32 +1,26 @@
 package kelpie.scalardb.injector;
 
-import com.palantir.giraffe.command.Command;
-import com.palantir.giraffe.command.CommandException;
-import com.palantir.giraffe.command.Commands;
-import com.palantir.giraffe.host.Host;
-import com.palantir.giraffe.host.HostControlSystem;
-import com.palantir.giraffe.ssh.PublicKeySshCredential;
-import com.palantir.giraffe.ssh.SshCredential;
-import com.palantir.giraffe.ssh.SshHostAccessor;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.InjectionException;
 import com.scalar.kelpie.modules.Injector;
 import io.github.resilience4j.retry.Retry;
-import java.io.File;
+import kelpie.scalardb.Common;
+
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import kelpie.scalardb.Common;
 
 public class CassandraKiller extends Injector {
   private final Random random = new Random(System.currentTimeMillis());
-  private final Map<String, SshHostAccessor> accessors;
   private final int maxIntervalSec;
+  private final String user;
+  private final int port;
+  private final String privateKeyFile;
   private final String[] nodes;
   private List<String> targets;
 
@@ -34,11 +28,10 @@ public class CassandraKiller extends Injector {
     super(config);
 
     maxIntervalSec = (int) config.getUserLong("killer_config", "max_kill_interval_sec", 300L);
-    String user = config.getUserString("killer_config", "ssh_user", "centos");
-    int port = (int) config.getUserLong("killer_config", "ssh_port", 22L);
-    String privateKeyFile = config.getUserString("killer_config", "ssh_private_key");
+    user = config.getUserString("killer_config", "ssh_user", "centos");
+    port = (int) config.getUserLong("killer_config", "ssh_port", 22L);
+    privateKeyFile = config.getUserString("killer_config", "ssh_private_key");
     nodes = config.getUserString("killer_config", "contact_points", "localhost").split(",");
-    accessors = getAccessors(user, port, privateKeyFile, nodes);
   }
 
   @Override
@@ -93,9 +86,9 @@ public class CassandraKiller extends Injector {
     logInfo("Killing cassandra on " + node);
     String killCommand = "pkill -9 -F /var/run/cassandra/cassandra.pid";
     try {
-      execCommand(node, killCommand.split(" "));
-    } catch (CommandException e) {
-      logWarn("Kill command failed");
+      execCommand(node, killCommand);
+    } catch (Exception e) {
+      logWarn("Kill command failed", e);
       // ignore this failure
     }
   }
@@ -104,15 +97,15 @@ public class CassandraKiller extends Injector {
     logInfo("Restarting cassandra on " + node);
     String restartCommand = "/etc/init.d/cassandra start";
     try {
-      execCommand(node, restartCommand.split(" "));
-    } catch (CommandException e) {
-      logWarn("Restart command failed");
+      execCommand(node, restartCommand);
+    } catch (Exception e) {
+      logWarn("Restart command failed", e);
       // the node will be recovered when close()
     }
   }
 
   private void checkNode(String node) {
-    String[] checkCommand = {"sh", "-c", "ss -at | grep :9042"};
+    String checkCommand = "ss -at | grep :9042";
     Retry retry = Common.getRetryWithFixedWaitDuration("checkNodeUp", 10, 10000);
     Runnable decorated = Retry.decorateRunnable(retry, () -> execCommand(node, checkCommand));
 
@@ -127,34 +120,42 @@ public class CassandraKiller extends Injector {
     logInfo("Cassandra is running on " + node);
   }
 
-  private void execCommand(String node, String[] commandStr) throws CommandException {
-    SshHostAccessor accessor = accessors.get(node);
+  private void execCommand(String node, String commandStr) {
+    String[] command =
+        new String[] {
+          "ssh",
+          "-i",
+          privateKeyFile,
+          user + "@" + node,
+          "-p",
+          Integer.toString(port),
+          "sudo " + commandStr
+        };
 
-    try (HostControlSystem hcs = accessor.open()) {
-      Command.Builder builder = hcs.getExecutionSystem().getCommandBuilder("sudo");
-      Arrays.stream(commandStr).forEach(arg -> builder.addArgument(arg));
-      Commands.execute(builder.build());
-    } catch (CommandException e) {
-      throw e;
-    } catch (IOException e) {
+    logDebug("Executing " + String.join(" ", command));
+
+    ProcessBuilder pb = new ProcessBuilder(command);
+    try {
+      Process process = pb.start();
+      process.waitFor();
+      int ret = process.exitValue();
+      if (ret != 0) {
+        logDebug("The exit code: " + ret);
+        logDebugInputStream("STDOUT", process.getInputStream());
+        logDebugInputStream("STDERR", process.getErrorStream());
+        throw new InjectionException("SSH command failed. The exit code: " + ret);
+      }
+    } catch (IOException | InterruptedException e) {
       throw new InjectionException("SSH connection failed", e);
     }
   }
 
-  private Map<String, SshHostAccessor> getAccessors(
-      String user, int port, String privateKeyFile, String[] nodes) {
-    Map<String, SshHostAccessor> accessors = new HashMap<>();
-    for (String node : nodes) {
-      SshCredential credential;
-      Path keyPath = new File(privateKeyFile).toPath();
-      try {
-        credential = PublicKeySshCredential.fromFile(user, keyPath);
-      } catch (IOException e) {
-        throw new InjectionException("Reading a private key failed from " + privateKeyFile, e);
-      }
-
-      accessors.put(node, SshHostAccessor.forCredential(Host.fromHostname(node), port, credential));
+  private void logDebugInputStream(String message, InputStream is) {
+    try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+      StringBuilder builder = new StringBuilder(message + ": ");
+      br.lines().forEach(builder::append);
+      logDebug(builder.toString());
+    } catch (IOException ignored) {
     }
-    return accessors;
   }
 }
