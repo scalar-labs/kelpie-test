@@ -24,7 +24,13 @@
   is_verification = true
   num_accounts = 10
   population_concurrency = 32
+
+[storage_config]
   contact_points = "localhost"
+  #username = "cassandra"
+  #password = "cassandra"
+  #storage = "cassandra"
+  #namespace_prefix = ""
 
 [contract]
   population_contract_name = "contract.BatchCreate"

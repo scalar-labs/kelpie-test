@@ -3,12 +3,10 @@ package kelpie.scalardb.transfer;
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.Get;
-import com.scalar.db.api.Isolation;
 import com.scalar.db.api.Put;
 import com.scalar.db.api.Result;
 import com.scalar.db.exception.transaction.TransactionException;
 import com.scalar.db.exception.transaction.UnknownTransactionStatusException;
-import com.scalar.db.transaction.consensuscommit.SerializableStrategy;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.ProcessException;
 import com.scalar.kelpie.exception.ProcessFatalException;
@@ -43,9 +41,15 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     this.isVerification =
         new AtomicBoolean(config.getUserBoolean("test_config", "is_verification", false));
     this.isSerializable =
-        new AtomicBoolean(config.getUserBoolean("test_config", "is_serializable", false));
+        new AtomicBoolean(
+            config
+                .getUserString("storage_config", "isolation_level", "SNAPSHOT")
+                .equals("SERIALIZABLE"));
     this.isExtraRead =
-        new AtomicBoolean(config.getUserBoolean("test_config", "is_extra_read", false));
+        new AtomicBoolean(
+            config
+                .getUserString("storage_config", "serializable_strategy", "EXTRA_READ")
+                .equals("EXTRA_READ"));
   }
 
   @Override
@@ -59,10 +63,7 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     }
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-    Isolation isolation = isSerializable.get() ? Isolation.SERIALIZABLE : Isolation.SNAPSHOT;
-    SerializableStrategy strategy =
-        isExtraRead.get() ? SerializableStrategy.EXTRA_READ : SerializableStrategy.EXTRA_WRITE;
-    DistributedTransaction transaction = manager.start(isolation, strategy);
+    DistributedTransaction transaction = manager.start();
     String txId = transaction.getId();
     logStart(txId, fromId, fromType, toId, toType, amount);
 

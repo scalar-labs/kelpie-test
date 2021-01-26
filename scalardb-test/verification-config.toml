@@ -30,6 +30,9 @@
   #username = "cassandra"
   #password = "cassandra"
   #storage = "cassandra"
+  #namespace_prefix = ""
+  #isolation_level = "SNAPSHOT"
+  #serializable_strategy = "EXTRA_READ"
 
 [killer_config]
   ssh_user = "centos"
