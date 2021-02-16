@@ -97,6 +97,10 @@ public class TransferChecker extends PostProcessor {
         Retry.decorateFunction(retry, id -> getState(coordinator, id));
 
     JsonObject unknownTransactions = getPreviousState().getJsonObject("unknown_transaction");
+    if (unknownTransactions == null) {
+      // for --only-post
+      return 0;
+    }
     int committed = 0;
     for (String txId : unknownTransactions.keySet()) {
       Optional<Coordinator.State> state;
