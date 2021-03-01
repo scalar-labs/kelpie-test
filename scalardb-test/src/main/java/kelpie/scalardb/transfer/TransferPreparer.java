@@ -98,7 +98,7 @@ public class TransferPreparer extends PreProcessor {
                 try {
                   transaction.abort();
                 } catch (AbortException ex) {
-                  logWarn("abort failed", ex);
+                  logWarn("abort failed.", ex);
                 }
               }
               throw new RuntimeException("population failed, retry", e);
