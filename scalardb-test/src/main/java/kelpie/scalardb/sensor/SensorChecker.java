@@ -4,7 +4,8 @@ import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.Result;
 import com.scalar.db.api.Scan;
-import com.scalar.db.exception.transaction.CrudException;
+import com.scalar.db.exception.transaction.AbortException;
+import com.scalar.db.exception.transaction.TransactionException;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.PostProcessException;
 import com.scalar.kelpie.modules.PostProcessor;
@@ -61,12 +62,20 @@ public class SensorChecker extends PostProcessor {
   private List<Result> readRecords(int timestamp) {
     List<Result> results = new ArrayList<>();
 
-    DistributedTransaction transaction = manager.start();
-    Scan scan = SensorCommon.prepareScan(timestamp);
+    DistributedTransaction transaction = null;
     try {
+      transaction = manager.start();
+      Scan scan = SensorCommon.prepareScan(timestamp);
       results = transaction.scan(scan);
-    } catch (CrudException e) {
+    } catch (TransactionException e) {
       // for Retry
+      if (transaction != null) {
+        try {
+          transaction.abort();
+        } catch (AbortException ex) {
+          logWarn("abort failed.", ex);
+        }
+      }
       throw new RuntimeException("at least 1 record couldn't be read");
     }
 

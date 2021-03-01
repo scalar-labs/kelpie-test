@@ -20,7 +20,7 @@ dependencies {
         implementation group: 'com.google.inject', name: 'guice', version: '4.2.0'
         implementation group: 'com.datastax.cassandra', name: 'cassandra-driver-core', version: '3.6.0'
     } else {
-        implementation group: 'com.scalar-labs', name: 'scalardb', version: '2.4.1'
+        implementation group: 'com.scalar-labs', name: 'scalardb', version: '3.0.0'
     }
 
     // for scalardb.jar on Cosmos DB

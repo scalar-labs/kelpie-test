@@ -3,6 +3,7 @@ package kelpie.scalardb.transfer;
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.Put;
+import com.scalar.db.exception.transaction.AbortException;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.PreProcessor;
 import io.github.resilience4j.retry.Retry;
@@ -82,21 +83,24 @@ public class TransferPreparer extends PreProcessor {
     private void populateWithTx(int startId, int endId) {
       Runnable populate =
           () -> {
-            DistributedTransaction transaction = manager.start();
-            IntStream.range(startId, endId)
-                .forEach(
-                    i -> {
-                      IntStream.range(0, TransferCommon.NUM_TYPES)
-                          .forEach(
-                              j -> {
-                                Put put =
-                                    TransferCommon.preparePut(i, j, TransferCommon.INITIAL_BALANCE);
-                                transaction.put(put);
-                              });
-                    });
+            DistributedTransaction transaction = null;
             try {
+              transaction = manager.start();
+              for (int i = startId; i <= endId; ++i) {
+                for (int j = 0; j <= TransferCommon.NUM_TYPES; ++j) {
+                  Put put = TransferCommon.preparePut(i, j, TransferCommon.INITIAL_BALANCE);
+                  transaction.put(put);
+                }
+              }
               transaction.commit();
             } catch (Exception e) {
+              if (transaction != null) {
+                try {
+                  transaction.abort();
+                } catch (AbortException ex) {
+                  logWarn("abort failed", ex);
+                }
+              }
               throw new RuntimeException("population failed, retry", e);
             }
           };

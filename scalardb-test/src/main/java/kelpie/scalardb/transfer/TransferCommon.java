@@ -6,7 +6,8 @@ import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.Get;
 import com.scalar.db.api.Put;
 import com.scalar.db.api.Result;
-import com.scalar.db.exception.transaction.CrudException;
+import com.scalar.db.exception.transaction.AbortException;
+import com.scalar.db.exception.transaction.TransactionException;
 import com.scalar.db.io.IntValue;
 import com.scalar.db.io.Key;
 import com.scalar.db.transaction.consensuscommit.TransactionResult;
@@ -64,15 +65,23 @@ public class TransferCommon {
     List<Result> results = new ArrayList<>();
 
     boolean isFailed = false;
-    DistributedTransaction transaction = manager.start();
     for (int i = 0; i < numAccounts; i++) {
       for (int j = 0; j < TransferCommon.NUM_TYPES; j++) {
-        Get get = TransferCommon.prepareGet(i, j);
+        DistributedTransaction transaction = null;
         try {
+          transaction = manager.start();
+          Get get = TransferCommon.prepareGet(i, j);
           transaction.get(get).ifPresent(r -> results.add(r));
-        } catch (CrudException e) {
+        } catch (TransactionException e) {
           // continue to read other records
           isFailed = true;
+          if (transaction != null) {
+            try {
+              transaction.abort();
+            } catch (AbortException ex) {
+              // ignore
+            }
+          }
         }
       }
     }
