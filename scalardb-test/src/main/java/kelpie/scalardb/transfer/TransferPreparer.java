@@ -86,8 +86,8 @@ public class TransferPreparer extends PreProcessor {
             DistributedTransaction transaction = null;
             try {
               transaction = manager.start();
-              for (int i = startId; i <= endId; ++i) {
-                for (int j = 0; j <= TransferCommon.NUM_TYPES; ++j) {
+              for (int i = startId; i < endId; ++i) {
+                for (int j = 0; j < TransferCommon.NUM_TYPES; ++j) {
                   Put put = TransferCommon.preparePut(i, j, TransferCommon.INITIAL_BALANCE);
                   transaction.put(put);
                 }
