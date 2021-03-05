@@ -16,7 +16,7 @@ import java.util.stream.IntStream;
 
 public class TransferWithoutTransactionPreparer extends PreProcessor {
   private static final long DEFAULT_POPULATION_CONCURRENCY = 32L;
-  private static final int NUM_ACCOUNTS_PER_TX = 100;
+  private static final int NUM_ACCOUNTS_PER_THREAD = 100;
 
   private final DistributedStorage storage;
 
@@ -72,16 +72,16 @@ public class TransferWithoutTransactionPreparer extends PreProcessor {
       int numPerThread = (numAccounts + concurrency - 1) / concurrency;
       int start = numPerThread * id;
       int end = Math.min(numPerThread * (id + 1), numAccounts);
-      IntStream.range(0, (numPerThread + NUM_ACCOUNTS_PER_TX - 1) / NUM_ACCOUNTS_PER_TX)
+      IntStream.range(0, (numPerThread + NUM_ACCOUNTS_PER_THREAD - 1) / NUM_ACCOUNTS_PER_THREAD)
           .forEach(
               i -> {
-                int startId = start + NUM_ACCOUNTS_PER_TX * i;
-                int endId = Math.min(start + NUM_ACCOUNTS_PER_TX * (i + 1), end);
-                populateWithTx(startId, endId);
+                int startId = start + NUM_ACCOUNTS_PER_THREAD * i;
+                int endId = Math.min(start + NUM_ACCOUNTS_PER_THREAD * (i + 1), end);
+                populate(startId, endId);
               });
     }
 
-    private void populateWithTx(int startId, int endId) {
+    private void populate(int startId, int endId) {
       Runnable populate =
           () -> {
             try {
