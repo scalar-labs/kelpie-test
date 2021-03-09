@@ -14,13 +14,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
-public class TransferWithoutTransactionPreparer extends PreProcessor {
+public class NontransactionalTransferPreparer extends PreProcessor {
   private static final long DEFAULT_POPULATION_CONCURRENCY = 32L;
   private static final int NUM_ACCOUNTS_PER_THREAD = 100;
 
   private final DistributedStorage storage;
 
-  public TransferWithoutTransactionPreparer(Config config) {
+  public NontransactionalTransferPreparer(Config config) {
     super(config);
     this.storage = TransferCommon.getStorage(config);
   }

@@ -11,11 +11,11 @@ import com.scalar.kelpie.modules.TimeBasedProcessor;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class TransferWithoutTransactionProcessor extends TimeBasedProcessor {
+public class NontransactionalTransferProcessor extends TimeBasedProcessor {
   private final DistributedStorage storage;
   private final int numAccounts;
 
-  public TransferWithoutTransactionProcessor(Config config) {
+  public NontransactionalTransferProcessor(Config config) {
     super(config);
     this.storage = TransferCommon.getStorage(config);
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");

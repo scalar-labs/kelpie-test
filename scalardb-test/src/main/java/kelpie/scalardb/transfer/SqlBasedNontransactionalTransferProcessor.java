@@ -15,12 +15,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class TransferWithRawSqlProcessor extends TimeBasedProcessor {
+public class SqlBasedNontransactionalTransferProcessor extends TimeBasedProcessor {
   private final int numAccounts;
   private final BasicDataSource dataSource;
   private final RdbEngine rdbEngine;
 
-  public TransferWithRawSqlProcessor(Config config) {
+  public SqlBasedNontransactionalTransferProcessor(Config config) {
     super(config);
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
 
