@@ -27,11 +27,7 @@ public class TransferWithoutTransactionProcessor extends TimeBasedProcessor {
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-    try {
-      transfer(fromId, toId, amount);
-    } catch (Exception e) {
-      throw e;
-    }
+   transfer(fromId, toId, amount);
   }
 
   @Override

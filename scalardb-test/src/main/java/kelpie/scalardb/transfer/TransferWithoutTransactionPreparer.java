@@ -39,15 +39,11 @@ public class TransferWithoutTransactionPreparer extends PreProcessor {
         .forEach(
             i -> {
               CompletableFuture<Void> future =
-                  CompletableFuture.runAsync(
-                      () -> {
-                        new PopulationRunner(i).run();
-                      },
-                      es);
+                  CompletableFuture.runAsync(() -> new PopulationRunner(i).run(), es);
               futures.add(future);
             });
 
-    CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     logInfo("all records have been inserted");
   }
 
