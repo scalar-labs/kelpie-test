@@ -28,7 +28,8 @@ public class NontransactionalTransferPreparer extends PreProcessor {
     super(config);
 
     client = CosmosUtil.createCosmosClient(config);
-    container = client.getDatabase(TransferCommon.KEYSPACE).getContainer(TransferCommon.TABLE);
+    container =
+        client.getDatabase(TransferCommon.KEYSPACE).getContainer(TransferCommon.TABLE + "_cosmos");
   }
 
   @Override
