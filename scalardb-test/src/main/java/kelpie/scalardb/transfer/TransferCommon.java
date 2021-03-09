@@ -19,11 +19,11 @@ import java.util.function.Supplier;
 import kelpie.scalardb.Common;
 
 public class TransferCommon {
-  private static final String KEYSPACE = "transfer";
-  private static final String TABLE = "tx_transfer";
-  private static final String ACCOUNT_ID = "account_id";
-  private static final String ACCOUNT_TYPE = "account_type";
-  private static final String BALANCE = "balance";
+  public static final String KEYSPACE = "transfer";
+  public static final String TABLE = "tx_transfer";
+  public static final String ACCOUNT_ID = "account_id";
+  public static final String ACCOUNT_TYPE = "account_type";
+  public static final String BALANCE = "balance";
 
   public static final int INITIAL_BALANCE = 10000;
   public static final int NUM_TYPES = 2;

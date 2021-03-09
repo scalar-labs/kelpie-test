@@ -43,7 +43,7 @@ public class Common {
     return manager;
   }
 
-  private static DatabaseConfig getDatabaseConfig(Config config) {
+  public static DatabaseConfig getDatabaseConfig(Config config) {
     Properties props = new Properties();
     String contactPoints = config.getUserString("storage_config", "contact_points", "localhost");
     String username = config.getUserString("storage_config", "username", "cassandra");

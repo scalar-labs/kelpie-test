@@ -19,6 +19,7 @@ dependencies {
         implementation group: 'com.google.guava', name: 'guava', version: '24.1-jre'
         implementation group: 'com.google.inject', name: 'guice', version: '4.2.0'
         implementation group: 'com.datastax.cassandra', name: 'cassandra-driver-core', version: '3.6.0'
+        implementation group: 'com.azure', name: 'azure-cosmos', version: '4.8.0'
     } else {
         implementation group: 'com.scalar-labs', name: 'scalardb', version: '3.0.0'
     }
