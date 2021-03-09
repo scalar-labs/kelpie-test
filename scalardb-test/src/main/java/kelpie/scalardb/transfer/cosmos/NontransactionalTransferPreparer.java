@@ -102,6 +102,9 @@ public class NontransactionalTransferPreparer extends PreProcessor {
                       account,
                       new PartitionKey(account.getAccountId()),
                       new CosmosItemRequestOptions());
+                  if (i % 100 == 0) {
+                    logInfo(id + ": " + i + " items are inserted.");
+                  }
                 } catch (CosmosException e) {
                   if (e.getStatusCode() != COSMOS_STATUS_CONFLICT) {
                     throw new RuntimeException("population failed, retry", e);
