@@ -10,9 +10,9 @@ import kelpie.scalardb.Common;
 import org.apache.commons.dbcp2.BasicDataSource;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class SqlBasedNontransactionalTransferProcessor extends TimeBasedProcessor {
@@ -38,7 +38,7 @@ public class SqlBasedNontransactionalTransferProcessor extends TimeBasedProcesso
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-   transfer(fromId, toId, amount);
+    transfer(fromId, toId, amount);
   }
 
   @Override
@@ -74,20 +74,18 @@ public class SqlBasedNontransactionalTransferProcessor extends TimeBasedProcesso
             + TransferCommon.TABLE
             + " WHERE "
             + TransferCommon.ACCOUNT_ID
-            + " = "
-            + id
-            + " AND "
+            + " = ? AND "
             + TransferCommon.ACCOUNT_TYPE
-            + " = "
-            + type;
-
-    logDebug(sql);
+            + " = ?";
 
     try (Connection connection = dataSource.getConnection();
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery(sql)) {
-      resultSet.next();
-      return resultSet.getInt(TransferCommon.BALANCE);
+        PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+      preparedStatement.setInt(1, id);
+      preparedStatement.setInt(2, type);
+      try (ResultSet resultSet = preparedStatement.executeQuery()) {
+        resultSet.next();
+        return resultSet.getInt(TransferCommon.BALANCE);
+      }
     }
   }
 
@@ -106,16 +104,9 @@ public class SqlBasedNontransactionalTransferProcessor extends TimeBasedProcesso
                 + TransferCommon.ACCOUNT_TYPE
                 + ","
                 + TransferCommon.BALANCE
-                + ") VALUES ("
-                + id
-                + ","
-                + type
-                + ","
-                + amount
-                + ") ON DUPLICATE KEY UPDATE "
+                + ") VALUES (?,?.?) ON DUPLICATE KEY UPDATE "
                 + TransferCommon.BALANCE
-                + "="
-                + amount;
+                + "= ?";
         break;
       case POSTGRESQL:
         sql =
@@ -129,30 +120,25 @@ public class SqlBasedNontransactionalTransferProcessor extends TimeBasedProcesso
                 + TransferCommon.ACCOUNT_TYPE
                 + ","
                 + TransferCommon.BALANCE
-                + ") VALUES ("
-                + id
-                + ","
-                + type
-                + ","
-                + amount
-                + ") ON CONFLICT ("
+                + ") VALUES (?,?,?) ON CONFLICT ("
                 + TransferCommon.ACCOUNT_ID
                 + ","
                 + TransferCommon.ACCOUNT_TYPE
                 + ") DO UPDATE SET "
                 + TransferCommon.BALANCE
-                + "="
-                + amount;
+                + "= ?";
         break;
       default:
         throw new AssertionError();
     }
 
-    logDebug(sql);
-
     try (Connection connection = dataSource.getConnection();
-        Statement statement = connection.createStatement()) {
-      statement.executeUpdate(sql);
+        PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+      preparedStatement.setInt(1, id);
+      preparedStatement.setInt(2, type);
+      preparedStatement.setInt(3, amount);
+      preparedStatement.setInt(4, amount);
+      preparedStatement.executeUpdate();
     }
   }
 }
