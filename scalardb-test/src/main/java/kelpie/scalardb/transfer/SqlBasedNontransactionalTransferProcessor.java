@@ -74,9 +74,9 @@ public class SqlBasedNontransactionalTransferProcessor extends TimeBasedProcesso
             + TransferCommon.TABLE
             + " WHERE "
             + TransferCommon.ACCOUNT_ID
-            + " = ? AND "
+            + "=? AND "
             + TransferCommon.ACCOUNT_TYPE
-            + " = ?";
+            + "=?";
 
     try (Connection connection = dataSource.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -104,9 +104,9 @@ public class SqlBasedNontransactionalTransferProcessor extends TimeBasedProcesso
                 + TransferCommon.ACCOUNT_TYPE
                 + ","
                 + TransferCommon.BALANCE
-                + ") VALUES (?,?.?) ON DUPLICATE KEY UPDATE "
+                + ") VALUES (?,?,?) ON DUPLICATE KEY UPDATE "
                 + TransferCommon.BALANCE
-                + "= ?";
+                + "=?";
         break;
       case POSTGRESQL:
         sql =
@@ -126,7 +126,7 @@ public class SqlBasedNontransactionalTransferProcessor extends TimeBasedProcesso
                 + TransferCommon.ACCOUNT_TYPE
                 + ") DO UPDATE SET "
                 + TransferCommon.BALANCE
-                + "= ?";
+                + "=?";
         break;
       default:
         throw new AssertionError();
