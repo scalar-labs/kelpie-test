@@ -3,7 +3,6 @@ function upsert(update, query) {
     //var update = { 'id': "0:1", 'accountId': 0, 'type': 1, 'balance': 99 };
     //var query = 'SELECT * FROM tx_transfer t WHERE t.id = "0:1"';
 
-
     function merge(source, update) {
         for (var column in update) {
             if (update[column].constructor == Object) {
