@@ -11,11 +11,13 @@ import com.scalar.db.service.StorageModule;
 import com.scalar.db.service.StorageService;
 import com.scalar.db.service.TransactionModule;
 import com.scalar.db.service.TransactionService;
+import com.scalar.db.storage.jdbc.JdbcDatabaseConfig;
 import com.scalar.db.transaction.consensuscommit.Coordinator;
 import com.scalar.kelpie.config.Config;
 import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
+
 import java.time.Duration;
 import java.util.Optional;
 import java.util.Properties;
@@ -44,14 +46,47 @@ public class Common {
   }
 
   public static DatabaseConfig getDatabaseConfig(Config config) {
-    Properties props = new Properties();
     String contactPoints = config.getUserString("storage_config", "contact_points", "localhost");
     String username = config.getUserString("storage_config", "username", "cassandra");
     String password = config.getUserString("storage_config", "password", "cassandra");
     String storage = config.getUserString("storage_config", "storage", "cassandra");
     String prefix = config.getUserString("storage_config", "namespace_prefix", "");
     String isolationLevel = config.getUserString("storage_config", "isolation_level", "SNAPSHOT");
-    String serializableStrategy = config.getUserString("storage_config", "serializable_strategy", "EXTRA_READ");
+    String serializableStrategy =
+        config.getUserString("storage_config", "serializable_strategy", "EXTRA_READ");
+
+    // JDBC adapter related configurations
+    long jdbcConnectionPoolMinIdle =
+        config.getUserLong(
+            "storage_config",
+            "jdbc_connection_pool_min_idle",
+            (long) JdbcDatabaseConfig.DEFAULT_CONNECTION_POOL_MIN_IDLE);
+    long jdbcConnectionPoolMaxIdle =
+        config.getUserLong(
+            "storage_config",
+            "jdbc_connection_pool_max_idle",
+            (long) JdbcDatabaseConfig.DEFAULT_CONNECTION_POOL_MAX_IDLE);
+    long jdbcConnectionPoolMaxTotal =
+        config.getUserLong(
+            "storage_config",
+            "jdbc_connection_pool_max_total",
+            (long) JdbcDatabaseConfig.DEFAULT_CONNECTION_POOL_MAX_TOTAL);
+    boolean jdbcPreparedStatementsPoolEnabled =
+        config.getUserBoolean(
+            "storage_config",
+            "jdbc_prepared_statements_pool_enabled",
+            JdbcDatabaseConfig.DEFAULT_PREPARED_STATEMENTS_POOL_ENABLED);
+    long jdbcPreparedStatementsPoolMaxOpen =
+        config.getUserLong(
+            "storage_config",
+            "jdbc_prepared_statements_pool_max_open",
+            (long) JdbcDatabaseConfig.DEFAULT_PREPARED_STATEMENTS_POOL_MAX_OPEN);
+    String jdbcTransactionManagerType =
+        config.getUserString(
+            "storage_config",
+            "jdbc_transaction_manager_type",
+            JdbcDatabaseConfig.DEFAULT_TRANSACTION_MANAGER_TYPE);
+    Properties props = new Properties();
     props.setProperty("scalar.db.contact_points", contactPoints);
     props.setProperty("scalar.db.username", username);
     props.setProperty("scalar.db.password", password);
@@ -59,7 +94,19 @@ public class Common {
     props.setProperty("scalar.db.namespace_prefix", prefix);
     props.setProperty("scalar.db.isolation_level", isolationLevel);
     props.setProperty("scalar.db.consensuscommit.serializable_strategy", serializableStrategy);
-
+    props.setProperty(
+        JdbcDatabaseConfig.CONNECTION_POOL_MIN_IDLE, Long.toString(jdbcConnectionPoolMinIdle));
+    props.setProperty(
+        JdbcDatabaseConfig.CONNECTION_POOL_MAX_IDLE, Long.toString(jdbcConnectionPoolMaxIdle));
+    props.setProperty(
+        JdbcDatabaseConfig.CONNECTION_POOL_MAX_TOTAL, Long.toString(jdbcConnectionPoolMaxTotal));
+    props.setProperty(
+        JdbcDatabaseConfig.PREPARED_STATEMENTS_POOL_ENABLED,
+        Boolean.toString(jdbcPreparedStatementsPoolEnabled));
+    props.setProperty(
+        JdbcDatabaseConfig.PREPARED_STATEMENTS_POOL_MAX_OPEN,
+        Long.toString(jdbcPreparedStatementsPoolMaxOpen));
+    props.setProperty(JdbcDatabaseConfig.TRANSACTION_MANAGER_TYPE, jdbcTransactionManagerType);
     return new DatabaseConfig(props);
   }
 
