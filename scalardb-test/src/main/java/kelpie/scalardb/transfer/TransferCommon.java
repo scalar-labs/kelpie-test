@@ -1,6 +1,7 @@
 package kelpie.scalardb.transfer;
 
 import com.scalar.db.api.Consistency;
+import com.scalar.db.api.DistributedStorage;
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.Get;
@@ -13,10 +14,11 @@ import com.scalar.db.io.Key;
 import com.scalar.db.transaction.consensuscommit.TransactionResult;
 import com.scalar.kelpie.config.Config;
 import io.github.resilience4j.retry.Retry;
+import kelpie.scalardb.Common;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-import kelpie.scalardb.Common;
 
 public class TransferCommon {
   public static final String KEYSPACE = "transfer";
@@ -30,6 +32,12 @@ public class TransferCommon {
 
   public static DistributedTransactionManager getTransactionManager(Config config) {
     return Common.getTransactionManager(config, KEYSPACE, TABLE);
+  }
+
+  public static DistributedStorage getStorage(Config config) {
+    DistributedStorage storage = Common.getStorage(config);
+    storage.with(KEYSPACE, TABLE);
+    return storage;
   }
 
   public static Get prepareGet(int id, int type) {
