@@ -25,11 +25,7 @@ function upsert(update, query) {
                 throw new Error("no docs found.");
             }
             else {
-                var response = getContext().getResponse();
-                var body = { records: records, update: update };
-                response.setBody(JSON.stringify(body));
                 const upserted = merge(records[0], update);
-                response.setBody(JSON.stringify(records[0]));
                 const isMutationAccepted = __.upsertDocument(__.getSelfLink(), upserted,
                     (error, result, options) => {
                         if (error) throw error;
@@ -42,5 +38,4 @@ function upsert(update, query) {
     );
 
     if (!isAccepted) throw new Error('The query was not accepted by the server.');
-
 }
