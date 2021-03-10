@@ -18,14 +18,14 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
   private CosmosStoredProcedure storedProcedure;
   private final int numAccounts;
   private final boolean useStoredProcedure;
-  private final String QUERY_FOR_SP = "SELECT * FROM " + TransferCommon.TABLE + " t WHERE t.id = ";
+  private final String TABLE = TransferCommon.TABLE + "_cosmos";
+  private final String QUERY_FOR_SP = "SELECT * FROM " + TABLE + "_cosmos t WHERE t.id = ";
 
   public NontransactionalTransferProcessor(Config config) {
     super(config);
 
     client = CosmosUtil.createCosmosClient(config);
-    container =
-        client.getDatabase(TransferCommon.KEYSPACE).getContainer(TransferCommon.TABLE + "_cosmos");
+    container = client.getDatabase(TransferCommon.KEYSPACE).getContainer(TABLE);
     numAccounts = (int) config.getUserLong("test_config", "num_accounts");
     useStoredProcedure = config.getUserBoolean("cosmos_config", "use_stored_procedure");
     if (useStoredProcedure) {
