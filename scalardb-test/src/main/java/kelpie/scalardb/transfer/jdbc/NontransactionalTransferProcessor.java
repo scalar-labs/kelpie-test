@@ -1,4 +1,4 @@
-package kelpie.scalardb.transfer;
+package kelpie.scalardb.transfer.jdbc;
 
 import com.scalar.db.config.DatabaseConfig;
 import com.scalar.db.storage.jdbc.JdbcDatabaseConfig;
@@ -7,6 +7,7 @@ import com.scalar.db.storage.jdbc.RdbEngine;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
 import kelpie.scalardb.Common;
+import kelpie.scalardb.transfer.TransferCommon;
 import org.apache.commons.dbcp2.BasicDataSource;
 
 import java.sql.Connection;
@@ -15,12 +16,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class SqlBasedNontransactionalTransferProcessor extends TimeBasedProcessor {
+public class NontransactionalTransferProcessor extends TimeBasedProcessor {
   private final int numAccounts;
   private final BasicDataSource dataSource;
   private final RdbEngine rdbEngine;
 
-  public SqlBasedNontransactionalTransferProcessor(Config config) {
+  public NontransactionalTransferProcessor(Config config) {
     super(config);
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
 
