@@ -22,6 +22,7 @@ public class TransferProcessor extends TimeBasedProcessor {
   private final DistributedTransactionManager manager;
   private final int numAccounts;
   private final boolean isVerification;
+  private final boolean useCompactLog;
 
   // for verification
   private final Map<String, List<Integer>> unknownTransactions = new ConcurrentHashMap<>();
@@ -32,6 +33,7 @@ public class TransferProcessor extends TimeBasedProcessor {
 
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
     this.isVerification = config.getUserBoolean("test_config", "is_verification", false);
+    this.useCompactLog = config.getUserBoolean("test_config", "use_compact_log", true);
   }
 
   @Override
@@ -107,10 +109,10 @@ public class TransferProcessor extends TimeBasedProcessor {
 
     if (e instanceof UnknownTransactionStatusException) {
       unknownTransactions.put(txId, Arrays.asList(fromId, toId));
-      logWarn("the status of the transaction is unknown: " + txId, e);
+      logTxWarn("the status of the transaction is unknown: " + txId, e);
       logTxInfo("unknown", txId, fromId, toId, amount);
     } else {
-      logWarn(txId + " failed", e);
+      logTxWarn(txId + " failed", e);
       logTxInfo("failed", txId, fromId, toId, amount);
     }
   }
@@ -129,5 +131,17 @@ public class TransferProcessor extends TimeBasedProcessor {
             + ((fromId == toId) ? 1 : 0)
             + " amount: "
             + amount);
+  }
+
+  private void logTxWarn(String message, Throwable e) {
+    if (useCompactLog) {
+      String cause = e.getMessage();
+      if (e.getCause() != null) {
+        cause = cause + " < " + e.getCause().getMessage();
+      }
+      logWarn(message + ", cause: " + cause);
+    } else {
+      logWarn(message, e);
+    }
   }
 }
