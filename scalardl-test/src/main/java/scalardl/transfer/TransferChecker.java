@@ -78,6 +78,7 @@ public class TransferChecker extends PostProcessor {
         results.add(result);
       } catch (Exception e) {
         // continue to read other records
+        logWarn("failed to read asset_id " + i, e);
         isFailed = true;
       }
     }
