@@ -17,7 +17,6 @@ import com.scalar.kelpie.config.Config;
 import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
-
 import java.time.Duration;
 import java.util.Optional;
 import java.util.Properties;
@@ -86,14 +85,15 @@ public class Common {
             "storage_config",
             "jdbc_transaction_manager_type",
             JdbcDatabaseConfig.DEFAULT_TRANSACTION_MANAGER_TYPE);
+
     Properties props = new Properties();
-    props.setProperty("scalar.db.contact_points", contactPoints);
-    props.setProperty("scalar.db.username", username);
-    props.setProperty("scalar.db.password", password);
-    props.setProperty("scalar.db.storage", storage);
-    props.setProperty("scalar.db.namespace_prefix", prefix);
-    props.setProperty("scalar.db.isolation_level", isolationLevel);
-    props.setProperty("scalar.db.consensuscommit.serializable_strategy", serializableStrategy);
+    props.setProperty(DatabaseConfig.CONTACT_POINTS, contactPoints);
+    props.setProperty(DatabaseConfig.USERNAME, username);
+    props.setProperty(DatabaseConfig.PASSWORD, password);
+    props.setProperty(DatabaseConfig.STORAGE, storage);
+    props.setProperty(DatabaseConfig.NAMESPACE_PREFIX, prefix);
+    props.setProperty(DatabaseConfig.ISOLATION_LEVEL, isolationLevel);
+    props.setProperty(DatabaseConfig.SERIALIZABLE_STRATEGY, serializableStrategy);
     props.setProperty(
         JdbcDatabaseConfig.CONNECTION_POOL_MIN_IDLE, Long.toString(jdbcConnectionPoolMinIdle));
     props.setProperty(
