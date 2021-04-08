@@ -5,7 +5,6 @@ import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.Get;
 import com.scalar.db.api.Put;
 import com.scalar.db.api.Result;
-import com.scalar.db.exception.transaction.TransactionException;
 import com.scalar.db.exception.transaction.UnknownTransactionStatusException;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
@@ -43,7 +42,15 @@ public class TransferProcessor extends TimeBasedProcessor {
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
     DistributedTransaction transaction = manager.start();
-    String txId = transaction.getId();
+
+    String txId;
+    try {
+      txId = transaction.getId();
+    } catch (UnsupportedOperationException ignored) {
+      // JdbcTransaction doesn't support getId()
+      txId = "nothing";
+    }
+
     logStart(txId, fromId, toId, amount);
 
     try {
@@ -67,27 +74,32 @@ public class TransferProcessor extends TimeBasedProcessor {
   }
 
   private void transfer(DistributedTransaction transaction, int fromId, int toId, int amount)
-      throws TransactionException {
+      throws Exception {
     int fromType = 0;
     int toType = 0;
     if (fromId == toId) {
       toType = 1; // transfer between the same account
     }
 
-    Get fromGet = TransferCommon.prepareGet(fromId, fromType);
-    Get toGet = TransferCommon.prepareGet(toId, toType);
+    try {
+      Get fromGet = TransferCommon.prepareGet(fromId, fromType);
+      Get toGet = TransferCommon.prepareGet(toId, toType);
 
-    Optional<Result> fromResult = transaction.get(fromGet);
-    Optional<Result> toResult = transaction.get(toGet);
-    int fromBalance = TransferCommon.getBalanceFromResult(fromResult.get());
-    int toBalance = TransferCommon.getBalanceFromResult(toResult.get());
+      Optional<Result> fromResult = transaction.get(fromGet);
+      Optional<Result> toResult = transaction.get(toGet);
+      int fromBalance = TransferCommon.getBalanceFromResult(fromResult.get());
+      int toBalance = TransferCommon.getBalanceFromResult(toResult.get());
 
-    Put fromPut = TransferCommon.preparePut(fromId, fromType, fromBalance - amount);
-    Put toPut = TransferCommon.preparePut(toId, toType, toBalance + amount);
-    transaction.put(fromPut);
-    transaction.put(toPut);
+      Put fromPut = TransferCommon.preparePut(fromId, fromType, fromBalance - amount);
+      Put toPut = TransferCommon.preparePut(toId, toType, toBalance + amount);
+      transaction.put(fromPut);
+      transaction.put(toPut);
 
-    transaction.commit();
+      transaction.commit();
+    } catch (Exception e) {
+      transaction.abort();
+      throw e;
+    }
   }
 
   private void logStart(String txId, int fromId, int toId, int amount) {
