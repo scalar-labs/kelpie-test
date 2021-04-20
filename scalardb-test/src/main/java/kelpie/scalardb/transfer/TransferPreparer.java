@@ -17,7 +17,9 @@ import kelpie.scalardb.Common;
 
 public class TransferPreparer extends PreProcessor {
   private static final long DEFAULT_POPULATION_CONCURRENCY = 32L;
-  private static final int NUM_ACCOUNTS_PER_TX = 100;
+  private static final long DEFAULT_POPULATION_NUM_ACCOUNTS_PER_TX = 100;
+  private static final long DEFAULT_POPULATION_MAX_RETRIES = 10;
+  private static final long DEFAULT_POPULATION_WAIT_MILLS = 1000;
 
   private final DistributedTransactionManager manager;
 
@@ -67,15 +69,21 @@ public class TransferPreparer extends PreProcessor {
           (int)
               config.getUserLong(
                   "test_config", "population_concurrency", DEFAULT_POPULATION_CONCURRENCY);
+      int numAccountsPerTx =
+          (int)
+              config.getUserLong(
+                  "test_config",
+                  "population_num_accounts_per_tx",
+                  DEFAULT_POPULATION_NUM_ACCOUNTS_PER_TX);
       int numAccounts = (int) config.getUserLong("test_config", "num_accounts");
       int numPerThread = (numAccounts + concurrency - 1) / concurrency;
       int start = numPerThread * id;
       int end = Math.min(numPerThread * (id + 1), numAccounts);
-      IntStream.range(0, (numPerThread + NUM_ACCOUNTS_PER_TX - 1) / NUM_ACCOUNTS_PER_TX)
+      IntStream.range(0, (numPerThread + numAccountsPerTx - 1) / numAccountsPerTx)
           .forEach(
               i -> {
-                int startId = start + NUM_ACCOUNTS_PER_TX * i;
-                int endId = Math.min(start + NUM_ACCOUNTS_PER_TX * (i + 1), end);
+                int startId = start + numAccountsPerTx * i;
+                int endId = Math.min(start + numAccountsPerTx * (i + 1), end);
                 populateWithTx(startId, endId);
               });
     }
@@ -101,11 +109,20 @@ public class TransferPreparer extends PreProcessor {
                   logWarn("abort failed.", ex);
                 }
               }
-              throw new RuntimeException("population failed, retry", e);
+              logWarn("population failed.", e);
+              throw new RuntimeException("population failed.", e);
             }
           };
 
-      Retry retry = Common.getRetryWithFixedWaitDuration("populate");
+      int maxRetries =
+          (int)
+              config.getUserLong(
+                  "test_config", "population_max_retries", DEFAULT_POPULATION_MAX_RETRIES);
+      int waitMillis =
+          (int)
+              config.getUserLong(
+                  "test_config", "population_wait_millis", DEFAULT_POPULATION_WAIT_MILLS);
+      Retry retry = Common.getRetryWithFixedWaitDuration("populate", maxRetries, waitMillis);
       Runnable decorated = Retry.decorateRunnable(retry, populate);
       try {
         decorated.run();
