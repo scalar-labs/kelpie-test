@@ -1,20 +1,22 @@
 package kelpie.scalardb.transfer.jdbc;
 
+import static com.scalar.db.storage.jdbc.query.QueryUtils.enclose;
+import static com.scalar.db.storage.jdbc.query.QueryUtils.enclosedFullTableName;
+
 import com.scalar.db.config.DatabaseConfig;
 import com.scalar.db.storage.jdbc.JdbcDatabaseConfig;
 import com.scalar.db.storage.jdbc.JdbcUtils;
 import com.scalar.db.storage.jdbc.RdbEngine;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
-import kelpie.scalardb.Common;
-import kelpie.scalardb.transfer.TransferCommon;
-import org.apache.commons.dbcp2.BasicDataSource;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.ThreadLocalRandom;
+import kelpie.scalardb.Common;
+import kelpie.scalardb.transfer.TransferCommon;
+import org.apache.commons.dbcp2.BasicDataSource;
 
 public class NontransactionalTransferProcessor extends TimeBasedProcessor {
   private final int numAccounts;
@@ -28,8 +30,8 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
     DatabaseConfig databaseConfig = Common.getDatabaseConfig(config);
     dataSource = JdbcUtils.initDataSource(new JdbcDatabaseConfig(databaseConfig.getProperties()));
     rdbEngine = JdbcUtils.getRdbEngine(databaseConfig.getContactPoints().get(0));
-    if (rdbEngine != RdbEngine.MYSQL && rdbEngine != RdbEngine.POSTGRESQL) {
-      throw new IllegalArgumentException(rdbEngine + " is not supported.");
+    if (rdbEngine == RdbEngine.SQL_SERVER) {
+      throw new IllegalArgumentException(RdbEngine.SQL_SERVER + " is not supported.");
     }
   }
 
@@ -66,17 +68,21 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
   }
 
   private int get(int id, int type) throws SQLException {
+    final String enclosedFullTableName =
+        enclosedFullTableName(TransferCommon.KEYSPACE, TransferCommon.TABLE, rdbEngine);
+    final String enclosedAccountId = enclose(TransferCommon.ACCOUNT_ID, rdbEngine);
+    final String enclosedAccountType = enclose(TransferCommon.ACCOUNT_TYPE, rdbEngine);
+    final String enclosedBalance = enclose(TransferCommon.BALANCE, rdbEngine);
+
     String sql =
         "SELECT "
-            + TransferCommon.BALANCE
+            + enclosedBalance
             + " FROM "
-            + TransferCommon.KEYSPACE
-            + "."
-            + TransferCommon.TABLE
+            + enclosedFullTableName
             + " WHERE "
-            + TransferCommon.ACCOUNT_ID
+            + enclosedAccountId
             + "=? AND "
-            + TransferCommon.ACCOUNT_TYPE
+            + enclosedAccountType
             + "=?";
 
     try (Connection connection = dataSource.getConnection();
@@ -91,43 +97,71 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
   }
 
   private void put(int id, int type, int amount) throws SQLException {
+    final String enclosedFullTableName =
+        enclosedFullTableName(TransferCommon.KEYSPACE, TransferCommon.TABLE, rdbEngine);
+    final String enclosedAccountId = enclose(TransferCommon.ACCOUNT_ID, rdbEngine);
+    final String enclosedAccountType = enclose(TransferCommon.ACCOUNT_TYPE, rdbEngine);
+    final String enclosedBalance = enclose(TransferCommon.BALANCE, rdbEngine);
+
     String sql;
     switch (rdbEngine) {
       case MYSQL:
         sql =
             "INSERT INTO "
-                + TransferCommon.KEYSPACE
-                + "."
-                + TransferCommon.TABLE
+                + enclosedFullTableName
                 + " ("
-                + TransferCommon.ACCOUNT_ID
+                + enclosedAccountId
                 + ","
-                + TransferCommon.ACCOUNT_TYPE
+                + enclosedAccountType
                 + ","
-                + TransferCommon.BALANCE
+                + enclosedBalance
                 + ") VALUES (?,?,?) ON DUPLICATE KEY UPDATE "
-                + TransferCommon.BALANCE
+                + enclosedBalance
                 + "=?";
         break;
       case POSTGRESQL:
         sql =
             "INSERT INTO "
-                + TransferCommon.KEYSPACE
-                + "."
-                + TransferCommon.TABLE
+                + enclosedFullTableName
                 + " ("
-                + TransferCommon.ACCOUNT_ID
+                + enclosedAccountId
                 + ","
-                + TransferCommon.ACCOUNT_TYPE
+                + enclosedAccountType
                 + ","
-                + TransferCommon.BALANCE
+                + enclosedBalance
                 + ") VALUES (?,?,?) ON CONFLICT ("
-                + TransferCommon.ACCOUNT_ID
+                + enclosedAccountId
                 + ","
-                + TransferCommon.ACCOUNT_TYPE
+                + enclosedAccountType
                 + ") DO UPDATE SET "
-                + TransferCommon.BALANCE
+                + enclosedBalance
                 + "=?";
+        break;
+      case ORACLE:
+        sql =
+            "MERGE INTO "
+                + enclosedFullTableName
+                + "t1 USING (SELECT ? "
+                + enclosedAccountId
+                + ",? "
+                + enclosedAccountType
+                + " FROM DUAL) t2 ON (t1."
+                + enclosedAccountId
+                + "=t2."
+                + enclosedAccountId
+                + " AND t1."
+                + enclosedAccountType
+                + "=t2."
+                + enclosedAccountType
+                + ") WHEN MATCHED THEN UPDATE SET "
+                + enclosedBalance
+                + "=? WHEN NOT MATCHED THEN INSERT ("
+                + enclosedAccountId
+                + ","
+                + enclosedAccountType
+                + ","
+                + enclosedBalance
+                + ") VALUES (?,?,?)";
         break;
       default:
         throw new AssertionError();
@@ -135,10 +169,19 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
 
     try (Connection connection = dataSource.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-      preparedStatement.setInt(1, id);
-      preparedStatement.setInt(2, type);
-      preparedStatement.setInt(3, amount);
-      preparedStatement.setInt(4, amount);
+      if (rdbEngine != RdbEngine.ORACLE) {
+        preparedStatement.setInt(1, id);
+        preparedStatement.setInt(2, type);
+        preparedStatement.setInt(3, amount);
+        preparedStatement.setInt(4, amount);
+      } else {
+        preparedStatement.setInt(1, id);
+        preparedStatement.setInt(2, type);
+        preparedStatement.setInt(3, amount);
+        preparedStatement.setInt(4, id);
+        preparedStatement.setInt(5, type);
+        preparedStatement.setInt(6, amount);
+      }
       preparedStatement.executeUpdate();
     }
   }
