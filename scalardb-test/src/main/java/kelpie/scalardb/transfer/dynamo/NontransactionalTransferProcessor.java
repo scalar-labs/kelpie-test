@@ -56,11 +56,12 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
     toKey.put("account_id", AttributeValue.builder().n(Integer.toString(toId)).build());
     toKey.put("account_type", AttributeValue.builder().n(Integer.toString(toType)).build());
 
-
     try {
-      GetItemRequest getFrom = GetItemRequest.builder().tableName("transfer").key(fromKey).build();
+      GetItemRequest getFrom =
+          GetItemRequest.builder().tableName("transfer").key(fromKey).consistentRead(true).build();
       Map<String, AttributeValue> from = client.getItem(getFrom).item();
-      GetItemRequest getTo = GetItemRequest.builder().tableName("transfer").key(toKey).build();
+      GetItemRequest getTo =
+          GetItemRequest.builder().tableName("transfer").key(toKey).consistentRead(true).build();
       Map<String, AttributeValue> to = client.getItem(getTo).item();
 
       int fromBalance = Integer.parseInt(from.get("balance").n());
