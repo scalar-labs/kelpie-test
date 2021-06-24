@@ -98,7 +98,7 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
       client.updateItem(fromRequest);
       client.updateItem(toRequest);
     } catch (DynamoDbException e) {
-      e.printStackTrace();
+      logWarn(e.getMessage());
       throw e;
     }
   }
