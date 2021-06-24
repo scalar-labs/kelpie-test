@@ -52,7 +52,12 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
 
     Put fromPut = TransferCommon.preparePut(fromId, fromType, fromBalance - amount);
     Put toPut = TransferCommon.preparePut(toId, toType, toBalance + amount);
+    try {
     storage.put(fromPut);
     storage.put(toPut);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 }
