@@ -46,6 +46,7 @@ public class Common {
 
   public static DatabaseConfig getDatabaseConfig(Config config) {
     String contactPoints = config.getUserString("storage_config", "contact_points", "localhost");
+    long contactPort = config.getUserLong("storage_config", "contact_port", 0L);
     String username = config.getUserString("storage_config", "username", "cassandra");
     String password = config.getUserString("storage_config", "password", "cassandra");
     String storage = config.getUserString("storage_config", "storage", "cassandra");
@@ -88,6 +89,9 @@ public class Common {
 
     Properties props = new Properties();
     props.setProperty(DatabaseConfig.CONTACT_POINTS, contactPoints);
+    if (contactPort > 0) {
+      props.setProperty(DatabaseConfig.CONTACT_PORT, Long.toString(contactPort));
+    }
     props.setProperty(DatabaseConfig.USERNAME, username);
     props.setProperty(DatabaseConfig.PASSWORD, password);
     props.setProperty(DatabaseConfig.STORAGE, storage);
