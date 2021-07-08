@@ -55,7 +55,9 @@ public class TransferPreparer extends PreProcessor {
   }
 
   @Override
-  public void close() {}
+  public void close() {
+    manager.close();
+  }
 
   private class PopulationRunner {
     private final int id;

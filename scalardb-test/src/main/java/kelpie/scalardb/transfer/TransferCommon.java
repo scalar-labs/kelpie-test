@@ -14,11 +14,10 @@ import com.scalar.db.io.Key;
 import com.scalar.db.transaction.consensuscommit.TransactionResult;
 import com.scalar.kelpie.config.Config;
 import io.github.resilience4j.retry.Retry;
-import kelpie.scalardb.Common;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import kelpie.scalardb.Common;
 
 public class TransferCommon {
   public static final String KEYSPACE = "transfer";
@@ -65,6 +64,8 @@ public class TransferCommon {
       return decorated.get();
     } catch (Exception e) {
       throw new RuntimeException("Reading records failed repeatedly", e);
+    } finally {
+      manager.close();
     }
   }
 
@@ -79,7 +80,8 @@ public class TransferCommon {
         try {
           transaction = manager.start();
           Get get = TransferCommon.prepareGet(i, j);
-          transaction.get(get).ifPresent(r -> results.add(r));
+          transaction.get(get).ifPresent(results::add);
+          transaction.commit();
         } catch (TransactionException e) {
           // continue to read other records
           isFailed = true;
@@ -112,7 +114,7 @@ public class TransferCommon {
   }
 
   public static int getActualTotalVersion(List<Result> results) {
-    return results.stream().mapToInt(r -> ((TransactionResult) r).getVersion() - 1).sum();
+    return results.stream().mapToInt(r -> (new TransactionResult(r)).getVersion() - 1).sum();
   }
 
   public static int getActualTotalBalance(List<Result> results) {

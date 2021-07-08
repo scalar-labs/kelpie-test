@@ -52,6 +52,8 @@ public class Common {
     String storage = config.getUserString("storage_config", "storage", "cassandra");
     String prefix = config.getUserString("storage_config", "namespace_prefix", "");
     String isolationLevel = config.getUserString("storage_config", "isolation_level", "SNAPSHOT");
+    String transactionManager =
+        config.getUserString("storage_config", "transaction_manager", "consensus-commit");
     String serializableStrategy =
         config.getUserString("storage_config", "serializable_strategy", "EXTRA_READ");
 
@@ -81,11 +83,6 @@ public class Common {
             "storage_config",
             "jdbc_prepared_statements_pool_max_open",
             (long) JdbcDatabaseConfig.DEFAULT_PREPARED_STATEMENTS_POOL_MAX_OPEN);
-    String jdbcTransactionManagerType =
-        config.getUserString(
-            "storage_config",
-            "jdbc_transaction_manager_type",
-            JdbcDatabaseConfig.DEFAULT_TRANSACTION_MANAGER_TYPE);
 
     Properties props = new Properties();
     props.setProperty(DatabaseConfig.CONTACT_POINTS, contactPoints);
@@ -96,6 +93,9 @@ public class Common {
     props.setProperty(DatabaseConfig.PASSWORD, password);
     props.setProperty(DatabaseConfig.STORAGE, storage);
     props.setProperty(DatabaseConfig.NAMESPACE_PREFIX, prefix);
+    props.setProperty(
+        /* DatabaseConfig.TRANSACTION_MANAGER */ "scalar.db.transaction_manager",
+        transactionManager);
     props.setProperty(DatabaseConfig.ISOLATION_LEVEL, isolationLevel);
     props.setProperty(DatabaseConfig.SERIALIZABLE_STRATEGY, serializableStrategy);
     props.setProperty(
@@ -110,7 +110,6 @@ public class Common {
     props.setProperty(
         JdbcDatabaseConfig.PREPARED_STATEMENTS_POOL_MAX_OPEN,
         Long.toString(jdbcPreparedStatementsPoolMaxOpen));
-    props.setProperty(JdbcDatabaseConfig.TRANSACTION_MANAGER_TYPE, jdbcTransactionManagerType);
     return new DatabaseConfig(props);
   }
 
