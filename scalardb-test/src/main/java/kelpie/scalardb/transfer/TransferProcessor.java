@@ -64,6 +64,7 @@ public class TransferProcessor extends TimeBasedProcessor {
 
   @Override
   public void close() {
+    manager.close();
     JsonObjectBuilder builder = Json.createObjectBuilder();
     unknownTransactions.forEach(
         (txId, ids) -> {
