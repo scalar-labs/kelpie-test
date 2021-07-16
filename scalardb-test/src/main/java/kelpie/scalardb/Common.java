@@ -82,6 +82,11 @@ public class Common {
             "storage_config",
             "jdbc_prepared_statements_pool_max_open",
             /* (long) JdbcConfig.DEFAULT_PREPARED_STATEMENTS_POOL_MAX_OPEN */ -1L);
+    long grpcDeadlineDurationMillis =
+        config.getUserLong(
+            "storage_config",
+            "grpc_deadline_duration_millis",
+            /* (long) GrpcConfig.DEFAULT_DEADLINE_DURATION_MILLIS */ 60000L);
 
     Properties props = new Properties();
     props.setProperty(DatabaseConfig.CONTACT_POINTS, contactPoints);
@@ -112,6 +117,9 @@ public class Common {
     props.setProperty(
         /* JdbcConfig.PREPARED_STATEMENTS_POOL_MAX_OPEN */ "scalar.db.jdbc.prepared_statements_pool.max_open",
         Long.toString(jdbcPreparedStatementsPoolMaxOpen));
+    props.setProperty(
+        /* GrpcConfig.DEADLINE_DURATION_MILLIS */ "scalar.db.grpc.deadline_duration_millis",
+        Long.toString(grpcDeadlineDurationMillis));
     return new DatabaseConfig(props);
   }
 
