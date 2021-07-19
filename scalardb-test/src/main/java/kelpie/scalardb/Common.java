@@ -11,7 +11,7 @@ import com.scalar.db.service.StorageModule;
 import com.scalar.db.service.StorageService;
 import com.scalar.db.service.TransactionModule;
 import com.scalar.db.service.TransactionService;
-import com.scalar.db.storage.jdbc.JdbcDatabaseConfig;
+import com.scalar.db.storage.jdbc.JdbcConfig;
 import com.scalar.db.transaction.consensuscommit.Coordinator;
 import com.scalar.kelpie.config.Config;
 import io.github.resilience4j.core.IntervalFunction;
@@ -62,27 +62,27 @@ public class Common {
         config.getUserLong(
             "storage_config",
             "jdbc_connection_pool_min_idle",
-            (long) JdbcDatabaseConfig.DEFAULT_CONNECTION_POOL_MIN_IDLE);
+            (long) JdbcConfig.DEFAULT_CONNECTION_POOL_MIN_IDLE);
     long jdbcConnectionPoolMaxIdle =
         config.getUserLong(
             "storage_config",
             "jdbc_connection_pool_max_idle",
-            (long) JdbcDatabaseConfig.DEFAULT_CONNECTION_POOL_MAX_IDLE);
+            (long) JdbcConfig.DEFAULT_CONNECTION_POOL_MAX_IDLE);
     long jdbcConnectionPoolMaxTotal =
         config.getUserLong(
             "storage_config",
             "jdbc_connection_pool_max_total",
-            (long) JdbcDatabaseConfig.DEFAULT_CONNECTION_POOL_MAX_TOTAL);
+            (long) JdbcConfig.DEFAULT_CONNECTION_POOL_MAX_TOTAL);
     boolean jdbcPreparedStatementsPoolEnabled =
         config.getUserBoolean(
             "storage_config",
             "jdbc_prepared_statements_pool_enabled",
-            JdbcDatabaseConfig.DEFAULT_PREPARED_STATEMENTS_POOL_ENABLED);
+            JdbcConfig.DEFAULT_PREPARED_STATEMENTS_POOL_ENABLED);
     long jdbcPreparedStatementsPoolMaxOpen =
         config.getUserLong(
             "storage_config",
             "jdbc_prepared_statements_pool_max_open",
-            (long) JdbcDatabaseConfig.DEFAULT_PREPARED_STATEMENTS_POOL_MAX_OPEN);
+            (long) JdbcConfig.DEFAULT_PREPARED_STATEMENTS_POOL_MAX_OPEN);
 
     Properties props = new Properties();
     props.setProperty(DatabaseConfig.CONTACT_POINTS, contactPoints);
@@ -99,16 +99,16 @@ public class Common {
     props.setProperty(DatabaseConfig.ISOLATION_LEVEL, isolationLevel);
     props.setProperty(DatabaseConfig.SERIALIZABLE_STRATEGY, serializableStrategy);
     props.setProperty(
-        JdbcDatabaseConfig.CONNECTION_POOL_MIN_IDLE, Long.toString(jdbcConnectionPoolMinIdle));
+        JdbcConfig.CONNECTION_POOL_MIN_IDLE, Long.toString(jdbcConnectionPoolMinIdle));
     props.setProperty(
-        JdbcDatabaseConfig.CONNECTION_POOL_MAX_IDLE, Long.toString(jdbcConnectionPoolMaxIdle));
+        JdbcConfig.CONNECTION_POOL_MAX_IDLE, Long.toString(jdbcConnectionPoolMaxIdle));
     props.setProperty(
-        JdbcDatabaseConfig.CONNECTION_POOL_MAX_TOTAL, Long.toString(jdbcConnectionPoolMaxTotal));
+        JdbcConfig.CONNECTION_POOL_MAX_TOTAL, Long.toString(jdbcConnectionPoolMaxTotal));
     props.setProperty(
-        JdbcDatabaseConfig.PREPARED_STATEMENTS_POOL_ENABLED,
+        JdbcConfig.PREPARED_STATEMENTS_POOL_ENABLED,
         Boolean.toString(jdbcPreparedStatementsPoolEnabled));
     props.setProperty(
-        JdbcDatabaseConfig.PREPARED_STATEMENTS_POOL_MAX_OPEN,
+        JdbcConfig.PREPARED_STATEMENTS_POOL_MAX_OPEN,
         Long.toString(jdbcPreparedStatementsPoolMaxOpen));
     return new DatabaseConfig(props);
   }
