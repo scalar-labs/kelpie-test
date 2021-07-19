@@ -4,18 +4,22 @@
 1. Set up an environment
     - This job requires a client to execute this job and Cassandra cluster or Cosmos DB which can be accessed from the client
 
-2. Build
+1. Update the `JdbcConfig` instead of `JdbcDatabaseConfig` in the following files If you are using Scalar DB 3.0.0 or older versions.
+    * [Common](src/main/java/kelpie/scalardb/Common.java)
+    * [NontransactionalTransferProcessor](src/main/java/kelpie/scalardb/transfer/jdbc/NontransactionalTransferProcessor.java)
+
+1. Build
     ```console
     $ gradle shadowJar
     ```
 
-3. Make your config file based on `benchmark-config.toml` or `verification-config.toml`
+1. Make your config file based on `benchmark-config.toml` or `verification-config.toml`
 
-4. Download Kelpie binary (zip) from https://github.com/scalar-labs/kelpie/releases/ and unzip it
+1. Download Kelpie binary (zip) from https://github.com/scalar-labs/kelpie/releases/ and unzip it
     - You can also build Kelpie from the source
 
 
-5. Execute a job
+1. Execute a job
     ```console
     $ ${KELPIE}/bin/kelpie --config your_config.toml
     ```
