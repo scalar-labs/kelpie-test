@@ -4,7 +4,6 @@ import static com.scalar.db.storage.jdbc.query.QueryUtils.enclose;
 import static com.scalar.db.storage.jdbc.query.QueryUtils.enclosedFullTableName;
 
 import com.scalar.db.config.DatabaseConfig;
-import com.scalar.db.storage.jdbc.JdbcDatabaseConfig;
 import com.scalar.db.storage.jdbc.JdbcUtils;
 import com.scalar.db.storage.jdbc.RdbEngine;
 import com.scalar.kelpie.config.Config;
@@ -28,11 +27,38 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
 
     DatabaseConfig databaseConfig = Common.getDatabaseConfig(config);
-    dataSource = JdbcUtils.initDataSource(new JdbcDatabaseConfig(databaseConfig.getProperties()));
+    // dataSource = JdbcUtils.initDataSource(new JdbcConfig(databaseConfig.getProperties()));
+    dataSource = initDataSource(databaseConfig);
     rdbEngine = JdbcUtils.getRdbEngine(databaseConfig.getContactPoints().get(0));
     if (rdbEngine == RdbEngine.SQL_SERVER) {
       throw new IllegalArgumentException(RdbEngine.SQL_SERVER + " is not supported.");
     }
+  }
+
+  public static BasicDataSource initDataSource(DatabaseConfig config) {
+    BasicDataSource dataSource = new BasicDataSource();
+    dataSource.setUrl(config.getContactPoints().get(0));
+    dataSource.setUsername(config.getProperties().getProperty("scalar.db.username"));
+    dataSource.setPassword(config.getProperties().getProperty("scalar.db.password"));
+
+    dataSource.setMinIdle(
+        Integer.parseInt(
+            config.getProperties().getProperty("scalar.db.jdbc.connection_pool.min_idle")));
+    dataSource.setMaxIdle(
+        Integer.parseInt(
+            config.getProperties().getProperty("scalar.db.jdbc.connection_pool.max_idle")));
+    dataSource.setMaxTotal(
+        Integer.parseInt(
+            config.getProperties().getProperty("scalar.db.jdbc.connection_pool.max_total")));
+    dataSource.setPoolPreparedStatements(
+        Boolean.parseBoolean(
+            config.getProperties().getProperty("scalar.db.jdbc.prepared_statements_pool.enabled")));
+    dataSource.setMaxOpenPreparedStatements(
+        Integer.parseInt(
+            config
+                .getProperties()
+                .getProperty("scalar.db.jdbc.prepared_statements_pool.max_open")));
+    return dataSource;
   }
 
   @Override
