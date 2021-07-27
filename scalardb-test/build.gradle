@@ -8,6 +8,8 @@ repositories {
     jcenter()
 }
 
+def awssdkVersion = "2.14.24"
+
 dependencies {
     implementation group: 'com.scalar-labs', name: 'kelpie', version: '1.1.1'
     implementation group: 'javax.json', name: 'javax.json-api', version: '1.1.4'
@@ -17,12 +19,13 @@ dependencies {
     if (project.hasProperty("scalardb-libs-path")) {
         implementation fileTree(project.property("scalardb-libs-path")) { include '*.jar' }
     } else {
-        implementation group: 'com.scalar-labs', name: 'scalardb', version: '3.0.0'
+        implementation group: 'com.scalar-labs', name: 'scalardb', version: '3.1.0'
+        implementation group: 'com.google.inject', name: 'guice', version: '5.0.1'
+        implementation group: 'com.azure', name: 'azure-cosmos', version: '4.15.0'
+        implementation group: 'software.amazon.awssdk', name: 'dynamodb', version: "${awssdkVersion}"
+        implementation group: 'software.amazon.awssdk', name: 'core', version: "${awssdkVersion}"
+        implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.8.0'
     }
-
-    // for scalardb.jar on Cosmos DB
-    //implementation group: 'com.azure', name: 'azure-cosmos', version: '4.0.1'
-    //implementation group: 'org.jooq', name: 'jooq', version: '3.13.2'
 }
 
 shadowJar {

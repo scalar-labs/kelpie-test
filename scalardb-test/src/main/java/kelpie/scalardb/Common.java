@@ -11,6 +11,8 @@ import com.scalar.db.service.StorageModule;
 import com.scalar.db.service.StorageService;
 import com.scalar.db.service.TransactionModule;
 import com.scalar.db.service.TransactionService;
+import com.scalar.db.storage.jdbc.JdbcConfig;
+import com.scalar.db.storage.rpc.GrpcConfig;
 import com.scalar.db.transaction.consensuscommit.Coordinator;
 import com.scalar.kelpie.config.Config;
 import io.github.resilience4j.core.IntervalFunction;
@@ -61,32 +63,32 @@ public class Common {
         config.getUserLong(
             "storage_config",
             "jdbc_connection_pool_min_idle",
-            /* (long) JdbcConfig.DEFAULT_CONNECTION_POOL_MIN_IDLE */ 5L);
+            (long) JdbcConfig.DEFAULT_CONNECTION_POOL_MIN_IDLE);
     long jdbcConnectionPoolMaxIdle =
         config.getUserLong(
             "storage_config",
             "jdbc_connection_pool_max_idle",
-            /* (long) JdbcConfig.DEFAULT_CONNECTION_POOL_MAX_IDLE */ 10L);
+            (long) JdbcConfig.DEFAULT_CONNECTION_POOL_MAX_IDLE);
     long jdbcConnectionPoolMaxTotal =
         config.getUserLong(
             "storage_config",
             "jdbc_connection_pool_max_total",
-            /* (long) JdbcConfig.DEFAULT_CONNECTION_POOL_MAX_TOTAL */ 25L);
+            (long) JdbcConfig.DEFAULT_CONNECTION_POOL_MAX_TOTAL);
     boolean jdbcPreparedStatementsPoolEnabled =
         config.getUserBoolean(
             "storage_config",
             "jdbc_prepared_statements_pool_enabled",
-            /* JdbcConfig.DEFAULT_PREPARED_STATEMENTS_POOL_ENABLED */ false);
+            JdbcConfig.DEFAULT_PREPARED_STATEMENTS_POOL_ENABLED);
     long jdbcPreparedStatementsPoolMaxOpen =
         config.getUserLong(
             "storage_config",
             "jdbc_prepared_statements_pool_max_open",
-            /* (long) JdbcConfig.DEFAULT_PREPARED_STATEMENTS_POOL_MAX_OPEN */ -1L);
+            (long) JdbcConfig.DEFAULT_PREPARED_STATEMENTS_POOL_MAX_OPEN);
     long grpcDeadlineDurationMillis =
         config.getUserLong(
             "storage_config",
             "grpc_deadline_duration_millis",
-            /* (long) GrpcConfig.DEFAULT_DEADLINE_DURATION_MILLIS */ 60000L);
+            GrpcConfig.DEFAULT_DEADLINE_DURATION_MILLIS);
 
     Properties props = new Properties();
     props.setProperty(DatabaseConfig.CONTACT_POINTS, contactPoints);
@@ -97,29 +99,23 @@ public class Common {
     props.setProperty(DatabaseConfig.PASSWORD, password);
     props.setProperty(DatabaseConfig.STORAGE, storage);
     props.setProperty(DatabaseConfig.NAMESPACE_PREFIX, prefix);
-    props.setProperty(
-        /* DatabaseConfig.TRANSACTION_MANAGER */ "scalar.db.transaction_manager",
-        transactionManager);
+    props.setProperty(DatabaseConfig.TRANSACTION_MANAGER, transactionManager);
     props.setProperty(DatabaseConfig.ISOLATION_LEVEL, isolationLevel);
     props.setProperty(DatabaseConfig.SERIALIZABLE_STRATEGY, serializableStrategy);
     props.setProperty(
-        /* JdbcConfig.CONNECTION_POOL_MIN_IDLE */ "scalar.db.jdbc.connection_pool.min_idle",
-        Long.toString(jdbcConnectionPoolMinIdle));
+        JdbcConfig.CONNECTION_POOL_MIN_IDLE, Long.toString(jdbcConnectionPoolMinIdle));
     props.setProperty(
-        /* JdbcConfig.CONNECTION_POOL_MAX_IDLE */ "scalar.db.jdbc.connection_pool.max_idle",
-        Long.toString(jdbcConnectionPoolMaxIdle));
+        JdbcConfig.CONNECTION_POOL_MAX_IDLE, Long.toString(jdbcConnectionPoolMaxIdle));
     props.setProperty(
-        /* JdbcConfig.CONNECTION_POOL_MAX_TOTAL */ "scalar.db.jdbc.connection_pool.max_total",
-        Long.toString(jdbcConnectionPoolMaxTotal));
+        JdbcConfig.CONNECTION_POOL_MAX_TOTAL, Long.toString(jdbcConnectionPoolMaxTotal));
     props.setProperty(
-        /* JdbcConfig.PREPARED_STATEMENTS_POOL_ENABLED */ "scalar.db.jdbc.prepared_statements_pool.enabled",
+        JdbcConfig.PREPARED_STATEMENTS_POOL_ENABLED,
         Boolean.toString(jdbcPreparedStatementsPoolEnabled));
     props.setProperty(
-        /* JdbcConfig.PREPARED_STATEMENTS_POOL_MAX_OPEN */ "scalar.db.jdbc.prepared_statements_pool.max_open",
+        JdbcConfig.PREPARED_STATEMENTS_POOL_MAX_OPEN,
         Long.toString(jdbcPreparedStatementsPoolMaxOpen));
     props.setProperty(
-        /* GrpcConfig.DEADLINE_DURATION_MILLIS */ "scalar.db.grpc.deadline_duration_millis",
-        Long.toString(grpcDeadlineDurationMillis));
+        GrpcConfig.DEADLINE_DURATION_MILLIS, Long.toString(grpcDeadlineDurationMillis));
     return new DatabaseConfig(props);
   }
 
