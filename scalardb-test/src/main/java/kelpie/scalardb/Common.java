@@ -101,7 +101,8 @@ public class Common {
     props.setProperty(DatabaseConfig.NAMESPACE_PREFIX, prefix);
     props.setProperty(DatabaseConfig.TRANSACTION_MANAGER, transactionManager);
     props.setProperty(DatabaseConfig.ISOLATION_LEVEL, isolationLevel);
-    props.setProperty(DatabaseConfig.SERIALIZABLE_STRATEGY, serializableStrategy);
+//    props.setProperty(ConsensusCommitConfig.SERIALIZABLE_STRATEGY, serializableStrategy);
+    props.setProperty("scalar.db.consensus_commit.serializable_strategy", serializableStrategy);
     props.setProperty(
         JdbcConfig.CONNECTION_POOL_MIN_IDLE, Long.toString(jdbcConnectionPoolMinIdle));
     props.setProperty(
