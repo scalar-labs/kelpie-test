@@ -7,9 +7,9 @@ import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.Get;
 import com.scalar.db.api.Put;
 import com.scalar.db.api.Result;
+import com.scalar.db.api.TwoPhaseCommitTransactionManager;
 import com.scalar.db.exception.transaction.AbortException;
 import com.scalar.db.exception.transaction.TransactionException;
-import com.scalar.db.io.IntValue;
 import com.scalar.db.io.Key;
 import com.scalar.db.transaction.consensuscommit.TransactionResult;
 import com.scalar.kelpie.config.Config;
@@ -33,6 +33,11 @@ public class TransferCommon {
     return Common.getTransactionManager(config, KEYSPACE, TABLE);
   }
 
+  public static TwoPhaseCommitTransactionManager getTwoPhaseCommitTransactionManager(
+      Config config) {
+    return Common.getTwoPhaseCommitTransactionManager(config, KEYSPACE, TABLE);
+  }
+
   public static DistributedStorage getStorage(Config config) {
     DistributedStorage storage = Common.getStorage(config);
     storage.with(KEYSPACE, TABLE);
@@ -40,18 +45,18 @@ public class TransferCommon {
   }
 
   public static Get prepareGet(int id, int type) {
-    Key partitionKey = new Key(new IntValue(ACCOUNT_ID, id));
-    Key clusteringKey = new Key(new IntValue(ACCOUNT_TYPE, type));
+    Key partitionKey = new Key(ACCOUNT_ID, id);
+    Key clusteringKey = new Key(ACCOUNT_TYPE, type);
 
     return new Get(partitionKey, clusteringKey).withConsistency(Consistency.LINEARIZABLE);
   }
 
   public static Put preparePut(int id, int type, int amount) {
-    Key partitionKey = new Key(new IntValue(ACCOUNT_ID, id));
-    Key clusteringKey = new Key(new IntValue(ACCOUNT_TYPE, type));
+    Key partitionKey = new Key(ACCOUNT_ID, id);
+    Key clusteringKey = new Key(ACCOUNT_TYPE, type);
     return new Put(partitionKey, clusteringKey)
         .withConsistency(Consistency.LINEARIZABLE)
-        .withValue(new IntValue(BALANCE, amount));
+        .withValue(BALANCE, amount);
   }
 
   public static List<Result> readRecordsWithRetry(Config config) {
@@ -105,7 +110,7 @@ public class TransferCommon {
   }
 
   public static int getBalanceFromResult(Result result) {
-    return ((IntValue) result.getValue(BALANCE).get()).get();
+    return result.getValue(BALANCE).get().getAsInt();
   }
 
   public static int getTotalInitialBalance(Config config) {
@@ -118,6 +123,6 @@ public class TransferCommon {
   }
 
   public static int getActualTotalBalance(List<Result> results) {
-    return results.stream().mapToInt(r -> ((IntValue) r.getValue(BALANCE).get()).get()).sum();
+    return results.stream().mapToInt(r -> r.getValue(BALANCE).get().getAsInt()).sum();
   }
 }

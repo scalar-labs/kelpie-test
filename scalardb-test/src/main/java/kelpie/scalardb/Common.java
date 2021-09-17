@@ -1,18 +1,16 @@
 package kelpie.scalardb;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.scalar.db.api.DistributedStorage;
 import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.TransactionState;
+import com.scalar.db.api.TwoPhaseCommitTransactionManager;
 import com.scalar.db.config.DatabaseConfig;
 import com.scalar.db.exception.transaction.CoordinatorException;
-import com.scalar.db.service.StorageModule;
-import com.scalar.db.service.StorageService;
-import com.scalar.db.service.TransactionModule;
-import com.scalar.db.service.TransactionService;
+import com.scalar.db.service.StorageFactory;
+import com.scalar.db.service.TransactionFactory;
 import com.scalar.db.storage.jdbc.JdbcConfig;
 import com.scalar.db.storage.rpc.GrpcConfig;
+import com.scalar.db.transaction.consensuscommit.ConsensusCommitConfig;
 import com.scalar.db.transaction.consensuscommit.Coordinator;
 import com.scalar.kelpie.config.Config;
 import io.github.resilience4j.core.IntervalFunction;
@@ -30,18 +28,25 @@ public class Common {
 
   public static DistributedStorage getStorage(Config config) {
     DatabaseConfig dbConfig = getDatabaseConfig(config);
-    Injector injector = Guice.createInjector(new StorageModule(dbConfig));
-
-    return injector.getInstance(StorageService.class);
+    StorageFactory factory = new StorageFactory(dbConfig);
+    return factory.getStorage();
   }
 
   public static DistributedTransactionManager getTransactionManager(
       Config config, String keyspace, String table) {
     DatabaseConfig dbConfig = getDatabaseConfig(config);
-    Injector injector = Guice.createInjector(new TransactionModule(dbConfig));
-    DistributedTransactionManager manager = injector.getInstance(TransactionService.class);
+    TransactionFactory factory = new TransactionFactory(dbConfig);
+    DistributedTransactionManager manager = factory.getTransactionManager();
     manager.with(keyspace, table);
+    return manager;
+  }
 
+  public static TwoPhaseCommitTransactionManager getTwoPhaseCommitTransactionManager(
+      Config config, String keyspace, String table) {
+    DatabaseConfig dbConfig = getDatabaseConfig(config);
+    TransactionFactory factory = new TransactionFactory(dbConfig);
+    TwoPhaseCommitTransactionManager manager = factory.getTwoPhaseCommitTransactionManager();
+    manager.with(keyspace, table);
     return manager;
   }
 
@@ -101,8 +106,7 @@ public class Common {
     props.setProperty(DatabaseConfig.NAMESPACE_PREFIX, prefix);
     props.setProperty(DatabaseConfig.TRANSACTION_MANAGER, transactionManager);
     props.setProperty(DatabaseConfig.ISOLATION_LEVEL, isolationLevel);
-//    props.setProperty(ConsensusCommitConfig.SERIALIZABLE_STRATEGY, serializableStrategy);
-    props.setProperty("scalar.db.consensus_commit.serializable_strategy", serializableStrategy);
+    props.setProperty(ConsensusCommitConfig.SERIALIZABLE_STRATEGY, serializableStrategy);
     props.setProperty(
         JdbcConfig.CONNECTION_POOL_MIN_IDLE, Long.toString(jdbcConnectionPoolMinIdle));
     props.setProperty(
