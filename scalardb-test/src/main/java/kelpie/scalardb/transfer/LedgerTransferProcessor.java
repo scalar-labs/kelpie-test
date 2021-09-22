@@ -27,7 +27,7 @@ public class LedgerTransferProcessor extends TimeBasedProcessor {
 
   public LedgerTransferProcessor(Config config) {
     super(config);
-    this.manager = TransferCommon.getTransactionManager(config);
+    this.manager = LedgerTransferCommon.getTransactionManager(config);
 
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
     this.isVerification = config.getUserBoolean("test_config", "is_verification", false);
@@ -96,6 +96,7 @@ public class LedgerTransferProcessor extends TimeBasedProcessor {
 
       transaction.commit();
     } catch (Exception e) {
+      e.printStackTrace();
       transaction.abort();
       throw e;
     }
