@@ -4,6 +4,7 @@ import com.scalar.db.api.Consistency;
 import com.scalar.db.api.DistributedStorage;
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
+import com.scalar.db.api.Get;
 import com.scalar.db.api.Put;
 import com.scalar.db.api.Result;
 import com.scalar.db.api.Scan;
@@ -24,6 +25,7 @@ import kelpie.scalardb.Common;
 public class LedgerTransferCommon {
   public static final String KEYSPACE = "ledger_transfer";
   public static final String TABLE = "tx_transfer";
+  public static final String META_TABLE = "metadata";
   public static final String ACCOUNT_ID = "account_id";
   public static final String AGE = "age";
   public static final String BALANCE = "balance";
@@ -41,6 +43,15 @@ public class LedgerTransferCommon {
     return storage;
   }
 
+  public static Get prepareGetForAge(int id) {
+    Key partitionKey = new Key(new IntValue(ACCOUNT_ID, id));
+
+    return new Get(partitionKey)
+        .forNamespace(KEYSPACE)
+        .forTable(META_TABLE)
+        .withConsistency(Consistency.LINEARIZABLE);
+  }
+
   public static Scan prepareScanForLatest(int id) {
     Key partitionKey = new Key(new IntValue(ACCOUNT_ID, id));
 
@@ -56,6 +67,15 @@ public class LedgerTransferCommon {
     return new Put(partitionKey, clusteringKey)
         .withConsistency(Consistency.LINEARIZABLE)
         .withValue(new IntValue(BALANCE, amount));
+  }
+
+  public static Put preparePutForAge(int id, int age) {
+    Key partitionKey = new Key(new IntValue(ACCOUNT_ID, id));
+    return new Put(partitionKey)
+        .forNamespace(KEYSPACE)
+        .forTable(META_TABLE)
+        .withConsistency(Consistency.LINEARIZABLE)
+        .withValue(new IntValue(AGE, age));
   }
 
   public static List<Result> readRecordsWithRetry(Config config) {

@@ -2,6 +2,7 @@ package kelpie.scalardb.transfer;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
+import com.scalar.db.api.Get;
 import com.scalar.db.api.Put;
 import com.scalar.db.api.Result;
 import com.scalar.db.api.Scan;
@@ -76,6 +77,11 @@ public class LedgerTransferProcessor extends TimeBasedProcessor {
   private void transfer(DistributedTransaction transaction, int fromId, int toId, int amount)
       throws Exception {
     try {
+      Get fromGet = LedgerTransferCommon.prepareGetForAge(fromId);
+      Get toGet = LedgerTransferCommon.prepareGetForAge(fromId);
+      transaction.get(fromGet);
+      transaction.get(toGet);
+
       Scan fromScan = LedgerTransferCommon.prepareScanForLatest(fromId);
       Scan toScan = LedgerTransferCommon.prepareScanForLatest(toId);
 
@@ -93,6 +99,9 @@ public class LedgerTransferProcessor extends TimeBasedProcessor {
       Put toPut = LedgerTransferCommon.preparePut(toId, toAge + 1, toBalance + amount);
       transaction.put(fromPut);
       transaction.put(toPut);
+
+      transaction.put(LedgerTransferCommon.preparePutForAge(fromId, fromAge + 1));
+      transaction.put(LedgerTransferCommon.preparePutForAge(toId, toAge + 1));
 
       transaction.commit();
     } catch (Exception e) {

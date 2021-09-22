@@ -93,8 +93,10 @@ public class LedgerTransferPreparer extends PreProcessor {
             try {
               transaction = manager.start();
               for (int i = startId; i < endId; ++i) {
-                Put put = LedgerTransferCommon.preparePut(i, 0, LedgerTransferCommon.INITIAL_BALANCE);
+                Put put =
+                    LedgerTransferCommon.preparePut(i, 0, LedgerTransferCommon.INITIAL_BALANCE);
                 transaction.put(put);
+                transaction.put(LedgerTransferCommon.preparePutForAge(i, 0));
               }
               transaction.commit();
             } catch (Exception e) {
