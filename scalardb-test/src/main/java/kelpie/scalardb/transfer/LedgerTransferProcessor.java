@@ -78,7 +78,7 @@ public class LedgerTransferProcessor extends TimeBasedProcessor {
       throws Exception {
     try {
       Get fromGet = LedgerTransferCommon.prepareGetForAge(fromId);
-      Get toGet = LedgerTransferCommon.prepareGetForAge(fromId);
+      Get toGet = LedgerTransferCommon.prepareGetForAge(toId);
       transaction.get(fromGet);
       transaction.get(toGet);
 
