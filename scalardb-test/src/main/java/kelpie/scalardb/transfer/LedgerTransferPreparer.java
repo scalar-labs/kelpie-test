@@ -25,7 +25,7 @@ public class LedgerTransferPreparer extends PreProcessor {
 
   public LedgerTransferPreparer(Config config) {
     super(config);
-    this.manager = TransferCommon.getTransactionManager(config);
+    this.manager = LedgerTransferCommon.getTransactionManager(config);
   }
 
   @Override
@@ -93,7 +93,7 @@ public class LedgerTransferPreparer extends PreProcessor {
             try {
               transaction = manager.start();
               for (int i = startId; i < endId; ++i) {
-                Put put = LedgerTransferCommon.preparePut(i, 0, TransferCommon.INITIAL_BALANCE);
+                Put put = LedgerTransferCommon.preparePut(i, 0, LedgerTransferCommon.INITIAL_BALANCE);
                 transaction.put(put);
               }
               transaction.commit();

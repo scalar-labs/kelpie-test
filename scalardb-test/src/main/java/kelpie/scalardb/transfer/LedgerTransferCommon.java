@@ -50,9 +50,9 @@ public class LedgerTransferCommon {
         .withConsistency(Consistency.LINEARIZABLE);
   }
 
-  public static Put preparePut(int id, int type, int amount) {
+  public static Put preparePut(int id, int age, int amount) {
     Key partitionKey = new Key(new IntValue(ACCOUNT_ID, id));
-    Key clusteringKey = new Key(new IntValue(AGE, type));
+    Key clusteringKey = new Key(new IntValue(AGE, age));
     return new Put(partitionKey, clusteringKey)
         .withConsistency(Consistency.LINEARIZABLE)
         .withValue(new IntValue(BALANCE, amount));
