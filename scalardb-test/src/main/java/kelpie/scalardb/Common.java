@@ -56,7 +56,6 @@ public class Common {
     String username = config.getUserString("storage_config", "username", "cassandra");
     String password = config.getUserString("storage_config", "password", "cassandra");
     String storage = config.getUserString("storage_config", "storage", "cassandra");
-    String prefix = config.getUserString("storage_config", "namespace_prefix", "");
     String isolationLevel = config.getUserString("storage_config", "isolation_level", "SNAPSHOT");
     String transactionManager =
         config.getUserString("storage_config", "transaction_manager", "consensus-commit");
@@ -103,7 +102,6 @@ public class Common {
     props.setProperty(DatabaseConfig.USERNAME, username);
     props.setProperty(DatabaseConfig.PASSWORD, password);
     props.setProperty(DatabaseConfig.STORAGE, storage);
-    props.setProperty(DatabaseConfig.NAMESPACE_PREFIX, prefix);
     props.setProperty(DatabaseConfig.TRANSACTION_MANAGER, transactionManager);
     props.setProperty(DatabaseConfig.ISOLATION_LEVEL, isolationLevel);
     props.setProperty(ConsensusCommitConfig.SERIALIZABLE_STRATEGY, serializableStrategy);
