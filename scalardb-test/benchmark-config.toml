@@ -26,7 +26,6 @@
   #username = "cassandra"
   #password = "cassandra"
   #storage = "cassandra"
-  #namespace_prefix = ""
   #isolation_level = "SNAPSHOT"
   #serializable_strategy = "EXTRA_READ"
 
