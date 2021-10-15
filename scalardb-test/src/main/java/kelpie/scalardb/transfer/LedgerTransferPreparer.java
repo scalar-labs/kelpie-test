@@ -1,5 +1,9 @@
 package kelpie.scalardb.transfer;
 
+import static kelpie.scalardb.transfer.LedgerTransferCommon.CONFIG_TABLE_NAME;
+import static kelpie.scalardb.transfer.LedgerTransferCommon.DEFAULT_METADATA_SIZE;
+
+import com.google.common.base.Strings;
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.Put;
@@ -20,12 +24,25 @@ public class LedgerTransferPreparer extends PreProcessor {
   private static final long DEFAULT_POPULATION_NUM_ACCOUNTS_PER_TX = 100;
   private static final long DEFAULT_POPULATION_MAX_RETRIES = 10;
   private static final long DEFAULT_POPULATION_WAIT_MILLS = 1000;
+  private final Retry retry;
+  private final int metadataSize;
 
   private final DistributedTransactionManager manager;
 
   public LedgerTransferPreparer(Config config) {
     super(config);
     this.manager = LedgerTransferCommon.getTransactionManager(config);
+    int maxRetries =
+        (int)
+            config.getUserLong(
+                CONFIG_TABLE_NAME, "population_max_retries", DEFAULT_POPULATION_MAX_RETRIES);
+    int waitMillis =
+        (int)
+            config.getUserLong(
+                CONFIG_TABLE_NAME, "population_wait_millis", DEFAULT_POPULATION_WAIT_MILLS);
+    this.retry = Common.getRetryWithFixedWaitDuration("populate", maxRetries, waitMillis);
+    this.metadataSize =
+        (int) config.getUserLong(CONFIG_TABLE_NAME, "metadata_size", DEFAULT_METADATA_SIZE);
   }
 
   @Override
@@ -35,7 +52,7 @@ public class LedgerTransferPreparer extends PreProcessor {
     int concurrency =
         (int)
             config.getUserLong(
-                "test_config", "population_concurrency", DEFAULT_POPULATION_CONCURRENCY);
+                CONFIG_TABLE_NAME, "population_concurrency", DEFAULT_POPULATION_CONCURRENCY);
     ExecutorService es = Executors.newCachedThreadPool();
     List<CompletableFuture> futures = new ArrayList<>();
     IntStream.range(0, concurrency)
@@ -66,14 +83,14 @@ public class LedgerTransferPreparer extends PreProcessor {
       int concurrency =
           (int)
               config.getUserLong(
-                  "test_config", "population_concurrency", DEFAULT_POPULATION_CONCURRENCY);
+                  CONFIG_TABLE_NAME, "population_concurrency", DEFAULT_POPULATION_CONCURRENCY);
       int numAccountsPerTx =
           (int)
               config.getUserLong(
-                  "test_config",
+                  CONFIG_TABLE_NAME,
                   "population_num_accounts_per_tx",
                   DEFAULT_POPULATION_NUM_ACCOUNTS_PER_TX);
-      int numAccounts = (int) config.getUserLong("test_config", "num_accounts");
+      int numAccounts = (int) config.getUserLong(CONFIG_TABLE_NAME, "num_accounts");
       int numPerThread = (numAccounts + concurrency - 1) / concurrency;
       int start = numPerThread * id;
       int end = Math.min(numPerThread * (id + 1), numAccounts);
@@ -93,10 +110,11 @@ public class LedgerTransferPreparer extends PreProcessor {
             try {
               transaction = manager.start();
               for (int i = startId; i < endId; ++i) {
+                String metadata = Strings.repeat("*", metadataSize);
                 Put put =
-                    LedgerTransferCommon.preparePut(i, 0, LedgerTransferCommon.INITIAL_BALANCE);
+                    LedgerTransferCommon.preparePut(
+                        i, 0, LedgerTransferCommon.INITIAL_BALANCE, metadata);
                 transaction.put(put);
-                transaction.put(LedgerTransferCommon.preparePutForAge(i, 0));
               }
               transaction.commit();
             } catch (Exception e) {
@@ -112,15 +130,6 @@ public class LedgerTransferPreparer extends PreProcessor {
             }
           };
 
-      int maxRetries =
-          (int)
-              config.getUserLong(
-                  "test_config", "population_max_retries", DEFAULT_POPULATION_MAX_RETRIES);
-      int waitMillis =
-          (int)
-              config.getUserLong(
-                  "test_config", "population_wait_millis", DEFAULT_POPULATION_WAIT_MILLS);
-      Retry retry = Common.getRetryWithFixedWaitDuration("populate", maxRetries, waitMillis);
       Runnable decorated = Retry.decorateRunnable(retry, populate);
       try {
         decorated.run();

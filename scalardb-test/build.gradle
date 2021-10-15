@@ -19,7 +19,7 @@ dependencies {
     if (project.hasProperty("scalardb-libs-path")) {
         implementation fileTree(project.property("scalardb-libs-path")) { include '*.jar' }
     } else {
-        implementation group: 'com.scalar-labs', name: 'scalardb', version: '3.1.0'
+        implementation group: 'com.scalar-labs', name: 'scalardb', version: '3.2.0'
         implementation group: 'com.google.inject', name: 'guice', version: '5.0.1'
         implementation group: 'com.azure', name: 'azure-cosmos', version: '4.15.0'
         implementation group: 'software.amazon.awssdk', name: 'dynamodb', version: "${awssdkVersion}"
