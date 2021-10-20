@@ -2,6 +2,7 @@ package kelpie.scalardb.transfer;
 
 import com.scalar.db.api.Consistency;
 import com.scalar.db.api.DistributedTransactionManager;
+import com.scalar.db.api.Get;
 import com.scalar.db.api.Put;
 import com.scalar.db.api.Result;
 import com.scalar.db.api.Scan;
@@ -36,6 +37,13 @@ public class LedgerTransferCommon {
         .withOrdering(new Ordering(AGE, Order.DESC))
         .withLimit(1)
         .withConsistency(Consistency.LINEARIZABLE);
+  }
+
+  public static Get prepareGet(int id) {
+    Key partitionKey = new Key(new IntValue(ACCOUNT_ID, id));
+    Key clusteringKey = new Key(new IntValue(AGE, 0));
+
+    return new Get(partitionKey, clusteringKey).withConsistency(Consistency.LINEARIZABLE);
   }
 
   public static Put preparePut(int id, int age, int amount, @Nullable String metadata) {
