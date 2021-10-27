@@ -1,0 +1,12 @@
+{
+  "storage.no-clustering-key": {
+    "partition-key": [
+      "pkey"
+    ],
+    "clustering-key": [],
+    "columns": {
+      "pkey": "INT",
+      "col": "INT"
+    }
+  }
+}

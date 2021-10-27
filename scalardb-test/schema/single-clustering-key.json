@@ -1,0 +1,15 @@
+{
+  "storage.single-clustering-key": {
+    "partition-key": [
+      "pkey"
+    ],
+    "clustering-key": [
+      "ckey"
+    ],
+    "columns": {
+      "pkey": "INT",
+      "ckey": "INT",
+      "col": "INT"
+    }
+  }
+}
