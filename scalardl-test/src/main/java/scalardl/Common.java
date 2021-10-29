@@ -5,7 +5,6 @@ import com.google.inject.Injector;
 import com.scalar.dl.client.config.ClientConfig;
 import com.scalar.dl.client.service.ClientModule;
 import com.scalar.dl.client.service.ClientService;
-import com.scalar.dl.ledger.exception.UnloadableKeyException;
 import com.scalar.kelpie.config.Config;
 import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
@@ -19,6 +18,7 @@ public class Common {
   private static String PORT = "50051";
   private static String AUDITOR_HOST = "localhost";
   private static String AUDITOR_PORT = "40051";
+  private static String AUDITOR_ENABLED = "false";
   private static ClientConfig config;
   private static final String CERT_HOLDER_ID = "test_holder";
   private static final int MAX_RETRIES = 10;
@@ -30,7 +30,7 @@ public class Common {
   public static ClientConfig getClientConfig(Config config) {
     String host = config.getUserString("client_config", "dl_server", HOST);
     String port = config.getUserString("client_config", "dl_server_port", PORT);
-    String auditorEnabled = config.getUserString("client_config", "auditor_enabled");
+    String auditorEnabled = config.getUserString("client_config", "auditor_enabled", AUDITOR_ENABLED);
     String auditorHost = config.getUserString("client_config", "auditor_host", AUDITOR_HOST);
     String auditorPort = config.getUserString("client_config", "auditor_port", AUDITOR_PORT);
     String certificate = config.getUserString("client_config", "certificate");
@@ -50,7 +50,7 @@ public class Common {
     try {
       clientConfig = new ClientConfig(properties);
     } catch (IOException e) {
-      throw new UnloadableKeyException(e.getMessage());
+      throw new IllegalArgumentException(e.getMessage());
     }
     return clientConfig;
   }

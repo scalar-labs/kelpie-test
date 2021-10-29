@@ -42,7 +42,7 @@
 
 [client_config]
   dl_server = "localhost"
-  auditor_enabled = "true"
+  auditor_enabled = "false"
   auditor_host = "localhost"
   certificate = "scalardl-test/sample-keys/certificate.pem"
   private_key = "scalardl-test/sample-keys/private-key.pem"
