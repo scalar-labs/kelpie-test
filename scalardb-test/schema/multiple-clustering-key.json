@@ -1,0 +1,17 @@
+{
+  "storage.multiple-clustering-key": {
+    "partition-key": [
+      "pkey"
+    ],
+    "clustering-key": [
+      "ckey1",
+      "ckey2"
+    ],
+    "columns": {
+      "pkey": "INT",
+      "ckey1": "INT",
+      "ckey2": "INT",
+      "col": "INT"
+    }
+  }
+}
