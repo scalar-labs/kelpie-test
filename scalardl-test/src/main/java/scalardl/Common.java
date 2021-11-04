@@ -1,10 +1,8 @@
 package scalardl;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.scalar.dl.client.config.ClientConfig;
-import com.scalar.dl.client.service.ClientModule;
 import com.scalar.dl.client.service.ClientService;
+import com.scalar.dl.client.service.ClientServiceFactory;
 import com.scalar.kelpie.config.Config;
 import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
@@ -57,9 +55,9 @@ public class Common {
 
   public static ClientService getClientService(Config config) {
     ClientConfig clientConfig = getClientConfig(config);
-    Injector injector = Guice.createInjector(new ClientModule(clientConfig));
+    ClientServiceFactory factory = new ClientServiceFactory(clientConfig);
 
-    return injector.getInstance(ClientService.class);
+    return factory.getClientService();
   }
 
   public static int getTotalInitialBalance(Config config) {
