@@ -98,6 +98,7 @@ public class TransferPreparer extends PreProcessor {
     }
 
     public void run() {
+      String holderId = config.getUserString("client_config", "holder_id");
       int populationConcurrency =
           (int) config.getUserLong("test_config", "population_concurrency", POPULATION_CONCURRENCY);
       int numAccounts = (int) config.getUserLong("test_config", "num_accounts");
@@ -115,7 +116,7 @@ public class TransferPreparer extends PreProcessor {
                 i -> {
                   int startId = start + NUM_ACCOUNTS_PER_TX * i;
                   int endId = Math.min(start + NUM_ACCOUNTS_PER_TX * (i + 1), end);
-                  populateWithTx(startId, endId);
+                  populateWithTx(startId, endId, holderId);
                 });
       } catch (Exception e) {
         throw new PreProcessException("Population failed", e);
@@ -124,12 +125,13 @@ public class TransferPreparer extends PreProcessor {
       }
     }
 
-    private void populateWithTx(int startId, int endId) {
+    private void populateWithTx(int startId, int endId, String holderId) {
       JsonObject argument =
           Json.createObjectBuilder()
               .add("start_id", startId)
               .add("end_id", endId)
               .add("amount", Common.INITIAL_BALANCE)
+              .add("holder_id", holderId)
               .add("nonce", UUID.randomUUID().toString())
               .build();
       Runnable populate = () -> service.executeContract(populationContractName, argument);

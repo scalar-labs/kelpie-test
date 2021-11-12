@@ -15,13 +15,14 @@ public class BatchCreate extends Contract {
     int startId = argument.getInt("start_id");
     int endId = argument.getInt("end_id");
     int amount = argument.getInt("amount");
+    String holderId = argument.getString("holder_id");
 
     IntStream.range(startId, endId)
         .forEach(
             id -> {
               JsonObject json = Json.createObjectBuilder().add("balance", amount).build();
               String assetId = String.valueOf(id);
-              ledger.put(assetId, json);
+              ledger.put(holderId + "-" + assetId, json);
             });
 
     return null;

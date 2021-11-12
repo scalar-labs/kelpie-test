@@ -37,10 +37,11 @@ public class TransferProcessor extends TimeBasedProcessor {
 
   @Override
   public void executeEach() {
+    String holderId = config.getUserString("client_config", "holder_id");
     int fromId = ThreadLocalRandom.current().nextInt(numAccounts);
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
-    JsonObject arg = makeArgument(fromId, toId, amount);
+    JsonObject arg = makeArgument(fromId, toId, amount, holderId);
 
     String txId = arg.getString("nonce");
     logStart(txId, fromId, toId, amount);
@@ -70,9 +71,9 @@ public class TransferProcessor extends TimeBasedProcessor {
     service.close();
   }
 
-  private JsonObject makeArgument(int fromId, int toId, int amount) {
+  private JsonObject makeArgument(int fromId, int toId, int amount, String holderId) {
     JsonArray assetIds =
-        Json.createArrayBuilder().add(String.valueOf(fromId)).add(String.valueOf(toId)).build();
+        Json.createArrayBuilder().add(holderId + "-" + String.valueOf(fromId)).add(holderId + "-" + String.valueOf(toId)).build();
 
     return Json.createObjectBuilder()
         .add("asset_ids", assetIds)
