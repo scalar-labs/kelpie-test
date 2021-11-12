@@ -83,16 +83,16 @@ public class TransferProcessor extends TimeBasedProcessor {
     }
 
     try {
-      Get fromGet = TransferCommon.prepareGet(fromId, fromType);
-      Get toGet = TransferCommon.prepareGet(toId, toType);
+      Get fromGet = TransferCommon.prepareGet(config, fromId, fromType);
+      Get toGet = TransferCommon.prepareGet(config, toId, toType);
 
       Optional<Result> fromResult = transaction.get(fromGet);
       Optional<Result> toResult = transaction.get(toGet);
       int fromBalance = TransferCommon.getBalanceFromResult(fromResult.get());
       int toBalance = TransferCommon.getBalanceFromResult(toResult.get());
 
-      Put fromPut = TransferCommon.preparePut(fromId, fromType, fromBalance - amount);
-      Put toPut = TransferCommon.preparePut(toId, toType, toBalance + amount);
+      Put fromPut = TransferCommon.preparePut(config, fromId, fromType, fromBalance - amount);
+      Put toPut = TransferCommon.preparePut(config, toId, toType, toBalance + amount);
       transaction.put(fromPut);
       transaction.put(toPut);
 

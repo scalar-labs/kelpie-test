@@ -44,15 +44,17 @@ public class TransferCommon {
     return storage;
   }
 
-  public static Get prepareGet(int id, int type) {
-    Key partitionKey = new Key(ACCOUNT_ID, id);
+  public static Get prepareGet(Config config, int id, int type) {
+    String accountPrefix = config.getUserString("test_config", "account_prefix");
+    Key partitionKey = new Key(ACCOUNT_ID, accountPrefix + "-" + String.valueOf(id));
     Key clusteringKey = new Key(ACCOUNT_TYPE, type);
 
     return new Get(partitionKey, clusteringKey).withConsistency(Consistency.LINEARIZABLE);
   }
 
-  public static Put preparePut(int id, int type, int amount) {
-    Key partitionKey = new Key(ACCOUNT_ID, id);
+  public static Put preparePut(Config config, int id, int type, int amount) {
+    String accountPrefix = config.getUserString("test_config", "account_prefix");
+    Key partitionKey = new Key(ACCOUNT_ID, accountPrefix + "-" + String.valueOf(id));
     Key clusteringKey = new Key(ACCOUNT_TYPE, type);
     return new Put(partitionKey, clusteringKey)
         .withConsistency(Consistency.LINEARIZABLE)
@@ -84,7 +86,7 @@ public class TransferCommon {
         DistributedTransaction transaction = null;
         try {
           transaction = manager.start();
-          Get get = TransferCommon.prepareGet(i, j);
+          Get get = TransferCommon.prepareGet(config, i, j);
           transaction.get(get).ifPresent(results::add);
           transaction.commit();
         } catch (TransactionException e) {

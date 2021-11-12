@@ -83,7 +83,7 @@ public class NontransactionalTransferPreparer extends PreProcessor {
             try {
               for (int i = startId; i < endId; ++i) {
                 for (int j = 0; j < TransferCommon.NUM_TYPES; ++j) {
-                  Put put = TransferCommon.preparePut(i, j, TransferCommon.INITIAL_BALANCE);
+                  Put put = TransferCommon.preparePut(config, i, j, TransferCommon.INITIAL_BALANCE);
                   storage.put(put);
                 }
               }

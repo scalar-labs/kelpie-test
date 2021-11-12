@@ -42,16 +42,16 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
       toType = 1; // transfer between the same account
     }
 
-    Get fromGet = TransferCommon.prepareGet(fromId, fromType);
-    Get toGet = TransferCommon.prepareGet(toId, toType);
+    Get fromGet = TransferCommon.prepareGet(this.config, fromId, fromType);
+    Get toGet = TransferCommon.prepareGet(this.config, toId, toType);
 
     Optional<Result> fromResult = storage.get(fromGet);
     Optional<Result> toResult = storage.get(toGet);
     int fromBalance = TransferCommon.getBalanceFromResult(fromResult.get());
     int toBalance = TransferCommon.getBalanceFromResult(toResult.get());
 
-    Put fromPut = TransferCommon.preparePut(fromId, fromType, fromBalance - amount);
-    Put toPut = TransferCommon.preparePut(toId, toType, toBalance + amount);
+    Put fromPut = TransferCommon.preparePut(this.config, fromId, fromType, fromBalance - amount);
+    Put toPut = TransferCommon.preparePut(this.config, toId, toType, toBalance + amount);
     storage.put(fromPut);
     storage.put(toPut);
   }

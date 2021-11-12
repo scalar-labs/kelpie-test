@@ -81,16 +81,16 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
     }
 
     try {
-      Get fromGet = TransferCommon.prepareGet(fromId, fromType);
+      Get fromGet = TransferCommon.prepareGet(config, fromId, fromType);
       Optional<Result> fromResult = tx1.get(fromGet);
       int fromBalance = TransferCommon.getBalanceFromResult(fromResult.get());
-      Put fromPut = TransferCommon.preparePut(fromId, fromType, fromBalance - amount);
+      Put fromPut = TransferCommon.preparePut(config, fromId, fromType, fromBalance - amount);
       tx1.put(fromPut);
 
-      Get toGet = TransferCommon.prepareGet(toId, toType);
+      Get toGet = TransferCommon.prepareGet(config, toId, toType);
       Optional<Result> toResult = tx2.get(toGet);
       int toBalance = TransferCommon.getBalanceFromResult(toResult.get());
-      Put toPut = TransferCommon.preparePut(toId, toType, toBalance + amount);
+      Put toPut = TransferCommon.preparePut(config, toId, toType, toBalance + amount);
       tx2.put(toPut);
 
       tx1.prepare();
