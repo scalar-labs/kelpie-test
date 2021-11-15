@@ -2,16 +2,16 @@
   {{ if (isTrue (default .Env.INIT_ENABLED "true")) }}
   [modules.preprocessor]
     name = "scalardl.transfer.TransferPreparer"
-    path = "scalardl-test/build/libs/scalardl-test-all.jar"
+    path = "build/libs/scalardl-test-all.jar"
   {{ end }}
   {{ if (isTrue (default .Env.PROCESS_ENABLED "true")) }}
   [modules.processor]
     name = "scalardl.transfer.TransferProcessor"
-    path = "scalardl-test/build/libs/scalardl-test-all.jar"
+    path = "build/libs/scalardl-test-all.jar"
   {{ end }}
   [modules.postprocessor]
     name = "scalardl.transfer.TransferReporter"
-    path = "scalardl-test/build/libs/scalardl-test-all.jar"
+    path = "build/libs/scalardl-test-all.jar"
 
 [common]
   concurrency = 1
@@ -27,13 +27,13 @@
 
 [contract]
   population_contract_name = "contract.BatchCreate"
-  population_contract_path = "scalardl-test/build/classes/java/main/contract/BatchCreate.class"
+  population_contract_path = "build/classes/java/main/contract/BatchCreate.class"
   transfer_contract_name = "contract.Transfer"
-  transfer_contract_path = "scalardl-test/build/classes/java/main/contract/Transfer.class"
+  transfer_contract_path = "build/classes/java/main/contract/Transfer.class"
 
 [client_config]
   dl_server = "{{ .Env.SCALAR_DL_SERVER_HOST }}"
   auditor_host = "{{ .Env.SCALAR_DL_AUDIT_SERVER_HOST }}"
   auditor_enabled = "{{ .Env.SCALAR_DL_AUDIT_ENABLED }}"
-  certificate = "scalardl-test/sample-keys/certificate.pem"
-  private_key = "scalardl-test/sample-keys/private-key.pem"
+  certificate = "sample-keys/certificate.pem"
+  private_key = "sample-keys/private-key.pem"

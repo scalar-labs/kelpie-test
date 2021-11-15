@@ -28,7 +28,7 @@ RUN mkdir -p scalardl-test/build/libs/
 COPY build/classes scalardl-test/build/classes
 COPY scalardl-test-all.jar scalardl-test/build/libs/
 COPY sample-keys scalardl-test/sample-keys
-COPY config.toml.tmpl config.toml.tmpl
+COPY config.toml.tmpl scalardl-test/config.toml.tmpl
 
 WORKDIR /scalar/kelpie/scalardl-test
 
