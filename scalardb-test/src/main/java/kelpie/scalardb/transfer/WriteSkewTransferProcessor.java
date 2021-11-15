@@ -103,7 +103,7 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     int totalBalance = 0;
 
     for (int i = 0; i < TransferCommon.NUM_TYPES; i++) {
-      Get get = TransferCommon.prepareGet(config, fromId, i);
+      Get get = TransferCommon.prepareGet(fromId, i);
       Optional<Result> result = transaction.get(get);
       int balance = TransferCommon.getBalanceFromResult(result.get());
       if (i == fromType) {
@@ -120,12 +120,12 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
       throw new ProcessException("the account doesn't have the enough balance");
     }
 
-    Get toGet = TransferCommon.prepareGet(config, toId, toType);
+    Get toGet = TransferCommon.prepareGet(toId, toType);
     Optional<Result> toResult = transaction.get(toGet);
     int toBalance = TransferCommon.getBalanceFromResult(toResult.get());
 
-    Put fromPut = TransferCommon.preparePut(config, fromId, fromType, fromBalance - amount);
-    Put toPut = TransferCommon.preparePut(config, toId, toType, toBalance + amount);
+    Put fromPut = TransferCommon.preparePut(fromId, fromType, fromBalance - amount);
+    Put toPut = TransferCommon.preparePut(toId, toType, toBalance + amount);
     transaction.put(fromPut);
     transaction.put(toPut);
 

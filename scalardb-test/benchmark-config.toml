@@ -20,7 +20,6 @@
 [test_config]
   num_accounts = 100000
   population_concurrency = 8
-  account_prefix = "prefix"
 
 [storage_config]
   contact_points = "localhost"

@@ -34,7 +34,7 @@ shadowJar {
 }
 
 docker {
-    name 'ghcr.io/scalar-labs/kelpie-test-scalardb:$dockerVersion'
+    name "ghcr.io/scalar-labs/kelpie-test-scalardb:${dockerVersion}"
     files tasks.shadowJar.outputs
     copySpec.with {
         from('.') {

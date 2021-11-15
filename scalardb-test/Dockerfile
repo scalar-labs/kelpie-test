@@ -26,6 +26,8 @@ WORKDIR /scalardb/kelpie
 RUN mkdir -p scalardb-test/build/libs/
 
 COPY scalardb-test-all.jar scalardb-test/build/libs/
+
+WORKDIR /scalardb/kelpie/scalardb-test
 COPY grpc-config.toml.tmpl grpc-config.toml.tmpl
 
 CMD ["dockerize", "-template", "grpc-config.toml.tmpl:grpc-config.toml", \
