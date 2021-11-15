@@ -1,10 +1,14 @@
 [modules]
+  {{ if (isTrue (default .Env.INIT_ENABLED "true")) }}
   [modules.preprocessor]
     name = "scalardl.transfer.TransferPreparer"
     path = "scalardl-test/build/libs/scalardl-test-all.jar"
+  {{ end }}
+  {{ if (isTrue (default .Env.PROCESS_ENABLED "true")) }}
   [modules.processor]
     name = "scalardl.transfer.TransferProcessor"
     path = "scalardl-test/build/libs/scalardl-test-all.jar"
+  {{ end }}
   [modules.postprocessor]
     name = "scalardl.transfer.TransferReporter"
     path = "scalardl-test/build/libs/scalardl-test-all.jar"
@@ -33,4 +37,3 @@
   auditor_enabled = "{{ .Env.SCALAR_DL_AUDIT_ENABLED }}"
   certificate = "scalardl-test/sample-keys/certificate.pem"
   private_key = "scalardl-test/sample-keys/private-key.pem"
-  holder_id   = "{{ .Env.SCALAR_DL_HOLDER_ID }}"

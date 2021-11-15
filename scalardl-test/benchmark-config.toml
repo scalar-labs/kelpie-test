@@ -33,4 +33,3 @@
   auditor_host = "localhost"
   certificate = "scalardl-test/sample-keys/certificate.pem"
   private_key = "scalardl-test/sample-keys/private-key.pem"
-  holder_id   = "test_holder_id"

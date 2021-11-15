@@ -33,7 +33,6 @@ public class Common {
     String auditorPort = config.getUserString("client_config", "auditor_port", AUDITOR_PORT);
     String certificate = config.getUserString("client_config", "certificate");
     String privateKey = config.getUserString("client_config", "private_key");
-    String holderId = config.getUserString("client_config", "holder_id", CERT_HOLDER_ID);
 
     Properties properties = new Properties();
     properties.setProperty(ClientConfig.SERVER_HOST, host);
@@ -41,7 +40,7 @@ public class Common {
     properties.setProperty(ClientConfig.AUDITOR_ENABLED, auditorEnabled);
     properties.setProperty(ClientConfig.AUDITOR_HOST, auditorHost);
     properties.setProperty(ClientConfig.AUDITOR_PORT, auditorPort);
-    properties.setProperty(ClientConfig.CERT_HOLDER_ID, holderId);
+    properties.setProperty(ClientConfig.CERT_HOLDER_ID, CERT_HOLDER_ID);
     properties.setProperty(ClientConfig.CERT_PATH, certificate);
     properties.setProperty(ClientConfig.PRIVATE_KEY_PATH, privateKey);
 

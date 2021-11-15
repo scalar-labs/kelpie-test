@@ -30,5 +30,7 @@ COPY scalardl-test-all.jar scalardl-test/build/libs/
 COPY sample-keys scalardl-test/sample-keys
 COPY config.toml.tmpl config.toml.tmpl
 
+WORKDIR /scalar/kelpie/scalardl-test
+
 CMD ["dockerize", "-template", "config.toml.tmpl:config.toml", \
     "kelpie", "--config", "config.toml"]
