@@ -1,0 +1,32 @@
+[modules]
+  {{ if (isTrue (default .Env.INIT_ENABLED "true")) }}
+  [modules.preprocessor]
+    name = "kelpie.scalardb.transfer.TransferPreparer"
+    path = "build/libs/scalardb-test-all.jar"
+  {{ end }}
+  {{ if (isTrue (default .Env.PROCESS_ENABLED "true")) }}
+  [modules.processor]
+    name = "kelpie.scalardb.transfer.TransferProcessor"
+    path = "build/libs/scalardb-test-all.jar"
+  {{ end }}
+  [modules.postprocessor]
+    name = "kelpie.scalardb.transfer.TransferReporter"
+    path = "build/libs/scalardb-test-all.jar"
+
+[common]
+  concurrency = {{ .Env.EXEC_CONCURRENCY }}
+  run_for_sec = {{ .Env.EXEC_TIME_SEC }}
+  ramp_for_sec = 10
+
+[stats]
+  realtime_report_enabled = true
+
+[test_config]
+  num_accounts = 10000
+  population_concurrency = 2
+
+[storage_config]
+  contact_points = "{{ .Env.SCALAR_DB_SERVER_HOST }}"
+  contact_port = 60051
+  storage = "grpc"
+  transaction_manager = "grpc"
