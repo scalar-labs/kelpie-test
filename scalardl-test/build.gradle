@@ -8,6 +8,8 @@ repositories {
     mavenCentral()
 }
 
+def dockerVersion = project.hasProperty('dockerVersion') ? project.dockerVersion : 'latest'
+
 dependencies {
     implementation group: 'com.scalar-labs', name: 'kelpie', version: '1.2.0'
     implementation group: 'com.scalar-labs', name: 'scalardl-java-client-sdk', version: '3.1.0'
