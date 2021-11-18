@@ -10,7 +10,7 @@ repositories {
 }
 
 def awssdkVersion = "2.14.24"
-def dockerVersion = "0.1.0"
+def dockerVersion = project.hasProperty('dockerVersion') ? project.dockerVersion : 'latest'
 
 dependencies {
     implementation group: 'com.scalar-labs', name: 'kelpie', version: '1.1.1'
