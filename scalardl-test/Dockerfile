@@ -1,5 +1,18 @@
+FROM docker.io/busybox:1.32 AS tools
+
+ENV DOCKERIZE_VERSION v0.6.1
+
+# Install dockerize
+RUN set -x && \
+    wget -q "https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-linux-amd64-${DOCKERIZE_VERSION}.tar.gz" && \
+    tar -xzvf "dockerize-linux-amd64-${DOCKERIZE_VERSION}.tar.gz" && \
+    ./dockerize --version
+
 FROM openjdk:8u212-jre-slim-stretch
-ENV KELPIE_VERSION 1.1.0
+
+COPY --from=tools dockerize /usr/local/bin/
+
+ENV KELPIE_VERSION 1.2.0
 
 RUN apt-get update && apt-get install wget unzip -y && \
     wget -O /tmp/kelpie.zip https://github.com/scalar-labs/kelpie/releases/download/${KELPIE_VERSION}/kelpie-${KELPIE_VERSION}.zip && \
@@ -8,8 +21,16 @@ RUN apt-get update && apt-get install wget unzip -y && \
     mv /kelpie-${KELPIE_VERSION}/lib/* /usr/local/lib/ && \
     rm -rf /tmp/kelpie.zip kelpie-${KELPIE_VERSION} /var/lib/apt/lists/*
 
-RUN mkdir -p /scalardl-test/build/libs/
+WORKDIR /scalar/kelpie
 
-COPY scalardl-test-all.jar /scalardl-test/build/libs/
-COPY sample-keys /scalardl-test/sample-keys
-COPY benchmark-config.toml /scalardl-test/
+RUN mkdir -p scalardl-test/build/libs/
+
+COPY build/classes scalardl-test/build/classes
+COPY scalardl-test-all.jar scalardl-test/build/libs/
+COPY sample-keys scalardl-test/sample-keys
+COPY config.toml.tmpl scalardl-test/config.toml.tmpl
+
+WORKDIR /scalar/kelpie/scalardl-test
+
+CMD ["dockerize", "-template", "config.toml.tmpl:config.toml", \
+    "kelpie", "--config", "config.toml"]
