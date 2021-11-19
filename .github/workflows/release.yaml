@@ -2,8 +2,8 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+    branches:
+      - master
 
 jobs:
   release:
@@ -12,9 +12,11 @@ jobs:
     steps:
       - name: Set version
         id: version
+        env:
+          VERSION: ${{ github.sha }}
         run: |
-          VERSION=$(echo ${{ github.ref }} | sed -e "s#refs/tags/v##g")
           echo ::set-output name=version::${VERSION}
+
       - uses: actions/checkout@v2
 
       - name: Set up JDK 1.8
@@ -51,17 +53,6 @@ jobs:
         run: |
           docker push ghcr.io/scalar-labs/kelpie-test-scalardb:${{ steps.version.outputs.version }}
           docker push ghcr.io/scalar-labs/kelpie-test-scalardl:${{ steps.version.outputs.version }}
-
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: false
-          prerelease: false
 
       - name: Cleanup Gradle cache
         # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
