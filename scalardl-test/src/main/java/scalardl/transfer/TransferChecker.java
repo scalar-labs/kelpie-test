@@ -27,12 +27,23 @@ import scalardl.Common;
 
 public class TransferChecker extends PostProcessor {
 
+  private final int SLEEP_TIME_MILLISECONDS = 60000;
+
   public TransferChecker(Config config) {
     super(config);
   }
 
   @Override
   public void execute() {
+
+    try {
+      Thread.sleep(SLEEP_TIME_MILLISECONDS);
+    } catch (InterruptedException ie) {
+      logInfo("Interrupted exception occurred during sleep");
+      // Interrupt flag is set back to true to indicate interruption
+      Thread.currentThread().interrupt();
+    }
+
     List<JsonObject> results = readBalancesWithRetry();
 
     int committed = getNumOfCommittedFromCoordinator();
