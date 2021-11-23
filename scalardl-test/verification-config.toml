@@ -24,6 +24,7 @@
   is_verification = true
   num_accounts = 10
   population_concurrency = 32
+  sleep_time_milli_sec = 60000
 
 [storage_config]
   contact_points = "localhost"

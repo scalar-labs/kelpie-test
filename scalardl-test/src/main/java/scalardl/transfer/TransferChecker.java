@@ -27,17 +27,18 @@ import scalardl.Common;
 
 public class TransferChecker extends PostProcessor {
 
-  private final int SLEEP_TIME_MILLISECONDS = 60000;
+  private final long sleepTimeMilliseconds;
 
   public TransferChecker(Config config) {
     super(config);
+    this.sleepTimeMilliseconds =  config.getUserLong("test_config", "sleep_time_milli_sec", 0L);
   }
 
   @Override
   public void execute() {
 
     try {
-      Thread.sleep(SLEEP_TIME_MILLISECONDS);
+      Thread.sleep(sleepTimeMilliseconds);
     } catch (InterruptedException ie) {
       logInfo("Interrupted exception occurred during sleep");
       // Interrupt flag is set back to true to indicate interruption
