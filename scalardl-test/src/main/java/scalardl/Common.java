@@ -19,9 +19,9 @@ public class Common {
   private static String AUDITOR_ENABLED = "false";
   private static ClientConfig config;
   private static final String CERT_HOLDER_ID = "test_holder";
-  private static final int MAX_RETRIES = 10;
+  private static int MAX_RETRIES = 10;
   private static final Duration WAIT_DURATION = Duration.ofMillis(1000);
-  private static final long SLEEP_BASE_MILLIS = 100L;
+  private static long SLEEP_BASE_MILLIS = 100L;
 
   public static final int INITIAL_BALANCE = 10000;
 
@@ -80,5 +80,10 @@ public class Common {
         RetryConfig.custom().maxAttempts(MAX_RETRIES).intervalFunction(intervalFunc).build();
 
     return Retry.of(name, retryConfig);
+  }
+
+  public static void setIntervalAndMaxRetry(Config config){
+    SLEEP_BASE_MILLIS = config.getUserLong("common", "sleep_base_millis", 1000L);
+    MAX_RETRIES = (int) config.getUserLong("common", "max_retries", 10L);
   }
 }

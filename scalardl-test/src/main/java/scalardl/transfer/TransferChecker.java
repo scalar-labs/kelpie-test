@@ -44,7 +44,7 @@ public class TransferChecker extends PostProcessor {
 
   private List<JsonObject> readBalancesWithRetry() {
     logInfo("reading latest assets...");
-
+    Common.setIntervalAndMaxRetry(config);
     Retry retry = Common.getRetryWithExponentialBackoff("readBalances");
     Supplier<List<JsonObject>> decorated = Retry.decorateSupplier(retry, this::readBalances);
 
