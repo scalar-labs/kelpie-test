@@ -16,7 +16,7 @@
   concurrency = 5
   run_for_sec = 900
   ramp_for_sec = 0
-  sleep_base_millis = 2000
+  sleep_base_millis = 1000
   max_retries = 10
 
 [stats]
