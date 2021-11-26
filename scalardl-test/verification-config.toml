@@ -16,8 +16,6 @@
   concurrency = 5
   run_for_sec = 900
   ramp_for_sec = 0
-  sleep_base_millis = 1000
-  max_retries = 10
 
 [stats]
   realtime_report_enabled = false
@@ -26,6 +24,8 @@
   is_verification = true
   num_accounts = 10
   population_concurrency = 32
+  retry_interval_milli_sec = 1000
+  max_retries = 10
 
 [storage_config]
   contact_points = "localhost"
