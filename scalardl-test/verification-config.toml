@@ -25,7 +25,7 @@
   num_accounts = 10
   population_concurrency = 32
   retry_interval_milli_sec = 1000
-  max_retries = 10
+  max_retries_for_read = 10
 
 [storage_config]
   contact_points = "localhost"
