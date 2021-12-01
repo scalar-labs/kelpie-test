@@ -43,7 +43,6 @@ public class WorkloadF extends TimeBasedProcessor {
       for (int i = 0; i < opsPerTx; ++i) {
         int userId = ThreadLocalRandom.current().nextInt(recordCount);
         transaction.get(prepareGet(userId));
-        // String payload = RandomStringUtils.randomAlphabetic(payloadSize);
         YcsbCommon.randomFastChars(ThreadLocalRandom.current(), payload);
         transaction.put(preparePut(userId, new String(payload)));
       }
