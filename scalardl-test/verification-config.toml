@@ -24,8 +24,8 @@
   is_verification = true
   num_accounts = 10
   population_concurrency = 32
-  retry_interval_milli_sec = 1000
-  max_retries_for_read = 10
+  checker_retry_interval_millis = 1000
+  checker_max_retries_for_read = 10
 
 [storage_config]
   contact_points = "localhost"
