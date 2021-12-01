@@ -21,6 +21,8 @@ import kelpie.scalardb.Common;
 
 public class MultipleClusteringKeyPreparer extends PreProcessor {
 
+  private final int BATCH_SIZE = 20;
+
   private final DistributedStorage storage;
 
   public MultipleClusteringKeyPreparer(Config config) {
@@ -84,7 +86,7 @@ public class MultipleClusteringKeyPreparer extends PreProcessor {
                   Put put = preparePut(pkey, i, j, ThreadLocalRandom.current().nextInt());
                   puts.add(put);
                 }
-                storage.put(puts);
+                StorageCommon.batchPut(storage, puts, BATCH_SIZE);
                 MultipleClusteringKeyPreparer.this.logInfo(
                     "(pkey=" + pkey + ", ckey1=" + i + ") inserted");
               }
