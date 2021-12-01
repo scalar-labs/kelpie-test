@@ -1,13 +1,13 @@
 package kelpie.scalardb.ycsb;
 
-import static kelpie.scalardb.ycsb.Common.CONFIG_NAME;
-import static kelpie.scalardb.ycsb.Common.NAMESPACE;
-import static kelpie.scalardb.ycsb.Common.OPS_PER_TX;
-import static kelpie.scalardb.ycsb.Common.TABLE;
-import static kelpie.scalardb.ycsb.Common.getPayloadSize;
-import static kelpie.scalardb.ycsb.Common.getRecordCount;
-import static kelpie.scalardb.ycsb.Common.prepareGet;
-import static kelpie.scalardb.ycsb.Common.preparePut;
+import static kelpie.scalardb.ycsb.YcsbCommon.CONFIG_NAME;
+import static kelpie.scalardb.ycsb.YcsbCommon.NAMESPACE;
+import static kelpie.scalardb.ycsb.YcsbCommon.OPS_PER_TX;
+import static kelpie.scalardb.ycsb.YcsbCommon.TABLE;
+import static kelpie.scalardb.ycsb.YcsbCommon.getPayloadSize;
+import static kelpie.scalardb.ycsb.YcsbCommon.getRecordCount;
+import static kelpie.scalardb.ycsb.YcsbCommon.prepareGet;
+import static kelpie.scalardb.ycsb.YcsbCommon.preparePut;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
@@ -44,7 +44,7 @@ public class WorkloadF extends TimeBasedProcessor {
         int userId = ThreadLocalRandom.current().nextInt(recordCount);
         transaction.get(prepareGet(userId));
         // String payload = RandomStringUtils.randomAlphabetic(payloadSize);
-        kelpie.scalardb.ycsb.Common.randomFastChars(ThreadLocalRandom.current(), payload);
+        YcsbCommon.randomFastChars(ThreadLocalRandom.current(), payload);
         transaction.put(preparePut(userId, new String(payload)));
       }
       transaction.commit();

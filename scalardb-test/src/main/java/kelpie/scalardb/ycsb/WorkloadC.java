@@ -1,11 +1,11 @@
 package kelpie.scalardb.ycsb;
 
-import static kelpie.scalardb.ycsb.Common.CONFIG_NAME;
-import static kelpie.scalardb.ycsb.Common.NAMESPACE;
-import static kelpie.scalardb.ycsb.Common.OPS_PER_TX;
-import static kelpie.scalardb.ycsb.Common.TABLE;
-import static kelpie.scalardb.ycsb.Common.getRecordCount;
-import static kelpie.scalardb.ycsb.Common.prepareGet;
+import static kelpie.scalardb.ycsb.YcsbCommon.CONFIG_NAME;
+import static kelpie.scalardb.ycsb.YcsbCommon.NAMESPACE;
+import static kelpie.scalardb.ycsb.YcsbCommon.OPS_PER_TX;
+import static kelpie.scalardb.ycsb.YcsbCommon.TABLE;
+import static kelpie.scalardb.ycsb.YcsbCommon.getRecordCount;
+import static kelpie.scalardb.ycsb.YcsbCommon.prepareGet;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;

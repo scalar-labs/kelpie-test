@@ -7,7 +7,7 @@ import com.scalar.db.io.Key;
 import com.scalar.kelpie.config.Config;
 import java.util.Random;
 
-public class Common {
+public class YcsbCommon {
   static final long DEFAULT_RECORD_COUNT = 1000;
   static final long DEFAULT_PAYLOAD_SIZE = 1000;
   static final String NAMESPACE = "ycsb";

@@ -1,11 +1,11 @@
 package kelpie.scalardb.ycsb;
 
-import static kelpie.scalardb.ycsb.Common.CONFIG_NAME;
-import static kelpie.scalardb.ycsb.Common.NAMESPACE;
-import static kelpie.scalardb.ycsb.Common.TABLE;
-import static kelpie.scalardb.ycsb.Common.getPayloadSize;
-import static kelpie.scalardb.ycsb.Common.getRecordCount;
-import static kelpie.scalardb.ycsb.Common.preparePut;
+import static kelpie.scalardb.ycsb.YcsbCommon.CONFIG_NAME;
+import static kelpie.scalardb.ycsb.YcsbCommon.NAMESPACE;
+import static kelpie.scalardb.ycsb.YcsbCommon.TABLE;
+import static kelpie.scalardb.ycsb.YcsbCommon.getPayloadSize;
+import static kelpie.scalardb.ycsb.YcsbCommon.getRecordCount;
+import static kelpie.scalardb.ycsb.YcsbCommon.preparePut;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
@@ -95,7 +95,7 @@ public class Loader extends PreProcessor {
             try {
               transaction = manager.start();
               for (int i = startId; i < endId; ++i) {
-                kelpie.scalardb.ycsb.Common.randomFastChars(ThreadLocalRandom.current(), payload);
+                YcsbCommon.randomFastChars(ThreadLocalRandom.current(), payload);
                 Put put = preparePut(i, new String(payload));
                 transaction.put(put);
               }
