@@ -21,6 +21,8 @@ import kelpie.scalardb.transfer.TransferCommon;
 
 public class SingleClusteringKeyPreparer extends PreProcessor {
 
+  private final int BATCH_SIZE = 20;
+
   private final DistributedStorage storage;
 
   public SingleClusteringKeyPreparer(Config config) {
@@ -83,7 +85,7 @@ public class SingleClusteringKeyPreparer extends PreProcessor {
                 Put put = preparePut(pkey, i, ThreadLocalRandom.current().nextInt());
                 puts.add(put);
               }
-              storage.put(puts);
+              StorageCommon.batchPut(storage, puts, BATCH_SIZE);
               SingleClusteringKeyPreparer.this.logInfo("pkey=" + pkey + " inserted");
             } catch (Exception e) {
               throw new RuntimeException("population failed, retry", e);
