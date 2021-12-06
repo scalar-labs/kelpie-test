@@ -8,20 +8,23 @@ import com.scalar.db.config.DatabaseConfig;
 import com.scalar.db.exception.transaction.CoordinatorException;
 import com.scalar.db.service.StorageFactory;
 import com.scalar.db.service.TransactionFactory;
-import com.scalar.db.storage.jdbc.JdbcConfig;
-import com.scalar.db.storage.rpc.GrpcConfig;
-import com.scalar.db.transaction.consensuscommit.ConsensusCommitConfig;
 import com.scalar.db.transaction.consensuscommit.Coordinator;
 import com.scalar.kelpie.config.Config;
 import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
+import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Common {
+  private static final Logger LOGGER = LoggerFactory.getLogger(Common.class);
+
   private static final int WAIT_MILLS = 1000;
   private static final long SLEEP_BASE_MILLIS = 100L;
   private static final int MAX_RETRIES = 10;
@@ -51,6 +54,15 @@ public class Common {
   }
 
   public static DatabaseConfig getDatabaseConfig(Config config) {
+    String configFile = config.getUserString("storage_config", "config_file", null);
+    if (configFile != null) {
+      try {
+        return new DatabaseConfig(new File(configFile));
+      } catch (IOException e) {
+        LOGGER.warn("failed to load the specified config file: " + configFile, e);
+      }
+    }
+
     String contactPoints = config.getUserString("storage_config", "contact_points", "localhost");
     long contactPort = config.getUserLong("storage_config", "contact_port", 0L);
     String username = config.getUserString("storage_config", "username", "cassandra");
@@ -62,63 +74,17 @@ public class Common {
     String serializableStrategy =
         config.getUserString("storage_config", "serializable_strategy", "EXTRA_READ");
 
-    // JDBC adapter related configurations
-    long jdbcConnectionPoolMinIdle =
-        config.getUserLong(
-            "storage_config",
-            "jdbc_connection_pool_min_idle",
-            (long) JdbcConfig.DEFAULT_CONNECTION_POOL_MIN_IDLE);
-    long jdbcConnectionPoolMaxIdle =
-        config.getUserLong(
-            "storage_config",
-            "jdbc_connection_pool_max_idle",
-            (long) JdbcConfig.DEFAULT_CONNECTION_POOL_MAX_IDLE);
-    long jdbcConnectionPoolMaxTotal =
-        config.getUserLong(
-            "storage_config",
-            "jdbc_connection_pool_max_total",
-            (long) JdbcConfig.DEFAULT_CONNECTION_POOL_MAX_TOTAL);
-    boolean jdbcPreparedStatementsPoolEnabled =
-        config.getUserBoolean(
-            "storage_config",
-            "jdbc_prepared_statements_pool_enabled",
-            JdbcConfig.DEFAULT_PREPARED_STATEMENTS_POOL_ENABLED);
-    long jdbcPreparedStatementsPoolMaxOpen =
-        config.getUserLong(
-            "storage_config",
-            "jdbc_prepared_statements_pool_max_open",
-            (long) JdbcConfig.DEFAULT_PREPARED_STATEMENTS_POOL_MAX_OPEN);
-    long grpcDeadlineDurationMillis =
-        config.getUserLong(
-            "storage_config",
-            "grpc_deadline_duration_millis",
-            GrpcConfig.DEFAULT_DEADLINE_DURATION_MILLIS);
-
     Properties props = new Properties();
-    props.setProperty(DatabaseConfig.CONTACT_POINTS, contactPoints);
+    props.setProperty("scalar.db.contact_points", contactPoints);
     if (contactPort > 0) {
-      props.setProperty(DatabaseConfig.CONTACT_PORT, Long.toString(contactPort));
+      props.setProperty("scalar.db.contact_port", Long.toString(contactPort));
     }
-    props.setProperty(DatabaseConfig.USERNAME, username);
-    props.setProperty(DatabaseConfig.PASSWORD, password);
-    props.setProperty(DatabaseConfig.STORAGE, storage);
-    props.setProperty(DatabaseConfig.TRANSACTION_MANAGER, transactionManager);
-    props.setProperty(DatabaseConfig.ISOLATION_LEVEL, isolationLevel);
-    props.setProperty(ConsensusCommitConfig.SERIALIZABLE_STRATEGY, serializableStrategy);
-    props.setProperty(
-        JdbcConfig.CONNECTION_POOL_MIN_IDLE, Long.toString(jdbcConnectionPoolMinIdle));
-    props.setProperty(
-        JdbcConfig.CONNECTION_POOL_MAX_IDLE, Long.toString(jdbcConnectionPoolMaxIdle));
-    props.setProperty(
-        JdbcConfig.CONNECTION_POOL_MAX_TOTAL, Long.toString(jdbcConnectionPoolMaxTotal));
-    props.setProperty(
-        JdbcConfig.PREPARED_STATEMENTS_POOL_ENABLED,
-        Boolean.toString(jdbcPreparedStatementsPoolEnabled));
-    props.setProperty(
-        JdbcConfig.PREPARED_STATEMENTS_POOL_MAX_OPEN,
-        Long.toString(jdbcPreparedStatementsPoolMaxOpen));
-    props.setProperty(
-        GrpcConfig.DEADLINE_DURATION_MILLIS, Long.toString(grpcDeadlineDurationMillis));
+    props.setProperty("scalar.db.username", username);
+    props.setProperty("scalar.db.password", password);
+    props.setProperty("scalar.db.storage", storage);
+    props.setProperty("scalar.db.transaction_manager", transactionManager);
+    props.setProperty("scalar.db.isolation_level", isolationLevel);
+    props.setProperty("scalar.db.consensus_commit.serializable_strategy", serializableStrategy);
     return new DatabaseConfig(props);
   }
 
