@@ -10,6 +10,7 @@ import com.scalar.db.service.StorageFactory;
 import com.scalar.db.service.TransactionFactory;
 import com.scalar.db.transaction.consensuscommit.Coordinator;
 import com.scalar.kelpie.config.Config;
+import com.scalar.kelpie.exception.IllegalConfigException;
 import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
@@ -54,7 +55,12 @@ public class Common {
   }
 
   public static DatabaseConfig getDatabaseConfig(Config config) {
-    String configFile = config.getUserString("storage_config", "config_file", null);
+    String configFile;
+    try {
+      configFile = config.getUserString("storage_config", "config_file");
+    } catch (IllegalConfigException e) {
+      configFile = null;
+    }
     if (configFile != null) {
       try {
         return new DatabaseConfig(new File(configFile));
