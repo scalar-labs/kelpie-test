@@ -4,7 +4,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.scalar.db.api.TransactionState;
 import com.scalar.db.config.DatabaseConfig;
-import com.scalar.db.exception.transaction.CoordinatorException;
 import com.scalar.db.service.StorageModule;
 import com.scalar.db.service.StorageService;
 import com.scalar.db.transaction.consensuscommit.Coordinator;
@@ -47,7 +46,8 @@ public class TransferChecker extends PostProcessor {
     int maxRetry = (int) config.getUserLong("test_config", "checker_max_retries_for_read", 10L);
     long retryIntervalSleepTime =
         config.getUserLong("test_config", "checker_retry_interval_millis", 1000L);
-    Retry retry = Common.getRetryWithExponentialBackoff("readBalances", maxRetry, retryIntervalSleepTime);
+    Retry retry =
+        Common.getRetryWithExponentialBackoff("readBalances", maxRetry, retryIntervalSleepTime);
     Supplier<List<JsonObject>> decorated = Retry.decorateSupplier(retry, this::readBalances);
 
     try {
@@ -154,7 +154,7 @@ public class TransferChecker extends PostProcessor {
       logInfo("reading the status of " + txId);
 
       return coordinator.getState(txId);
-    } catch (CoordinatorException e) {
+    } catch (Exception e) {
       // convert the exception for Retry
       throw new RuntimeException("Failed to read the state from the coordinator", e);
     }
