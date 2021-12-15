@@ -5,7 +5,6 @@ import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.TransactionState;
 import com.scalar.db.api.TwoPhaseCommitTransactionManager;
 import com.scalar.db.config.DatabaseConfig;
-import com.scalar.db.exception.transaction.CoordinatorException;
 import com.scalar.db.service.StorageFactory;
 import com.scalar.db.service.TransactionFactory;
 import com.scalar.db.transaction.consensuscommit.Coordinator;
@@ -112,7 +111,7 @@ public class Common {
   private static Optional<Coordinator.State> getState(Coordinator coordinator, String txId) {
     try {
       return coordinator.getState(txId);
-    } catch (CoordinatorException e) {
+    } catch (Exception e) {
       // convert the exception for Retry
       throw new RuntimeException("Failed to read the state from the coordinator", e);
     }
