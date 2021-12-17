@@ -8,6 +8,7 @@ import com.scalar.db.api.Get;
 import com.scalar.db.api.Put;
 import com.scalar.db.api.Result;
 import com.scalar.db.api.TwoPhaseCommitTransactionManager;
+import com.scalar.db.exception.storage.ExecutionException;
 import com.scalar.db.exception.transaction.AbortException;
 import com.scalar.db.exception.transaction.TransactionException;
 import com.scalar.db.io.Key;
@@ -61,9 +62,10 @@ public class TransferCommon {
 
   public static List<Result> readRecordsWithRetry(Config config) {
     DistributedTransactionManager manager = getTransactionManager(config);
+    DistributedStorage storage = getStorage(config);
     Retry retry = Common.getRetryWithExponentialBackoff("readRecords");
     Supplier<List<Result>> decorated =
-        Retry.decorateSupplier(retry, () -> readRecords(manager, config));
+        Retry.decorateSupplier(retry, () -> readRecords(manager, storage, config));
 
     try {
       return decorated.get();
@@ -71,13 +73,16 @@ public class TransferCommon {
       throw new RuntimeException("Reading records failed repeatedly", e);
     } finally {
       manager.close();
+      storage.close();
     }
   }
 
-  private static List<Result> readRecords(DistributedTransactionManager manager, Config config) {
+  private static List<Result> readRecords(
+      DistributedTransactionManager manager, DistributedStorage storage, Config config) {
     int numAccounts = (int) config.getUserLong("test_config", "num_accounts");
     List<Result> results = new ArrayList<>();
 
+    // To perform lazy recovery, execute transaction reads first
     boolean isFailed = false;
     for (int i = 0; i < numAccounts; i++) {
       for (int j = 0; j < TransferCommon.NUM_TYPES; j++) {
@@ -85,7 +90,7 @@ public class TransferCommon {
         try {
           transaction = manager.start();
           Get get = TransferCommon.prepareGet(i, j);
-          transaction.get(get).ifPresent(results::add);
+          transaction.get(get);
           transaction.commit();
         } catch (TransactionException e) {
           // continue to read other records
@@ -104,6 +109,20 @@ public class TransferCommon {
     if (isFailed) {
       // for Retry
       throw new RuntimeException("at least 1 record couldn't be read");
+    }
+
+    // Then, execute storage reads. We need to do this because we need transactional meta columns to
+    // check consistency (we can't get the transactional meta columns from the Transaction API)
+    for (int i = 0; i < numAccounts; i++) {
+      for (int j = 0; j < TransferCommon.NUM_TYPES; j++) {
+        try {
+          Get get = TransferCommon.prepareGet(i, j);
+          storage.get(get).ifPresent(results::add);
+        } catch (ExecutionException e) {
+          // for Retry
+          throw new RuntimeException("failed to read a record", e);
+        }
+      }
     }
 
     return results;
