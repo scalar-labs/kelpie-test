@@ -11,10 +11,16 @@ import static kelpie.scalardb.ycsb.YcsbCommon.preparePut;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
+import com.scalar.db.exception.transaction.CommitConflictException;
+import com.scalar.db.exception.transaction.CrudConflictException;
 import com.scalar.db.exception.transaction.TransactionException;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.LongAdder;
+import javax.json.Json;
 import kelpie.scalardb.Common;
 
 /** Workload F: Read-modify-write. */
@@ -25,35 +31,56 @@ public class WorkloadF extends TimeBasedProcessor {
   private final DistributedTransactionManager manager;
   private final int recordCount;
   private final int opsPerTx;
-  private final char[] payload;
+  private final int payloadSize;
+
+  private final LongAdder transactionRetryCount = new LongAdder();
 
   public WorkloadF(Config config) {
     super(config);
     this.manager = Common.getTransactionManager(config, NAMESPACE, TABLE);
     this.recordCount = getRecordCount(config);
     this.opsPerTx = (int) config.getUserLong(CONFIG_NAME, OPS_PER_TX, DEFAULT_OPS_PER_TX);
-    this.payload = new char[getPayloadSize(config)];
+    this.payloadSize = getPayloadSize(config);
   }
 
   @Override
   public void executeEach() throws TransactionException {
-    DistributedTransaction transaction = manager.start();
+    List<Integer> userIds = new ArrayList<>(opsPerTx);
+    List<String> payloads = new ArrayList<>(opsPerTx);
+    char[] payload = new char[payloadSize];
+    for (int i = 0; i < opsPerTx; ++i) {
+      userIds.add(ThreadLocalRandom.current().nextInt(recordCount));
 
-    try {
-      for (int i = 0; i < opsPerTx; ++i) {
-        int userId = ThreadLocalRandom.current().nextInt(recordCount);
-        transaction.get(prepareGet(userId));
-        YcsbCommon.randomFastChars(ThreadLocalRandom.current(), payload);
-        transaction.put(preparePut(userId, new String(payload)));
+      YcsbCommon.randomFastChars(ThreadLocalRandom.current(), payload);
+      payloads.add(new String(payload));
+    }
+
+    while (true) {
+      DistributedTransaction transaction = manager.start();
+      try {
+        for (int i = 0; i < userIds.size(); i++) {
+          int userId = userIds.get(i);
+          transaction.get(prepareGet(userId));
+          transaction.put(preparePut(userId, payloads.get(i)));
+        }
+        transaction.commit();
+        break;
+      } catch (CrudConflictException | CommitConflictException e) {
+        transaction.abort();
+        transactionRetryCount.increment();
+      } catch (Exception e) {
+        transaction.abort();
+        throw e;
       }
-      transaction.commit();
-    } catch (Exception e) {
-      transaction.abort();
     }
   }
 
   @Override
   public void close() throws Exception {
     manager.close();
+    setState(
+        Json.createObjectBuilder()
+            .add("transaction-retry-count", transactionRetryCount.toString())
+            .build());
   }
 }

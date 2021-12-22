@@ -11,10 +11,16 @@ import static kelpie.scalardb.ycsb.YcsbCommon.preparePut;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
+import com.scalar.db.exception.transaction.CommitConflictException;
+import com.scalar.db.exception.transaction.CrudConflictException;
 import com.scalar.db.exception.transaction.TransactionException;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.LongAdder;
+import javax.json.Json;
 import kelpie.scalardb.Common;
 
 /**
@@ -28,13 +34,15 @@ public class WorkloadA extends TimeBasedProcessor {
   private final int recordCount;
   private final int opsPerTx;
   private final boolean useReadModifyWrite;
-  private final char[] payload;
+  private final int payloadSize;
+
+  private final LongAdder transactionRetryCount = new LongAdder();
 
   public WorkloadA(Config config) {
     super(config);
     this.manager = Common.getTransactionManager(config, NAMESPACE, TABLE);
     this.recordCount = getRecordCount(config);
-    this.payload = new char[getPayloadSize(config)];
+    this.payloadSize = getPayloadSize(config);
     this.opsPerTx = (int) config.getUserLong(CONFIG_NAME, OPS_PER_TX, DEFAULT_OPS_PER_TX);
     if (opsPerTx % 2 != 0) {
       throw new IllegalArgumentException(OPS_PER_TX + " must be a multiple of 2.");
@@ -44,32 +52,56 @@ public class WorkloadA extends TimeBasedProcessor {
 
   @Override
   public void executeEach() throws TransactionException {
-    DistributedTransaction transaction = manager.start();
-
     int readOpsPerTx = opsPerTx / 2;
     int writeOpsPerTx = opsPerTx / 2;
 
-    try {
-      for (int i = 0; i < readOpsPerTx; ++i) {
-        transaction.get(prepareGet(ThreadLocalRandom.current().nextInt(recordCount)));
-      }
+    List<Integer> readUserIds = new ArrayList<>(readOpsPerTx);
+    for (int i = 0; i < readOpsPerTx; ++i) {
+      readUserIds.add(ThreadLocalRandom.current().nextInt(recordCount));
+    }
 
-      for (int i = 0; i < writeOpsPerTx; ++i) {
-        int userId = ThreadLocalRandom.current().nextInt(recordCount);
-        if (useReadModifyWrite) {
-          transaction.get(prepareGet(userId));
+    List<Integer> writeUserIds = new ArrayList<>(writeOpsPerTx);
+    List<String> payloads = new ArrayList<>(writeOpsPerTx);
+    char[] payload = new char[payloadSize];
+    for (int i = 0; i < writeOpsPerTx; ++i) {
+      writeUserIds.add(ThreadLocalRandom.current().nextInt(recordCount));
+
+      YcsbCommon.randomFastChars(ThreadLocalRandom.current(), payload);
+      payloads.add(new String(payload));
+    }
+
+    while (true) {
+      DistributedTransaction transaction = manager.start();
+      try {
+        for (Integer readUserId : readUserIds) {
+          transaction.get(prepareGet(readUserId));
         }
-        YcsbCommon.randomFastChars(ThreadLocalRandom.current(), payload);
-        transaction.put(preparePut(userId, new String(payload)));
+
+        for (int i = 0; i < writeUserIds.size(); i++) {
+          int writeUserId = writeUserIds.get(i);
+          if (useReadModifyWrite) {
+            transaction.get(prepareGet(writeUserId));
+          }
+          transaction.put(preparePut(writeUserId, payloads.get(i)));
+        }
+        transaction.commit();
+        break;
+      } catch (CrudConflictException | CommitConflictException e) {
+        transaction.abort();
+        transactionRetryCount.increment();
+      } catch (Exception e) {
+        transaction.abort();
+        throw e;
       }
-      transaction.commit();
-    } catch (Exception e) {
-      transaction.abort();
     }
   }
 
   @Override
   public void close() throws Exception {
     manager.close();
+    setState(
+        Json.createObjectBuilder()
+            .add("transaction-retry-count", transactionRetryCount.toString())
+            .build());
   }
 }

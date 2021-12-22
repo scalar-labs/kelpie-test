@@ -9,10 +9,16 @@ import static kelpie.scalardb.ycsb.YcsbCommon.prepareGet;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
+import com.scalar.db.exception.transaction.CommitConflictException;
+import com.scalar.db.exception.transaction.CrudConflictException;
 import com.scalar.db.exception.transaction.TransactionException;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.LongAdder;
+import javax.json.Json;
 import kelpie.scalardb.Common;
 
 /** Workload C: Read only. */
@@ -21,6 +27,8 @@ public class WorkloadC extends TimeBasedProcessor {
   private final DistributedTransactionManager manager;
   private final int recordCount;
   private final int opsPerTx;
+
+  private final LongAdder transactionRetryCount = new LongAdder();
 
   public WorkloadC(Config config) {
     super(config);
@@ -31,20 +39,35 @@ public class WorkloadC extends TimeBasedProcessor {
 
   @Override
   public void executeEach() throws TransactionException {
-    DistributedTransaction transaction = manager.start();
+    List<Integer> userIds = new ArrayList<>(opsPerTx);
+    for (int i = 0; i < opsPerTx; ++i) {
+      userIds.add(ThreadLocalRandom.current().nextInt(recordCount));
+    }
 
-    try {
-      for (int i = 0; i < opsPerTx; ++i) {
-        transaction.get(prepareGet(ThreadLocalRandom.current().nextInt(recordCount)));
+    while (true) {
+      DistributedTransaction transaction = manager.start();
+      try {
+        for (Integer userId : userIds) {
+          transaction.get(prepareGet(userId));
+        }
+        transaction.commit();
+        break;
+      } catch (CrudConflictException | CommitConflictException e) {
+        transaction.abort();
+        transactionRetryCount.increment();
+      } catch (Exception e) {
+        transaction.abort();
+        throw e;
       }
-      transaction.commit();
-    } catch (Exception e) {
-      transaction.abort();
     }
   }
 
   @Override
   public void close() throws Exception {
     manager.close();
+    setState(
+        Json.createObjectBuilder()
+            .add("transaction-retry-count", transactionRetryCount.toString())
+            .build());
   }
 }
