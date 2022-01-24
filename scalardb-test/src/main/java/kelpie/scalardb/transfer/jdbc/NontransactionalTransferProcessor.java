@@ -30,9 +30,6 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
     DatabaseConfig databaseConfig = Common.getDatabaseConfig(config);
     dataSource = JdbcUtils.initDataSource(new JdbcConfig(databaseConfig.getProperties()));
     rdbEngine = JdbcUtils.getRdbEngine(databaseConfig.getContactPoints().get(0));
-    if (rdbEngine == RdbEngine.SQL_SERVER) {
-      throw new IllegalArgumentException(RdbEngine.SQL_SERVER + " is not supported.");
-    }
   }
 
   @Override
@@ -163,24 +160,58 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
                 + enclosedBalance
                 + ") VALUES (?,?,?)";
         break;
+      case SQL_SERVER:
+        sql =
+            "MERGE "
+                + enclosedFullTableName
+                + " t1 USING (SELECT ? "
+                + enclosedAccountId
+                + ",? "
+                + enclosedAccountType
+                + ") t2 "
+                + "ON (t1."
+                + enclosedAccountId
+                + "=t2."
+                + enclosedAccountId
+                + " AND t1."
+                + enclosedAccountType
+                + "=t2."
+                + enclosedAccountType
+                + ") WHEN MATCHED THEN UPDATE SET "
+                + enclosedBalance
+                + "=? WHEN NOT MATCHED THEN INSERT ("
+                + enclosedAccountId
+                + ","
+                + enclosedAccountType
+                + ","
+                + enclosedBalance
+                + ") VALUES (?,?,?);";
+        break;
       default:
         throw new AssertionError();
     }
 
     try (Connection connection = dataSource.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-      if (rdbEngine != RdbEngine.ORACLE) {
-        preparedStatement.setInt(1, id);
-        preparedStatement.setInt(2, type);
-        preparedStatement.setInt(3, amount);
-        preparedStatement.setInt(4, amount);
-      } else {
-        preparedStatement.setInt(1, id);
-        preparedStatement.setInt(2, type);
-        preparedStatement.setInt(3, amount);
-        preparedStatement.setInt(4, id);
-        preparedStatement.setInt(5, type);
-        preparedStatement.setInt(6, amount);
+      switch (rdbEngine) {
+        case MYSQL:
+        case POSTGRESQL:
+          preparedStatement.setInt(1, id);
+          preparedStatement.setInt(2, type);
+          preparedStatement.setInt(3, amount);
+          preparedStatement.setInt(4, amount);
+          break;
+        case ORACLE:
+        case SQL_SERVER:
+          preparedStatement.setInt(1, id);
+          preparedStatement.setInt(2, type);
+          preparedStatement.setInt(3, amount);
+          preparedStatement.setInt(4, id);
+          preparedStatement.setInt(5, type);
+          preparedStatement.setInt(6, amount);
+          break;
+        default:
+          throw new AssertionError();
       }
       preparedStatement.executeUpdate();
     }
