@@ -5,10 +5,13 @@ import static kelpie.scalardb.ycsb.YcsbCommon.NAMESPACE;
 import static kelpie.scalardb.ycsb.YcsbCommon.TABLE;
 import static kelpie.scalardb.ycsb.YcsbCommon.getPayloadSize;
 import static kelpie.scalardb.ycsb.YcsbCommon.getRecordCount;
+import static kelpie.scalardb.ycsb.YcsbCommon.prepareGet;
 import static kelpie.scalardb.ycsb.YcsbCommon.preparePut;
+import static kelpie.scalardb.ycsb.YcsbCommon.randomFastChars;
 
 import com.scalar.db.api.DistributedTransaction;
 import com.scalar.db.api.DistributedTransactionManager;
+import com.scalar.db.api.Get;
 import com.scalar.db.api.Put;
 import com.scalar.db.exception.transaction.AbortException;
 import com.scalar.kelpie.config.Config;
@@ -27,6 +30,7 @@ public class Loader extends PreProcessor {
   private static final long DEFAULT_POPULATION_CONCURRENCY = 10L;
   private static final long DEFAULT_BATCH_SIZE = 1;
   private static final String POPULATION_CONCURRENCY = "population_concurrency";
+  private static final String POPULATION_READ_BEFORE_WRITE = "population_read_before_write";
   private static final String BATCH_SIZE = "batch_size";
   private static final int MAX_RETRIES = 10;
   private static final int WAIT_DURATION_MILLIS = 1000;
@@ -35,16 +39,18 @@ public class Loader extends PreProcessor {
   private final int recordCount;
   private final char[] payload;
   private final int batchSize;
+  private final boolean readBeforeWrite;
 
   public Loader(Config config) {
     super(config);
-    this.manager = Common.getTransactionManager(config, NAMESPACE, TABLE);
-    this.concurrency =
+    manager = Common.getTransactionManager(config, NAMESPACE, TABLE);
+    concurrency =
         (int)
             config.getUserLong(CONFIG_NAME, POPULATION_CONCURRENCY, DEFAULT_POPULATION_CONCURRENCY);
-    this.batchSize = (int) config.getUserLong(CONFIG_NAME, BATCH_SIZE, DEFAULT_BATCH_SIZE);
-    this.recordCount = getRecordCount(config);
-    this.payload = new char[getPayloadSize(config)];
+    batchSize = (int) config.getUserLong(CONFIG_NAME, BATCH_SIZE, DEFAULT_BATCH_SIZE);
+    recordCount = getRecordCount(config);
+    payload = new char[getPayloadSize(config)];
+    readBeforeWrite = config.getUserBoolean(CONFIG_NAME, POPULATION_READ_BEFORE_WRITE, false);
   }
 
   @Override
@@ -95,7 +101,11 @@ public class Loader extends PreProcessor {
             try {
               transaction = manager.start();
               for (int i = startId; i < endId; ++i) {
-                YcsbCommon.randomFastChars(ThreadLocalRandom.current(), payload);
+                if (readBeforeWrite) {
+                  Get get = prepareGet(i);
+                  transaction.get(get);
+                }
+                randomFastChars(ThreadLocalRandom.current(), payload);
                 Put put = preparePut(i, new String(payload));
                 transaction.put(put);
               }
