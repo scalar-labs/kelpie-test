@@ -6,6 +6,9 @@ plugins {
 
 repositories {
     mavenCentral()
+    maven {
+        url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
     jcenter()
 }
 
@@ -21,7 +24,7 @@ dependencies {
     if (project.hasProperty("scalardb-libs-path")) {
         implementation fileTree(project.property("scalardb-libs-path")) { include '*.jar' }
     } else {
-        implementation group: 'com.scalar-labs', name: 'scalardb', version: '3.5.0'
+        implementation group: 'com.scalar-labs', name: 'scalardb', version: '4.0.0-SNAPSHOT'
         implementation group: 'com.google.guava', name: 'guava', version: '30.1-jre'
         implementation group: 'com.azure', name: 'azure-cosmos', version: '4.20.0'
         implementation group: 'software.amazon.awssdk', name: 'dynamodb', version: "${awssdkVersion}"

@@ -28,7 +28,7 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
 
     DatabaseConfig databaseConfig = Common.getDatabaseConfig(config);
-    dataSource = JdbcUtils.initDataSource(new JdbcConfig(databaseConfig.getProperties()));
+    dataSource = JdbcUtils.initDataSource(new JdbcConfig(databaseConfig));
     rdbEngine = JdbcUtils.getRdbEngine(databaseConfig.getContactPoints().get(0));
   }
 
