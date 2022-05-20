@@ -1,6 +1,5 @@
 package scalardl.transfer;
 
-import scalardl.Common;
 import com.scalar.dl.client.exception.ClientException;
 import com.scalar.dl.client.service.ClientService;
 import com.scalar.dl.ledger.service.StatusCode;
@@ -16,8 +15,10 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import scalardl.Common;
 
 public class TransferProcessor extends TimeBasedProcessor {
+
   private final String transferContractName;
   private final ClientService service;
   private final int numAccounts;
@@ -42,11 +43,11 @@ public class TransferProcessor extends TimeBasedProcessor {
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
     JsonObject arg = makeArgument(fromId, toId, amount);
 
-    String txId = arg.getString("nonce");
+    String txId = UUID.randomUUID().toString();
     logStart(txId, fromId, toId, amount);
 
     try {
-      service.executeContract(transferContractName, arg);
+      service.executeContract(txId, transferContractName, arg);
     } catch (Exception e) {
       logFailure(txId, fromId, toId, amount, e);
       throw e;
@@ -74,11 +75,7 @@ public class TransferProcessor extends TimeBasedProcessor {
     JsonArray assetIds =
         Json.createArrayBuilder().add(String.valueOf(fromId)).add(String.valueOf(toId)).build();
 
-    return Json.createObjectBuilder()
-        .add("asset_ids", assetIds)
-        .add("amount", amount)
-        .add("nonce", UUID.randomUUID().toString())
-        .build();
+    return Json.createObjectBuilder().add("asset_ids", assetIds).add("amount", amount).build();
   }
 
   private void logStart(String txId, int fromId, int toId, int amount) {

@@ -1,6 +1,5 @@
 package scalardl.transfer;
 
-import scalardl.Common;
 import com.scalar.dl.client.service.ClientService;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.PreProcessException;
@@ -9,15 +8,16 @@ import io.github.resilience4j.retry.Retry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 import javax.json.Json;
 import javax.json.JsonObject;
+import scalardl.Common;
 
 public class TransferPreparer extends PreProcessor {
+
   private final long POPULATION_CONCURRENCY = 16L;
   private final int NUM_ACCOUNTS_PER_TX = 100;
 
@@ -89,6 +89,7 @@ public class TransferPreparer extends PreProcessor {
   }
 
   private class PopulationRunner implements Runnable {
+
     private final ClientService service;
     private final int threadId;
 
@@ -130,7 +131,6 @@ public class TransferPreparer extends PreProcessor {
               .add("start_id", startId)
               .add("end_id", endId)
               .add("amount", Common.INITIAL_BALANCE)
-              .add("nonce", UUID.randomUUID().toString())
               .build();
       Runnable populate = () -> service.executeContract(populationContractName, argument);
 

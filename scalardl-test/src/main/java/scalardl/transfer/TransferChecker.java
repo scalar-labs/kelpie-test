@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.json.Json;
@@ -70,11 +69,7 @@ public class TransferChecker extends PostProcessor {
 
     for (int i = 0; i < numAccounts; i++) {
       try {
-        JsonObject argument =
-            Json.createObjectBuilder()
-                .add("asset_id", String.valueOf(i))
-                .add("nonce", UUID.randomUUID().toString())
-                .build();
+        JsonObject argument = Json.createObjectBuilder().add("asset_id", String.valueOf(i)).build();
 
         JsonObject result = service.executeContract(name, argument).getResult().get();
         results.add(result);
