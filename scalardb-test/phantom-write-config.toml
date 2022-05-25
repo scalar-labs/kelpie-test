@@ -23,7 +23,7 @@
 [test_config]
   is_verification = true
   num_devices = 5
-  checker_retry_interval_millis = 10000
+  checker_retry_interval_millis = 1000
   checker_max_retries_for_read = 10
 
 [storage_config]

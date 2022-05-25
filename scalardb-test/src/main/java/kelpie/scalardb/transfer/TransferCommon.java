@@ -61,9 +61,13 @@ public class TransferCommon {
   }
 
   public static List<Result> readRecordsWithRetry(Config config) {
+    int maxRetry = (int) config.getUserLong("test_config", "checker_max_retries_for_read", 10L);
+    long retryIntervalSleepTime = config.getUserLong("test_config", "checker_retry_interval_millis",
+        1000L);
     DistributedTransactionManager manager = getTransactionManager(config);
     DistributedStorage storage = getStorage(config);
-    Retry retry = Common.getRetryWithExponentialBackoff("readRecords");
+    Retry retry = Common.getRetryWithExponentialBackoff("readBalances", maxRetry,
+        retryIntervalSleepTime);
     Supplier<List<Result>> decorated =
         Retry.decorateSupplier(retry, () -> readRecords(manager, storage, config));
 
