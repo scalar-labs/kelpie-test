@@ -49,7 +49,11 @@ public class SensorChecker extends PostProcessor {
   public void close() {}
 
   private List<Result> readRecordsWithRetry(int timestamp) {
-    Retry retry = Common.getRetryWithExponentialBackoff("readRecords");
+    int maxRetry = (int) config.getUserLong("test_config", "checker_max_retries_for_read", 10L);
+    long retryIntervalSleepTime = config.getUserLong("test_config", "checker_retry_interval_millis",
+        1000L);
+    Retry retry = Common.getRetryWithExponentialBackoff("readBalances", maxRetry,
+        retryIntervalSleepTime);
     Supplier<List<Result>> decorated = Retry.decorateSupplier(retry, () -> readRecords(timestamp));
 
     try {

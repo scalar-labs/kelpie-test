@@ -132,10 +132,14 @@ public class Common {
   }
 
   public static Retry getRetryWithExponentialBackoff(String name) {
-    IntervalFunction intervalFunc = IntervalFunction.ofExponentialBackoff(SLEEP_BASE_MILLIS, 2.0);
+    return getRetryWithExponentialBackoff(name, MAX_RETRIES, SLEEP_BASE_MILLIS);
+  }
+
+  public static Retry getRetryWithExponentialBackoff(String name, int maxRetries, long waitMillis) {
+    IntervalFunction intervalFunc = IntervalFunction.ofExponentialBackoff(waitMillis, 2.0);
 
     RetryConfig retryConfig =
-        RetryConfig.custom().maxAttempts(MAX_RETRIES).intervalFunction(intervalFunc).build();
+        RetryConfig.custom().maxAttempts(maxRetries).intervalFunction(intervalFunc).build();
 
     return Retry.of(name, retryConfig);
   }
