@@ -1,0 +1,34 @@
+[modules]
+  [modules.preprocessor]
+    name = "kelpie.seata.mycsb.Loader"
+    path = "build/libs/seata-test-all.jar"
+  [modules.processor]
+    name = "kelpie.seata.mycsb.WorkloadFe"
+    path = "build/libs/seata-test-all.jar"
+  [modules.postprocessor]
+    name = "kelpie.seata.mycsb.MycsbReporter"
+    path = "build/libs/seata-test-all.jar"
+
+[common]
+  concurrency = 4
+  run_for_sec = 5
+  ramp_for_sec = 5
+
+[stats]
+  realtime_report_enabled = true
+
+[test_config]
+  record_count = 10000
+  population_concurrency = 4
+
+[primary_db_config]
+  url = "jdbc:mysql://localhost:3306/seata?useSSL=false&serverTimezone=UTC"
+  username = "root"
+  password = "root"
+  driver = "com.mysql.jdbc.Driver"
+
+[secondary_db_config]
+  url = "jdbc:mysql://localhost:13306/seata?useSSL=false&serverTimezone=UTC"
+  username = "root"
+  password = "root"
+  driver = "com.mysql.jdbc.Driver"
