@@ -1,0 +1,28 @@
+[modules]
+  [modules.preprocessor]
+    name = "kelpie.scalardb.ycsb.MultiStorageLoader"
+    path = "build/libs/scalardb-test-all.jar"
+  [modules.processor]
+    name = "kelpie.scalardb.ycsb.MultiStorageWorkloadFr"
+    path = "build/libs/scalardb-test-all.jar"
+  [modules.postprocessor]
+    name = "kelpie.scalardb.ycsb.YcsbReporter"
+    path = "build/libs/scalardb-test-all.jar"
+
+[common]
+  concurrency = 4
+  run_for_sec = 5
+  ramp_for_sec = 5
+
+[stats]
+  realtime_report_enabled = true
+
+[test_config]
+  ops_per_tx = 1
+  record_count = 10000
+  hotspot_record_count = 100
+  dispatch_rate = 25
+  population_concurrency = 4
+
+[storage_config]
+  config_file = "multi-storage-ycsb.properties"

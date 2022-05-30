@@ -35,11 +35,16 @@ public class Common {
     return factory.getStorage();
   }
 
-  public static DistributedTransactionManager getTransactionManager(
-      Config config, String keyspace, String table) {
+  public static DistributedTransactionManager getTransactionManager(Config config) {
     DatabaseConfig dbConfig = getDatabaseConfig(config);
     TransactionFactory factory = new TransactionFactory(dbConfig);
     DistributedTransactionManager manager = factory.getTransactionManager();
+    return manager;
+  }
+
+  public static DistributedTransactionManager getTransactionManager(
+      Config config, String keyspace, String table) {
+    DistributedTransactionManager manager = getTransactionManager(config);
     manager.with(keyspace, table);
     return manager;
   }
