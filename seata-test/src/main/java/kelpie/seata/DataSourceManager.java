@@ -28,15 +28,19 @@ public class DataSourceManager {
 
   private DataSource getDataSourceXA(String table) {
     String url = config.getUserString(table, "url", "jdbc:mysql://localhost/seata");
-    String username = config.getUserString(table, "username", "cassandra");
-    String password = config.getUserString(table, "password", "cassandra");
-    String driver = config.getUserString(table, "isolation_level", "com.mysql.jdbc.Driver");
+    String username = config.getUserString(table, "username", "root");
+    String password = config.getUserString(table, "password", "example");
+    String driver = config.getUserString(table, "driver", "com.mysql.jdbc.Driver");
+    int minIdle = (int)config.getUserLong(table, "min_idle", (long)0);
+    int maxActive = (int)config.getUserLong(table, "max_active", (long)8);
 
     DataSource dataSource = new DruidDataSource();
     ((DruidDataSource)dataSource).setUrl(url);
     ((DruidDataSource)dataSource).setUsername(username);
     ((DruidDataSource)dataSource).setPassword(password);
     ((DruidDataSource)dataSource).setDriverClassName(driver);
+    ((DruidDataSource)dataSource).setMinIdle(minIdle);
+    ((DruidDataSource)dataSource).setMaxActive(maxActive);
     return new DataSourceProxyXA(dataSource);
   }
 }

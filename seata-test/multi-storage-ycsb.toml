@@ -26,9 +26,13 @@
   username = "root"
   password = "root"
   driver = "com.mysql.jdbc.Driver"
+  min_idle = 200
+  max_active = 500
 
 [secondary_db_config]
   url = "jdbc:mysql://localhost:13306/seata?useSSL=false&serverTimezone=UTC"
   username = "root"
   password = "root"
   driver = "com.mysql.jdbc.Driver"
+  min_idle = 200
+  max_active = 500
