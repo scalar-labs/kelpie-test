@@ -20,17 +20,12 @@ dependencies {
     implementation group: 'javax.json', name: 'javax.json-api', version: '1.1.4'
     implementation group: 'org.glassfish', name: 'javax.json', version: '1.1.4'
     implementation group: 'io.github.resilience4j', name: 'resilience4j-retry', version: '1.3.1'
-
-    if (project.hasProperty("scalardb-libs-path")) {
-        implementation fileTree(project.property("scalardb-libs-path")) { include '*.jar' }
-    } else {
-        implementation group: 'com.scalar-labs', name: 'scalardb', version: '4.0.0-SNAPSHOT'
-        implementation group: 'com.google.guava', name: 'guava', version: '30.1-jre'
-        implementation group: 'com.azure', name: 'azure-cosmos', version: '4.20.0'
-        implementation group: 'software.amazon.awssdk', name: 'dynamodb', version: "${awssdkVersion}"
-        implementation group: 'software.amazon.awssdk', name: 'core', version: "${awssdkVersion}"
-        implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.8.0'
-    }
+    implementation group: 'com.scalar-labs', name: 'scalardb', version: '4.0.0-SNAPSHOT'
+    implementation group: 'com.google.guava', name: 'guava', version: '30.1-jre'
+    implementation group: 'com.azure', name: 'azure-cosmos', version: '4.20.0'
+    implementation group: 'software.amazon.awssdk', name: 'dynamodb', version: "${awssdkVersion}"
+    implementation group: 'software.amazon.awssdk', name: 'core', version: "${awssdkVersion}"
+    implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.8.0'
 }
 
 shadowJar {
