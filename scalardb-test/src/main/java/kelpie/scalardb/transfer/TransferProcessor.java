@@ -42,14 +42,7 @@ public class TransferProcessor extends TimeBasedProcessor {
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
     DistributedTransaction transaction = manager.start();
-
-    String txId;
-    try {
-      txId = transaction.getId();
-    } catch (UnsupportedOperationException ignored) {
-      // JdbcTransaction doesn't support getId()
-      txId = "nothing";
-    }
+    String txId = transaction.getId();
 
     logStart(txId, fromId, toId, amount);
 

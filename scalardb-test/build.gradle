@@ -10,6 +10,13 @@ repositories {
         url 'https://oss.sonatype.org/content/repositories/snapshots/'
     }
     jcenter()
+    maven {
+        url = uri("https://maven.pkg.github.com/scalar-labs/scalardb-sql")
+        credentials {
+            username = project.findProperty("gprUsername") ?: System.getenv("GPR_USERNAME")
+            password = project.findProperty("gprPassword") ?: System.getenv("GPR_PASSWORD")
+        }
+    }
 }
 
 def awssdkVersion = "2.17.69"
@@ -26,6 +33,8 @@ dependencies {
     implementation group: 'software.amazon.awssdk', name: 'dynamodb', version: "${awssdkVersion}"
     implementation group: 'software.amazon.awssdk', name: 'core', version: "${awssdkVersion}"
     implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.8.0'
+    implementation group: 'com.scalar-labs', name: 'scalardb-sql', version: '4.0.0-SNAPSHOT'
+    implementation group: 'com.scalar-labs', name: 'scalardb-sql-jdbc', version: '4.0.0-SNAPSHOT'
 }
 
 shadowJar {
