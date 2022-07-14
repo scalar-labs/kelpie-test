@@ -14,7 +14,7 @@ public final class SqlCommon {
       Config config, TransactionMode transactionMode) {
     String configFile = config.getUserString("sql_config", "config_file");
     return SqlSessionFactory.builder()
-        .withPropertyFile(configFile)
+        .withPropertiesFile(configFile)
         .withDefaultTransactionMode(transactionMode)
         .build();
   }
