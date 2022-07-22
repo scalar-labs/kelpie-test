@@ -35,7 +35,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Create scalardb test containers
-        run: ./gradlew docker -PdockerVersion=${{ steps.version.outputs.version }}
+        run: ./gradlew docker -PdockerVersion=${{ steps.version.outputs.version }} -PgprUsername="${{ github.repository_owner }}" -PgprPassword="${{ secrets.CR_PAT }}"
         working-directory: scalardb-test
 
       - name: Create scalardl test containers
