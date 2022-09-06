@@ -1,0 +1,29 @@
+[modules]
+  [modules.preprocessor]
+    name = "kelpie.jdbc.ycsb.Loader"
+    path = "build/libs/jdbc-test-all.jar"
+  [modules.processor]
+    name = "kelpie.jdbc.ycsb.WorkloadF"
+    path = "build/libs/jdbc-test-all.jar"
+  [modules.postprocessor]
+    name = "kelpie.jdbc.ycsb.YcsbReporter"
+    path = "build/libs/jdbc-test-all.jar"
+
+[common]
+  concurrency = 4
+  run_for_sec = 30
+  ramp_for_sec = 30
+
+[stats]
+  realtime_report_enabled = true
+
+[test_config]
+  record_count = 1000000
+
+[db_config]
+  url = "jdbc:mysql://localhost:3306/ycsb?useSSL=false&serverTimezone=UTC"
+  username = "root"
+  password = "root"
+  driver = "com.mysql.cj.jdbc.Driver"
+  min_idle = 200
+  max_active = 500
