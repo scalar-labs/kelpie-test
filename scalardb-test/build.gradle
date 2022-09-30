@@ -36,7 +36,7 @@ dependencies {
     implementation group: 'com.scalar-labs', name: 'scalardb-sql', version: '4.0.0-SNAPSHOT'
     implementation group: 'com.scalar-labs', name: 'scalardb-sql-jdbc', version: '4.0.0-SNAPSHOT'
     implementation group: 'com.scalar-labs', name: 'scalardb-graphql', version: '4.0.0-SNAPSHOT'
-    implementation 'com.graphql-java:graphql-java:17.2'
+    implementation group: 'com.graphql-java', name: 'graphql-java', version: '17.4'
 }
 
 shadowJar {
