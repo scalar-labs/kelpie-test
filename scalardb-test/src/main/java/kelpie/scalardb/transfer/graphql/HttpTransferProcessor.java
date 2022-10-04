@@ -4,10 +4,7 @@ import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.ThreadLocalRandom;
@@ -17,6 +14,7 @@ import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.JsonValue;
+import javax.json.JsonWriter;
 import kelpie.scalardb.transfer.TransferCommon;
 
 public class HttpTransferProcessor extends TimeBasedProcessor {
@@ -154,16 +152,15 @@ public class HttpTransferProcessor extends TimeBasedProcessor {
 
     JsonObject requestJson =
         Json.createObjectBuilder().add("query", query).add("variables", variables).build();
-    try (Writer writer = new OutputStreamWriter(connection.getOutputStream())) {
-      Json.createWriter(writer).write(requestJson);
+    try (JsonWriter writer = Json.createWriter(connection.getOutputStream())) {
+      writer.write(requestJson);
     }
 
-    try (InputStream is = connection.getInputStream()) {
-      JsonReader jsonReader = Json.createReader(is);
+    try (JsonReader jsonReader = Json.createReader(connection.getInputStream())) {
       return jsonReader.readObject();
     } catch (IOException e) {
-      try (InputStream es = connection.getErrorStream()) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(es));
+      try (BufferedReader reader =
+          new BufferedReader(new InputStreamReader(connection.getErrorStream()))) {
         logError(reader.lines().collect(Collectors.joining()));
       }
       throw e;
