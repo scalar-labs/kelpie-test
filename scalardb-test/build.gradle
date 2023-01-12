@@ -24,6 +24,13 @@ repositories {
             password = project.findProperty("gprPassword") ?: System.getenv("GPR_PASSWORD")
         }
     }
+    maven {
+        url = uri("https://maven.pkg.github.com/scalar-labs/scalardb-cluster")
+        credentials {
+            username = project.findProperty("gprUsername") ?: System.getenv("GPR_USERNAME")
+            password = project.findProperty("gprPassword") ?: System.getenv("GPR_PASSWORD")
+        }
+    }
 }
 
 def awssdkVersion = "2.17.69"
@@ -43,6 +50,7 @@ dependencies {
     implementation group: 'com.scalar-labs', name: 'scalardb-sql', version: '4.0.0-SNAPSHOT'
     implementation group: 'com.scalar-labs', name: 'scalardb-sql-jdbc', version: '4.0.0-SNAPSHOT'
     implementation group: 'com.scalar-labs', name: 'scalardb-graphql', version: '4.0.0-SNAPSHOT'
+    implementation group: 'com.scalar-labs', name: 'scalardb-cluster-client', version: '4.0.0-SNAPSHOT'
     implementation group: 'com.graphql-java', name: 'graphql-java', version: '17.4'
 }
 
