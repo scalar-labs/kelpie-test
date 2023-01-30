@@ -42,6 +42,13 @@ public class TransferProcessorWithRetry extends TimeBasedProcessor {
             .retryExceptions(CrudConflictException.class, CommitConflictException.class)
             .build();
     retry = Retry.of("TransferProcessorWithRetry", retryConfig);
+    retry
+        .getEventPublisher()
+        .onRetry(
+            e -> {
+              logWarn(e.toString(), e.getLastThrowable());
+              retryCount.increment();
+            });
   }
 
   @Override
@@ -92,11 +99,6 @@ public class TransferProcessorWithRetry extends TimeBasedProcessor {
 
       transaction.commit();
     } catch (Exception e) {
-      if (e instanceof CrudConflictException || e instanceof CommitConflictException) {
-        logWarn("a transaction conflict occurred. Retrying...", e);
-        retryCount.increment();
-      }
-
       try {
         transaction.rollback();
       } catch (RollbackException ex) {
