@@ -7,6 +7,7 @@ import com.scalar.db.api.TwoPhaseCommitTransaction;
 import com.scalar.db.api.TwoPhaseCommitTransactionManager;
 import com.scalar.db.exception.transaction.CommitConflictException;
 import com.scalar.db.exception.transaction.CrudConflictException;
+import com.scalar.db.exception.transaction.RollbackException;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
 import io.github.resilience4j.core.IntervalFunction;
@@ -107,8 +108,16 @@ public class TransferWithTwoPhaseCommitTransactionProcessorWithRetry extends Tim
       tx1.commit();
       tx2.commit();
     } catch (Exception e) {
-      tx1.rollback();
-      tx2.rollback();
+      try {
+        tx1.rollback();
+      } catch (RollbackException ex) {
+        logWarn("rollback failed", ex);
+      }
+      try {
+        tx2.rollback();
+      } catch (RollbackException ex) {
+        logWarn("rollback failed", ex);
+      }
       throw e;
     }
   }
