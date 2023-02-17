@@ -7,7 +7,9 @@ import com.scalar.db.api.TwoPhaseCommitTransaction;
 import com.scalar.db.api.TwoPhaseCommitTransactionManager;
 import com.scalar.db.exception.transaction.CommitConflictException;
 import com.scalar.db.exception.transaction.CrudConflictException;
+import com.scalar.db.exception.transaction.PreparationConflictException;
 import com.scalar.db.exception.transaction.RollbackException;
+import com.scalar.db.exception.transaction.ValidationConflictException;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
 import io.github.resilience4j.core.IntervalFunction;
@@ -42,7 +44,11 @@ public class TransferWithTwoPhaseCommitTransactionProcessorWithRetry extends Tim
             .maxAttempts(MAX_RETRIES)
             .intervalFunction(
                 IntervalFunction.ofExponentialBackoff(INITIAL_INTERNAL_MILLS, MULTIPLIER))
-            .retryExceptions(CrudConflictException.class, CommitConflictException.class)
+            .retryExceptions(
+                CrudConflictException.class,
+                PreparationConflictException.class,
+                ValidationConflictException.class,
+                CommitConflictException.class)
             .build();
     retry = Retry.of("TransferWithTwoPhaseCommitTransactionProcessorWithRetry", retryConfig);
     retry
