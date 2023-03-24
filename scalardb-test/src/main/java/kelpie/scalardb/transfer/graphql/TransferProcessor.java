@@ -1,8 +1,12 @@
 package kelpie.scalardb.transfer.graphql;
 
 import com.google.common.collect.ImmutableMap;
+import com.scalar.db.api.DistributedTransactionAdmin;
+import com.scalar.db.api.DistributedTransactionManager;
+import com.scalar.db.api.TwoPhaseCommitTransactionManager;
 import com.scalar.db.config.DatabaseConfig;
 import com.scalar.db.graphql.GraphQlFactory;
+import com.scalar.db.graphql.server.ScalarDbSchema;
 import com.scalar.db.service.TransactionFactory;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
@@ -16,8 +20,11 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import kelpie.scalardb.Common;
 import kelpie.scalardb.transfer.TransferCommon;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TransferProcessor extends TimeBasedProcessor {
+  private static final Logger logger = LoggerFactory.getLogger(TransferProcessor.class);
 
   private static final String GET_BALANCES =
       "query balances($from_id: Int!, $from_type: Int!, $to_id: Int!, $to_type: Int!) @transaction {\n"
@@ -52,6 +59,9 @@ public class TransferProcessor extends TimeBasedProcessor {
           + "          values: {balance: $to_new_balance}}\n"
           + "  )\n"
           + "}";
+
+  private final DistributedTransactionManager transactionManager;
+  private final TwoPhaseCommitTransactionManager twoPhaseCommitTransactionManager;
   private final GraphQL graphql;
   private final int numAccounts;
   private final boolean isVerification;
@@ -61,11 +71,31 @@ public class TransferProcessor extends TimeBasedProcessor {
     super(config);
 
     DatabaseConfig databaseConfig = Common.getDatabaseConfig(config);
+    TransactionFactory transactionFactory =
+        TransactionFactory.create(databaseConfig.getProperties());
+
+    ScalarDbSchema scalarDbSchema;
+    DistributedTransactionAdmin transactionAdmin = transactionFactory.getTransactionAdmin();
+    try {
+      ScalarDbSchema.Builder scalarDBSchemaBuilder = ScalarDbSchema.newBuilder();
+      scalarDBSchemaBuilder.tableMetadata(
+          TransferCommon.KEYSPACE,
+          TransferCommon.TABLE,
+          transactionAdmin.getTableMetadata(TransferCommon.KEYSPACE, TransferCommon.TABLE));
+      scalarDbSchema = scalarDBSchemaBuilder.build();
+    } finally {
+      try {
+        transactionAdmin.close();
+      } catch (Exception e) {
+        logger.warn("failed to close transactionAdmin", e);
+      }
+    }
+
+    transactionManager = transactionFactory.getTransactionManager();
+    twoPhaseCommitTransactionManager = transactionFactory.getTwoPhaseCommitTransactionManager();
+
     GraphQlFactory graphQlFactory =
-        GraphQlFactory.newBuilder()
-            .transactionFactory(new TransactionFactory(databaseConfig))
-            .table(TransferCommon.KEYSPACE, TransferCommon.TABLE)
-            .build();
+        new GraphQlFactory(transactionManager, twoPhaseCommitTransactionManager, scalarDbSchema);
     graphql = graphQlFactory.createGraphQL();
 
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
@@ -92,7 +122,18 @@ public class TransferProcessor extends TimeBasedProcessor {
   }
 
   @Override
-  public void close() {}
+  public void close() {
+    try {
+      transactionManager.close();
+    } catch (Exception e) {
+      logger.warn("failed to close transactionManager", e);
+    }
+    try {
+      twoPhaseCommitTransactionManager.close();
+    } catch (Exception e) {
+      logger.warn("failed to close twoPhaseCommitTransactionManager", e);
+    }
+  }
 
   @SuppressWarnings("unchecked")
   private String transfer(int fromId, int toId, int amount) throws Exception {
