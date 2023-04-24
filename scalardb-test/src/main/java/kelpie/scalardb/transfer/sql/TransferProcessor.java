@@ -29,7 +29,7 @@ public class TransferProcessor extends TimeBasedProcessor {
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-    try (SqlSession sqlSession = sqlSessionFactory.getSqlSession()) {
+    try (SqlSession sqlSession = sqlSessionFactory.createSqlSession()) {
       transfer(sqlSession, fromId, toId, amount);
     }
   }

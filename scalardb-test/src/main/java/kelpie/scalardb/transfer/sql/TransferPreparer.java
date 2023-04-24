@@ -91,7 +91,7 @@ public class TransferPreparer extends PreProcessor {
     private void populateWithTx(int startId, int endId) {
       Runnable populate =
           () -> {
-            try (SqlSession sqlSession = sqlSessionFactory.getSqlSession()) {
+            try (SqlSession sqlSession = sqlSessionFactory.createSqlSession()) {
               try {
                 sqlSession.begin();
 

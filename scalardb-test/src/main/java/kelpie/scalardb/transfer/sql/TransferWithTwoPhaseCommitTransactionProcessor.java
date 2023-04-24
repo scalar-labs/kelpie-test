@@ -30,8 +30,8 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-    try (SqlSession sqlSession1 = sqlSessionFactory.getSqlSession();
-        SqlSession sqlSession2 = sqlSessionFactory.getSqlSession()) {
+    try (SqlSession sqlSession1 = sqlSessionFactory.createSqlSession();
+        SqlSession sqlSession2 = sqlSessionFactory.createSqlSession()) {
       transfer(sqlSession1, sqlSession2, fromId, toId, amount);
     }
   }
