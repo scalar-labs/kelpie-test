@@ -2,11 +2,15 @@ package kelpie.scalardb.transfer.graphql;
 
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
+import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -22,9 +26,13 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class HttpTransferProcessor extends TimeBasedProcessor {
+public class HttpTransferProcessorWithRetry extends TimeBasedProcessor {
 
   public static final MediaType JSON = MediaType.get("application/json");
+
+  private static final int INITIAL_INTERNAL_MILLS = 10;
+  private static final double MULTIPLIER = 2.0;
+  private static final int MAX_RETRIES = 10;
 
   private static final String GET_BALANCES =
       "query balances($from_id: Int!, $from_type: Int!, $to_id: Int!, $to_type: Int!) @transaction {\n"
@@ -64,8 +72,10 @@ public class HttpTransferProcessor extends TimeBasedProcessor {
   private final String endpointUrl;
   private final OkHttpClient client;
   private final ThreadLocalCookieJar threadLocalCookieJar;
+  private final Retry retry;
+  private final LongAdder retryCount = new LongAdder();
 
-  public HttpTransferProcessor(Config config) {
+  public HttpTransferProcessorWithRetry(Config config) {
     super(config);
 
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
@@ -81,6 +91,25 @@ public class HttpTransferProcessor extends TimeBasedProcessor {
             .connectionPool(new ConnectionPool(concurrency, 5, TimeUnit.SECONDS))
             .cookieJar(threadLocalCookieJar)
             .build();
+
+    RetryConfig retryConfig =
+        RetryConfig.custom()
+            .maxAttempts(MAX_RETRIES)
+            .intervalFunction(
+                IntervalFunction.ofExponentialBackoff(INITIAL_INTERNAL_MILLS, MULTIPLIER))
+            .retryOnException(
+                t ->
+                    t instanceof GraphQlFailureException
+                        && ((GraphQlFailureException) t).isRetryable())
+            .build();
+    retry = Retry.of("HttpTransferProcessorWithRetry", retryConfig);
+    retry
+        .getEventPublisher()
+        .onRetry(
+            e -> {
+              logWarn(e.toString(), e.getLastThrowable());
+              retryCount.increment();
+            });
   }
 
   @Override
@@ -89,11 +118,21 @@ public class HttpTransferProcessor extends TimeBasedProcessor {
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-    transfer(fromId, toId, amount);
+    try {
+      Retry.decorateCheckedRunnable(retry, () -> transfer(fromId, toId, amount)).run();
+    } catch (Throwable t) {
+      if (t instanceof Exception) {
+        throw (Exception) t;
+      }
+
+      throw new Exception(t);
+    }
   }
 
   @Override
-  public void close() {}
+  public void close() {
+    setState(Json.createObjectBuilder().add("retry_count", retryCount.longValue()).build());
+  }
 
   private void transfer(int fromId, int toId, int amount) throws Exception {
     try {
@@ -189,6 +228,19 @@ public class HttpTransferProcessor extends TimeBasedProcessor {
     public GraphQlFailureException(String txId, JsonArray errors) {
       this.txId = txId;
       this.errors = errors;
+    }
+
+    public boolean isRetryable() {
+      for (JsonValue error : errors) {
+        String exception = error.asJsonObject().getJsonObject("extensions").getString("exception");
+        if (exception.contains("CrudConflictException")
+            || exception.contains("CommitConflictException")
+            || exception.contains("UncommittedRecordException")
+            || exception.contains("TransactionNotFoundException")) {
+          return true;
+        }
+      }
+      return false;
     }
 
     @Override

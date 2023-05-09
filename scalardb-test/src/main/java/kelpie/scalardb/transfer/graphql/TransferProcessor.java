@@ -64,8 +64,6 @@ public class TransferProcessor extends TimeBasedProcessor {
   private final TwoPhaseCommitTransactionManager twoPhaseCommitTransactionManager;
   private final GraphQL graphql;
   private final int numAccounts;
-  private final boolean isVerification;
-  private final boolean useCompactLog;
 
   public TransferProcessor(Config config) throws Exception {
     super(config);
@@ -99,8 +97,6 @@ public class TransferProcessor extends TimeBasedProcessor {
     graphql = graphQlFactory.createGraphQL();
 
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
-    this.isVerification = config.getUserBoolean("test_config", "is_verification", false);
-    this.useCompactLog = config.getUserBoolean("test_config", "use_compact_log", true);
   }
 
   @Override
@@ -109,16 +105,7 @@ public class TransferProcessor extends TimeBasedProcessor {
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-    logStart(fromId, toId, amount);
-
-    String txId;
-    try {
-      txId = transfer(fromId, toId, amount);
-    } catch (Exception e) {
-      logFailure(fromId, toId, amount, e);
-      throw e;
-    }
-    logSuccess(txId, fromId, toId, amount);
+    transfer(fromId, toId, amount);
   }
 
   @Override
@@ -136,7 +123,7 @@ public class TransferProcessor extends TimeBasedProcessor {
   }
 
   @SuppressWarnings("unchecked")
-  private String transfer(int fromId, int toId, int amount) throws Exception {
+  private void transfer(int fromId, int toId, int amount) throws Exception {
     int fromType = 0;
     int toType = 0;
     if (fromId == toId) {
@@ -175,66 +162,9 @@ public class TransferProcessor extends TimeBasedProcessor {
     if (!executionResult.getErrors().isEmpty()) {
       throw new GraphQlFailureException(txId, executionResult.getErrors());
     }
-
-    return txId;
   }
 
-  private void logStart(int fromId, int toId, int amount) {
-    if (isVerification) {
-      logTxInfo("started", null, fromId, toId, amount);
-    }
-  }
-
-  private void logSuccess(String txId, int fromId, int toId, int amount) {
-    if (isVerification) {
-      logTxInfo("succeeded", txId, fromId, toId, amount);
-    }
-  }
-
-  private void logFailure(int fromId, int toId, int amount, Throwable e) {
-    if (!isVerification) {
-      return;
-    }
-
-    if (e instanceof GraphQlFailureException) {
-      GraphQlFailureException e2 = (GraphQlFailureException) e;
-      logTxWarn(e2.getTxId() + " failed", e2);
-      logTxInfo("failed", e2.getTxId(), fromId, toId, amount);
-    } else {
-      logTxWarn("failed", e);
-      logTxInfo("failed", null, fromId, toId, amount);
-    }
-  }
-
-  private void logTxInfo(String status, String txId, int fromId, int toId, int amount) {
-    logInfo(
-        status
-            + " - id: "
-            + txId
-            + " from: "
-            + fromId
-            + ",0"
-            + " to: "
-            + toId
-            + ","
-            + ((fromId == toId) ? 1 : 0)
-            + " amount: "
-            + amount);
-  }
-
-  private void logTxWarn(String message, Throwable e) {
-    if (useCompactLog) {
-      String cause = e.getMessage();
-      if (e.getCause() != null) {
-        cause = cause + " < " + e.getCause().getMessage();
-      }
-      logWarn(message + ", cause: " + cause);
-    } else {
-      logWarn(message, e);
-    }
-  }
-
-  static class GraphQlFailureException extends Exception {
+  private static class GraphQlFailureException extends Exception {
 
     private final String txId;
     private final List<GraphQLError> errors;
@@ -244,13 +174,13 @@ public class TransferProcessor extends TimeBasedProcessor {
       this.errors = errors;
     }
 
-    public String getTxId() {
-      return txId;
-    }
-
     @Override
     public String getMessage() {
-      return errors.stream().map(GraphQLError::getMessage).collect(Collectors.joining(", "));
+      return "txId: "
+          + txId
+          + ", errors: ["
+          + errors.stream().map(GraphQLError::getMessage).collect(Collectors.joining(", "))
+          + "]";
     }
   }
 }
