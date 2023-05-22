@@ -36,7 +36,11 @@ public class TransferProcessor extends TimeBasedProcessor {
 
   @Override
   public void close() {
-    sqlSessionFactory.close();
+    try {
+      sqlSessionFactory.close();
+    } catch (Exception e) {
+      logWarn("Failed to close SqlSessionFactory", e);
+    }
   }
 
   private void transfer(SqlSession sqlSession, int fromId, int toId, int amount) {
