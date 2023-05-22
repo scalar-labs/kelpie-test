@@ -47,7 +47,8 @@ dependencies {
     implementation "software.amazon.awssdk:dynamodb:${awssdkVersion}"
     implementation "software.amazon.awssdk:core:${awssdkVersion}"
     implementation 'org.apache.commons:commons-dbcp2:2.8.0'
-    implementation 'com.scalar-labs:scalardb-sql:4.0.0-SNAPSHOT'
+    implementation 'com.scalar-labs:scalardb-sql-direct-mode:4.0.0-SNAPSHOT'
+    implementation 'com.scalar-labs:scalardb-sql-server-mode:4.0.0-SNAPSHOT'
     implementation 'com.scalar-labs:scalardb-sql-jdbc:4.0.0-SNAPSHOT'
     implementation 'com.scalar-labs:scalardb-graphql:4.0.0-SNAPSHOT'
     implementation 'com.scalar-labs:scalardb-cluster-client:4.0.0-SNAPSHOT'

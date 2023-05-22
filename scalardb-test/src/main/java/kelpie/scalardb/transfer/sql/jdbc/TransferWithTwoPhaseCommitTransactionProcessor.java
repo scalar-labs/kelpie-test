@@ -39,8 +39,8 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
   public void close() {
     try {
       dataSource.close();
-    } catch (SQLException ignore) {
-      // ignored
+    } catch (SQLException e) {
+      logWarn("Failed to close DataSource", e);
     }
   }
 

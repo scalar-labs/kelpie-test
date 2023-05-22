@@ -57,8 +57,8 @@ public class TransferPreparer extends PreProcessor {
   public void close() {
     try {
       dataSource.close();
-    } catch (SQLException ignore) {
-      // ignored
+    } catch (SQLException e) {
+      logWarn("Failed to close DataSource", e);
     }
   }
 

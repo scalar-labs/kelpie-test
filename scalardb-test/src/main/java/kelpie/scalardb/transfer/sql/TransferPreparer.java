@@ -54,7 +54,11 @@ public class TransferPreparer extends PreProcessor {
 
   @Override
   public void close() {
-    sqlSessionFactory.close();
+    try {
+      sqlSessionFactory.close();
+    } catch (Exception e) {
+      logWarn("Failed to close SqlSessionFactory", e);
+    }
   }
 
   private class PopulationRunner {
