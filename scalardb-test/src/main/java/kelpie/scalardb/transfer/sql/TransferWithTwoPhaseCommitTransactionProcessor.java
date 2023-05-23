@@ -9,22 +9,39 @@ import com.scalar.db.sql.TransactionMode;
 import com.scalar.db.sql.Value;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import kelpie.scalardb.transfer.TransferCommon;
 
 public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedProcessor {
   private final int numAccounts;
-  private final SqlSessionFactory sqlSessionFactory1;
-  private final SqlSessionFactory sqlSessionFactory2;
+  private final ThreadLocal<SqlSessionFactory> sqlSessionFactory1;
+  private final ThreadLocal<SqlSessionFactory> sqlSessionFactory2;
+  private final List<SqlSessionFactory> sqlSessionFactories = new CopyOnWriteArrayList<>();
 
   public TransferWithTwoPhaseCommitTransactionProcessor(Config config) {
     super(config);
     numAccounts = (int) config.getUserLong("test_config", "num_accounts");
     sqlSessionFactory1 =
-        SqlCommon.getSqlSessionFactory1(config, TransactionMode.TWO_PHASE_COMMIT_TRANSACTION);
+        ThreadLocal.withInitial(
+            () -> {
+              SqlSessionFactory factory =
+                  SqlCommon.getSqlSessionFactory1(
+                      config, TransactionMode.TWO_PHASE_COMMIT_TRANSACTION);
+              sqlSessionFactories.add(factory);
+              return factory;
+            });
     sqlSessionFactory2 =
-        SqlCommon.getSqlSessionFactory1(config, TransactionMode.TWO_PHASE_COMMIT_TRANSACTION);
+        ThreadLocal.withInitial(
+            () -> {
+              SqlSessionFactory factory =
+                  SqlCommon.getSqlSessionFactory2(
+                      config, TransactionMode.TWO_PHASE_COMMIT_TRANSACTION);
+              sqlSessionFactories.add(factory);
+              return factory;
+            });
   }
 
   @Override
@@ -33,25 +50,22 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-    try (SqlSession sqlSession1 = sqlSessionFactory1.createSqlSession();
-        SqlSession sqlSession2 = sqlSessionFactory2.createSqlSession()) {
+    try (SqlSession sqlSession1 = sqlSessionFactory1.get().createSqlSession();
+        SqlSession sqlSession2 = sqlSessionFactory2.get().createSqlSession()) {
       transfer(sqlSession1, sqlSession2, fromId, toId, amount);
     }
   }
 
   @Override
   public void close() {
-    try {
-      sqlSessionFactory1.close();
-    } catch (Exception e) {
-      logWarn("Failed to close SqlSessionFactory", e);
-    }
-
-    try {
-      sqlSessionFactory2.close();
-    } catch (Exception e) {
-      logWarn("Failed to close SqlSessionFactory", e);
-    }
+    sqlSessionFactories.forEach(
+        sqlSessionFactory -> {
+          try {
+            sqlSessionFactory.close();
+          } catch (Exception e) {
+            logWarn("Failed to close SqlSessionFactory", e);
+          }
+        });
   }
 
   private void transfer(

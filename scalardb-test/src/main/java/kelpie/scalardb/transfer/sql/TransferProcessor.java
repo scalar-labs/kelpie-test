@@ -9,18 +9,28 @@ import com.scalar.db.sql.TransactionMode;
 import com.scalar.db.sql.Value;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import kelpie.scalardb.transfer.TransferCommon;
 
 public class TransferProcessor extends TimeBasedProcessor {
   private final int numAccounts;
-  private final SqlSessionFactory sqlSessionFactory;
+  private final ThreadLocal<SqlSessionFactory> sqlSessionFactory;
+  private final List<SqlSessionFactory> sqlSessionFactories = new CopyOnWriteArrayList<>();
 
   public TransferProcessor(Config config) {
     super(config);
     numAccounts = (int) config.getUserLong("test_config", "num_accounts");
-    sqlSessionFactory = SqlCommon.getSqlSessionFactory(config, TransactionMode.TRANSACTION);
+    sqlSessionFactory =
+        ThreadLocal.withInitial(
+            () -> {
+              SqlSessionFactory factory =
+                  SqlCommon.getSqlSessionFactory(config, TransactionMode.TRANSACTION);
+              sqlSessionFactories.add(factory);
+              return factory;
+            });
   }
 
   @Override
@@ -29,18 +39,21 @@ public class TransferProcessor extends TimeBasedProcessor {
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-    try (SqlSession sqlSession = sqlSessionFactory.createSqlSession()) {
+    try (SqlSession sqlSession = sqlSessionFactory.get().createSqlSession()) {
       transfer(sqlSession, fromId, toId, amount);
     }
   }
 
   @Override
   public void close() {
-    try {
-      sqlSessionFactory.close();
-    } catch (Exception e) {
-      logWarn("Failed to close SqlSessionFactory", e);
-    }
+    sqlSessionFactories.forEach(
+        sqlSessionFactory -> {
+          try {
+            sqlSessionFactory.close();
+          } catch (Exception e) {
+            logWarn("Failed to close SqlSessionFactory", e);
+          }
+        });
   }
 
   private void transfer(SqlSession sqlSession, int fromId, int toId, int amount) {
