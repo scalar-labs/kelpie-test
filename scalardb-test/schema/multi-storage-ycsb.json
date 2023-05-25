@@ -1,0 +1,22 @@
+{
+  "ycsb_primary.usertable": {
+    "transaction": true,
+    "partition-key": [
+      "ycsb_key"
+    ],
+    "columns": {
+      "ycsb_key": "INT",
+      "payload": "TEXT"
+    }
+  },
+  "ycsb_secondary.usertable": {
+    "transaction": true,
+    "partition-key": [
+      "ycsb_key"
+    ],
+    "columns": {
+      "ycsb_key": "INT",
+      "payload": "TEXT"
+    }
+  }
+}

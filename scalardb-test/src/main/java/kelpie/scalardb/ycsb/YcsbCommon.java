@@ -9,13 +9,19 @@ import java.util.Random;
 
 public class YcsbCommon {
   static final long DEFAULT_RECORD_COUNT = 1000;
+  static final long DEFAULT_HOTSPOT_RECORD_COUNT = 100;
   static final long DEFAULT_PAYLOAD_SIZE = 1000;
+  static final long DEFAULT_DISPATCH_RATE = 50; // rate for sending operations to secondary
   static final String NAMESPACE = "ycsb";
+  static final String NAMESPACE_PRIMARY = "ycsb_primary";     // for multi-storage mode
+  static final String NAMESPACE_SECONDARY = "ycsb_secondary"; // for multi-storage mode
   static final String TABLE = "usertable";
   static final String YCSB_KEY = "ycsb_key";
   static final String PAYLOAD = "payload";
   static final String CONFIG_NAME = "test_config";
   static final String RECORD_COUNT = "record_count";
+  static final String HOTSPOT_RECORD_COUNT = "hotspot_record_count";
+  static final String DISPATCH_RATE = "dispatch_rate";
   static final String PAYLOAD_SIZE = "payload_size";
   static final String OPS_PER_TX = "ops_per_tx";
   private static final int CHAR_START = 32; // [space]
@@ -49,6 +55,14 @@ public class YcsbCommon {
         .forTable(TABLE);
   }
 
+  public static Get prepareGet(String namespace, int key) {
+    Key partitionKey = new Key(YCSB_KEY, key);
+    return new Get(partitionKey)
+        .withConsistency(Consistency.LINEARIZABLE)
+        .forNamespace(namespace)
+        .forTable(TABLE);
+  }
+
   public static Put preparePut(int key, String payload) {
     Key partitionKey = new Key(YCSB_KEY, key);
     return new Put(partitionKey)
@@ -58,12 +72,31 @@ public class YcsbCommon {
         .forTable(TABLE);
   }
 
+  public static Put preparePut(String namespace, int key, String payload) {
+    Key partitionKey = new Key(YCSB_KEY, key);
+    return new Put(partitionKey)
+        .withConsistency(Consistency.LINEARIZABLE)
+        .withValue(PAYLOAD, payload)
+        .forNamespace(namespace)
+        .forTable(TABLE);
+  }
+
   public static int getRecordCount(Config config) {
     return (int) config.getUserLong(CONFIG_NAME, RECORD_COUNT, DEFAULT_RECORD_COUNT);
   }
 
   public static int getPayloadSize(Config config) {
     return (int) config.getUserLong(CONFIG_NAME, PAYLOAD_SIZE, DEFAULT_PAYLOAD_SIZE);
+  }
+
+  public static int getHotspotRecordCount(Config config) {
+    return (int) config.getUserLong(
+        CONFIG_NAME, HOTSPOT_RECORD_COUNT, DEFAULT_HOTSPOT_RECORD_COUNT);
+  }
+
+  public static int getDispatchRate(Config config) {
+    return (int) config.getUserLong(
+        CONFIG_NAME, DISPATCH_RATE, DEFAULT_DISPATCH_RATE);
   }
 
   // This method is taken from benchbase.
