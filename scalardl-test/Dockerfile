@@ -8,7 +8,7 @@ RUN set -x && \
     tar -xzvf "dockerize-linux-amd64-${DOCKERIZE_VERSION}.tar.gz" && \
     ./dockerize --version
 
-FROM openjdk:8u212-jre-slim-stretch
+FROM openjdk:8u342-jre-slim
 
 COPY --from=tools dockerize /usr/local/bin/
 
