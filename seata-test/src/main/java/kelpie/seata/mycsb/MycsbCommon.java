@@ -1,24 +1,24 @@
-package kelpie.scalardb.ycsb;
+package kelpie.seata.mycsb;
 
-import com.scalar.db.api.Consistency;
-import com.scalar.db.api.Get;
-import com.scalar.db.api.Put;
-import com.scalar.db.io.Key;
 import com.scalar.kelpie.config.Config;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Random;
 
-public class YcsbCommon {
+public class MycsbCommon {
   static final long DEFAULT_RECORD_COUNT = 1000;
   static final long DEFAULT_HOTSPOT_RECORD_COUNT = 100;
   static final long DEFAULT_PAYLOAD_SIZE = 1000;
   static final long DEFAULT_DISPATCH_RATE = 50; // rate for sending operations to secondary
   static final String NAMESPACE = "ycsb";
-  static final String NAMESPACE_PRIMARY = "ycsb_primary";     // for multi-storage mode
-  static final String NAMESPACE_SECONDARY = "ycsb_secondary"; // for multi-storage mode
   static final String TABLE = "usertable";
   static final String YCSB_KEY = "ycsb_key";
   static final String PAYLOAD = "payload";
   static final String CONFIG_NAME = "test_config";
+  static final String PRIMARY_DB_CONFIG_NAME = "primary_db_config";
+  static final String SECONDARY_DB_CONFIG_NAME = "secondary_db_config";
   static final String RECORD_COUNT = "record_count";
   static final String HOTSPOT_RECORD_COUNT = "hotspot_record_count";
   static final String DISPATCH_RATE = "dispatch_rate";
@@ -46,40 +46,6 @@ public class YcsbCommon {
     935194491, // 11011
     658099827, // 10011
   };
-
-  public static Get prepareGet(int key) {
-    Key partitionKey = new Key(YCSB_KEY, key);
-    return new Get(partitionKey)
-        .withConsistency(Consistency.LINEARIZABLE)
-        .forNamespace(NAMESPACE)
-        .forTable(TABLE);
-  }
-
-  public static Get prepareGet(String namespace, int key) {
-    Key partitionKey = new Key(YCSB_KEY, key);
-    return new Get(partitionKey)
-        .withConsistency(Consistency.LINEARIZABLE)
-        .forNamespace(namespace)
-        .forTable(TABLE);
-  }
-
-  public static Put preparePut(int key, String payload) {
-    Key partitionKey = new Key(YCSB_KEY, key);
-    return new Put(partitionKey)
-        .withConsistency(Consistency.LINEARIZABLE)
-        .withValue(PAYLOAD, payload)
-        .forNamespace(NAMESPACE)
-        .forTable(TABLE);
-  }
-
-  public static Put preparePut(String namespace, int key, String payload) {
-    Key partitionKey = new Key(YCSB_KEY, key);
-    return new Put(partitionKey)
-        .withConsistency(Consistency.LINEARIZABLE)
-        .withValue(PAYLOAD, payload)
-        .forNamespace(namespace)
-        .forTable(TABLE);
-  }
 
   public static int getRecordCount(Config config) {
     return (int) config.getUserLong(CONFIG_NAME, RECORD_COUNT, DEFAULT_RECORD_COUNT);
@@ -120,5 +86,44 @@ public class YcsbCommon {
       chars[i] = CHAR_SYMBOLS[rng.nextInt(CHAR_SYMBOLS.length)];
     }
     return (chars);
+  }
+
+  public static String read(Connection connection, int userId) throws SQLException {
+    PreparedStatement statement = null;
+    String result = null;
+    String sql = "select * from " + TABLE + " where " + YCSB_KEY + " = ?";
+    try {
+      statement = connection.prepareStatement(sql);
+      statement.setInt(1, userId);
+      ResultSet resultSet = statement.executeQuery();
+      resultSet.next();
+      result = resultSet.getString(PAYLOAD);
+    } catch (SQLException e) {
+      throw e;
+    } finally {
+      if (statement != null) {
+        statement.close();
+      }
+    }
+    return result;
+  }
+
+  public static String write(Connection connection, int userId, String payload) throws SQLException {
+    PreparedStatement statement = null;
+    String result = null;
+    String sql = "update " + TABLE + " set " + PAYLOAD + " = ? where " + YCSB_KEY + " = ?";
+    try {
+      statement = connection.prepareStatement(sql);
+      statement.setString(1, payload);
+      statement.setInt(2, userId);
+      statement.executeUpdate();
+    } catch (SQLException e) {
+      throw e;
+    } finally {
+      if (statement != null) {
+        statement.close();
+      }
+    }
+    return result;
   }
 }
