@@ -31,7 +31,11 @@ public class SingleClusteringKeyWriterProcessor extends TimeBasedProcessor {
   }
 
   @Override
-  public void close() throws Exception {
-    storage.close();
+  public void close() {
+    try {
+      storage.close();
+    } catch (Exception e) {
+      logWarn("Failed to close the storage", e);
+    }
   }
 }
