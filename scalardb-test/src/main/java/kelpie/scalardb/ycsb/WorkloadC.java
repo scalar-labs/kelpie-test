@@ -64,7 +64,12 @@ public class WorkloadC extends TimeBasedProcessor {
 
   @Override
   public void close() throws Exception {
-    manager.close();
+    try {
+      manager.close();
+    } catch (Exception e) {
+      logWarn("Failed to close the transaction manager", e);
+    }
+
     setState(
         Json.createObjectBuilder()
             .add("transaction-retry-count", transactionRetryCount.toString())

@@ -166,8 +166,8 @@ public class TransferProcessor extends TimeBasedProcessor {
 
   private static class GraphQlFailureException extends Exception {
 
-    private final String txId;
-    private final List<GraphQLError> errors;
+    public final String txId;
+    public final List<GraphQLError> errors;
 
     public GraphQlFailureException(String txId, List<GraphQLError> errors) {
       this.txId = txId;

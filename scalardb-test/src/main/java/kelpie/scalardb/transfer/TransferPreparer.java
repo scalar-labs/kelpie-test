@@ -56,7 +56,11 @@ public class TransferPreparer extends PreProcessor {
 
   @Override
   public void close() {
-    manager.close();
+    try {
+      manager.close();
+    } catch (Exception e) {
+      logWarn("Failed to close the transaction manager", e);
+    }
   }
 
   private class PopulationRunner {

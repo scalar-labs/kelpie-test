@@ -23,7 +23,7 @@ public class WriteSkewTransferChecker extends PostProcessor {
 
   @Override
   public void execute() {
-    boolean isConsistent = false;
+    boolean isConsistent;
     try {
       logInfo("reading latest records ...");
       List<Result> results = TransferCommon.readRecordsWithRetry(config);
@@ -111,7 +111,7 @@ public class WriteSkewTransferChecker extends PostProcessor {
                           .reduce(
                               0,
                               (sum, r) -> sum + TransferCommon.getBalanceFromResult(r),
-                              (sum1, sum2) -> sum1 + sum2);
+                              Integer::sum);
                   return total >= 0;
                 });
 

@@ -57,13 +57,16 @@ public class TransferProcessor extends TimeBasedProcessor {
 
   @Override
   public void close() {
-    manager.close();
+    try {
+      manager.close();
+    } catch (Exception e) {
+      logWarn("Failed to close the transaction manager", e);
+    }
+
     JsonObjectBuilder builder = Json.createObjectBuilder();
     unknownTransactions.forEach(
-        (txId, ids) -> {
-          builder.add(txId, Json.createArrayBuilder().add(ids.get(0)).add(ids.get(1)).build());
-        });
-
+        (txId, ids) ->
+            builder.add(txId, Json.createArrayBuilder().add(ids.get(0)).add(ids.get(1)).build()));
     setState(Json.createObjectBuilder().add("unknown_transaction", builder.build()).build());
   }
 

@@ -5,14 +5,13 @@ import com.scalar.db.api.Put;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.PreProcessor;
 import io.github.resilience4j.retry.Retry;
-import kelpie.scalardb.Common;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
+import kelpie.scalardb.Common;
 
 public class NontransactionalTransferPreparer extends PreProcessor {
   private static final long DEFAULT_POPULATION_CONCURRENCY = 32L;
@@ -49,7 +48,11 @@ public class NontransactionalTransferPreparer extends PreProcessor {
 
   @Override
   public void close() {
-    storage.close();
+    try {
+      storage.close();
+    } catch (Exception e) {
+      logWarn("Failed to close the storage", e);
+    }
   }
 
   private class PopulationRunner {

@@ -181,10 +181,10 @@ public class HttpTransferProcessor extends TimeBasedProcessor {
     }
   }
 
-  private static class GraphQlFailureException extends Exception {
+  protected static class GraphQlFailureException extends Exception {
 
-    private final String txId;
-    private final JsonArray errors;
+    public final String txId;
+    public final JsonArray errors;
 
     public GraphQlFailureException(String txId, JsonArray errors) {
       this.txId = txId;
