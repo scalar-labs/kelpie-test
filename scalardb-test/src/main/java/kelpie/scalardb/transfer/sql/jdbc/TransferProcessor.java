@@ -37,8 +37,8 @@ public class TransferProcessor extends TimeBasedProcessor {
   public void close() {
     try {
       dataSource.close();
-    } catch (SQLException ignore) {
-      // ignored
+    } catch (SQLException e) {
+      logWarn("Failed to close DataSource", e);
     }
   }
 

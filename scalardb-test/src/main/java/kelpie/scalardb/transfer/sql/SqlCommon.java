@@ -12,7 +12,22 @@ public final class SqlCommon {
 
   public static SqlSessionFactory getSqlSessionFactory(
       Config config, TransactionMode transactionMode) {
-    String configFile = config.getUserString("sql_config", "config_file");
+    return getSqlSessionFactory(config, transactionMode, "config_file");
+  }
+
+  public static SqlSessionFactory getSqlSessionFactory1(
+      Config config, TransactionMode transactionMode) {
+    return getSqlSessionFactory(config, transactionMode, "config_file1");
+  }
+
+  public static SqlSessionFactory getSqlSessionFactory2(
+      Config config, TransactionMode transactionMode) {
+    return getSqlSessionFactory(config, transactionMode, "config_file2");
+  }
+
+  private static SqlSessionFactory getSqlSessionFactory(
+      Config config, TransactionMode transactionMode, String configName) {
+    String configFile = config.getUserString("sql_config", configName);
     return SqlSessionFactory.builder()
         .withPropertiesFile(configFile)
         .withDefaultTransactionMode(transactionMode)
@@ -20,7 +35,20 @@ public final class SqlCommon {
   }
 
   public static BasicDataSource getDataSource(Config config, TransactionMode transactionMode) {
-    String configFile = config.getUserString("sql_config", "config_file");
+    return getDataSource(config, transactionMode, "config_file");
+  }
+
+  public static BasicDataSource getDataSource1(Config config, TransactionMode transactionMode) {
+    return getDataSource(config, transactionMode, "config_file1");
+  }
+
+  public static BasicDataSource getDataSource2(Config config, TransactionMode transactionMode) {
+    return getDataSource(config, transactionMode, "config_file2");
+  }
+
+  private static BasicDataSource getDataSource(
+      Config config, TransactionMode transactionMode, String configName) {
+    String configFile = config.getUserString("sql_config", configName);
 
     BasicDataSource dataSource = new BasicDataSource();
     dataSource.setDriver(new com.scalar.db.Driver());
