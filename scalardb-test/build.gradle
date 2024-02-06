@@ -58,6 +58,7 @@ dependencies {
 
 shadowJar {
     mergeServiceFiles()
+    zip64 true
 }
 
 docker {
