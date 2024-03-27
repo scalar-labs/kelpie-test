@@ -9,7 +9,6 @@ repositories {
     maven {
         url 'https://oss.sonatype.org/content/repositories/snapshots/'
     }
-    jcenter()
     maven {
         url = uri("https://maven.pkg.github.com/scalar-labs/scalardb-sql")
         credentials {
@@ -24,36 +23,29 @@ repositories {
             password = project.findProperty("gprPassword") ?: System.getenv("GPR_PASSWORD")
         }
     }
-    maven {
-        url = uri("https://maven.pkg.github.com/scalar-labs/scalardb-cluster")
-        credentials {
-            username = project.findProperty("gprUsername") ?: System.getenv("GPR_USERNAME")
-            password = project.findProperty("gprPassword") ?: System.getenv("GPR_PASSWORD")
-        }
-    }
 }
 
-def awssdkVersion = "2.17.69"
+def awssdkVersion = "2.25.1"
 def dockerVersion = project.hasProperty('dockerVersion') ? project.dockerVersion : 'latest'
 
 dependencies {
     implementation 'com.scalar-labs:kelpie:1.2.3'
     implementation 'javax.json:javax.json-api:1.1.4'
     implementation 'org.glassfish:javax.json:1.1.4'
-    implementation 'io.github.resilience4j:resilience4j-retry:1.3.1'
+    implementation 'io.github.resilience4j:resilience4j-retry:1.7.1'
     implementation 'com.scalar-labs:scalardb:4.0.0-SNAPSHOT'
-    implementation 'com.google.guava:guava:30.1-jre'
-    implementation 'com.azure:azure-cosmos:4.20.0'
+    implementation 'com.google.guava:guava:32.1.3-jre'
+    implementation 'com.azure:azure-cosmos:4.56.0'
     implementation "software.amazon.awssdk:dynamodb:${awssdkVersion}"
     implementation "software.amazon.awssdk:core:${awssdkVersion}"
-    implementation 'org.apache.commons:commons-dbcp2:2.8.0'
+    implementation 'org.apache.commons:commons-dbcp2:2.12.0'
     implementation 'com.scalar-labs:scalardb-sql-direct-mode:4.0.0-SNAPSHOT'
     implementation 'com.scalar-labs:scalardb-sql-server-mode:4.0.0-SNAPSHOT'
     implementation 'com.scalar-labs:scalardb-sql-jdbc:4.0.0-SNAPSHOT'
     implementation 'com.scalar-labs:scalardb-graphql:4.0.0-SNAPSHOT'
-    implementation 'com.scalar-labs:scalardb-cluster-client:4.0.0-SNAPSHOT'
-    implementation 'com.graphql-java:graphql-java:17.4'
-    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
+    implementation 'com.scalar-labs:scalardb-cluster-java-client-sdk:4.0.0-SNAPSHOT'
+    implementation 'com.graphql-java:graphql-java:20.7'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 }
 
 shadowJar {
