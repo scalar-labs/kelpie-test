@@ -88,6 +88,8 @@ public class Common {
         config.getUserString("storage_config", "transaction_manager", "consensus-commit");
     String serializableStrategy =
         config.getUserString("storage_config", "serializable_strategy", "EXTRA_READ");
+    boolean groupCommitEnabled =
+        config.getUserBoolean("storage_config", "group_commit_enabled", false);
 
     Properties props = new Properties();
     props.setProperty("scalar.db.contact_points", contactPoints);
@@ -100,6 +102,8 @@ public class Common {
     props.setProperty("scalar.db.transaction_manager", transactionManager);
     props.setProperty("scalar.db.isolation_level", isolationLevel);
     props.setProperty("scalar.db.consensus_commit.serializable_strategy", serializableStrategy);
+    props.setProperty("scalar.db.consensus_commit.coordinator.group_commit.enabled", String.valueOf(groupCommitEnabled));
+    props.setProperty("scalar.db.consensus_commit.coordinator.group_commit.metrics_monitor_log_enabled", String.valueOf(groupCommitEnabled));
     return new DatabaseConfig(props);
   }
 
