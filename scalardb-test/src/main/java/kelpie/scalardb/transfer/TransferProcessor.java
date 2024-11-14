@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
+import kelpie.scalardb.Common;
 
 public class TransferProcessor extends TimeBasedProcessor {
   private final DistributedTransactionManager manager;
@@ -28,7 +29,7 @@ public class TransferProcessor extends TimeBasedProcessor {
 
   public TransferProcessor(Config config) {
     super(config);
-    this.manager = TransferCommon.getTransactionManager(config);
+    this.manager = Common.getTransactionManager(config);
 
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
     this.isVerification = config.getUserBoolean("test_config", "is_verification", false);

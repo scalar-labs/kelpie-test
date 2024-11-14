@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
+import kelpie.scalardb.Common;
 
 public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedProcessor {
 
@@ -30,8 +31,8 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
 
   public TransferWithTwoPhaseCommitTransactionProcessor(Config config) {
     super(config);
-    manager1 = TransferCommon.getTwoPhaseCommitTransactionManager1(config);
-    manager2 = TransferCommon.getTwoPhaseCommitTransactionManager2(config);
+    manager1 = Common.getTwoPhaseCommitTransactionManager1(config);
+    manager2 = Common.getTwoPhaseCommitTransactionManager2(config);
 
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
     this.isVerification = config.getUserBoolean("test_config", "is_verification", false);

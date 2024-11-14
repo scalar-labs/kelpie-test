@@ -9,6 +9,7 @@ import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import kelpie.scalardb.Common;
 
 public class NontransactionalTransferProcessor extends TimeBasedProcessor {
   private final DistributedStorage storage;
@@ -16,7 +17,7 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
 
   public NontransactionalTransferProcessor(Config config) {
     super(config);
-    this.storage = TransferCommon.getStorage(config);
+    this.storage = Common.getStorage(config);
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
   }
 
