@@ -20,7 +20,7 @@ public class SensorChecker extends PostProcessor {
 
   public SensorChecker(Config config) {
     super(config);
-    this.manager = SensorCommon.getTransactionManager(config);
+    this.manager = Common.getTransactionManager(config);
   }
 
   @Override

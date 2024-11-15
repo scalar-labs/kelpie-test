@@ -21,7 +21,7 @@ public class NontransactionalTransferPreparer extends PreProcessor {
 
   public NontransactionalTransferPreparer(Config config) {
     super(config);
-    this.storage = TransferCommon.getStorage(config);
+    this.storage = Common.getStorage(config);
   }
 
   @Override

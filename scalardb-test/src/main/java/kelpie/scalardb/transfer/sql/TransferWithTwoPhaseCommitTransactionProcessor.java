@@ -64,7 +64,7 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
 
     final String SELECT_QUERY =
         "SELECT * FROM "
-            + TransferCommon.KEYSPACE
+            + TransferCommon.NAMESPACE
             + "."
             + TransferCommon.TABLE
             + " WHERE "
@@ -75,7 +75,7 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
 
     final String UPDATE_QUERY =
         "UPDATE "
-            + TransferCommon.KEYSPACE
+            + TransferCommon.NAMESPACE
             + "."
             + TransferCommon.TABLE
             + " SET "

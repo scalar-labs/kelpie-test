@@ -65,7 +65,7 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
 
   private int get(int id, int type) throws SQLException {
     final String enclosedFullTableName =
-        rdbEngine.encloseFullTableName(TransferCommon.KEYSPACE, TransferCommon.TABLE);
+        rdbEngine.encloseFullTableName(TransferCommon.NAMESPACE, TransferCommon.TABLE);
     final String enclosedAccountId = rdbEngine.enclose(TransferCommon.ACCOUNT_ID);
     final String enclosedAccountType = rdbEngine.enclose(TransferCommon.ACCOUNT_TYPE);
     final String enclosedBalance = rdbEngine.enclose(TransferCommon.BALANCE);
@@ -94,7 +94,7 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
 
   private void put(int id, int type, int amount) throws SQLException {
     final String enclosedFullTableName =
-        rdbEngine.encloseFullTableName(TransferCommon.KEYSPACE, TransferCommon.TABLE);
+        rdbEngine.encloseFullTableName(TransferCommon.NAMESPACE, TransferCommon.TABLE);
     final String enclosedAccountId = rdbEngine.enclose(TransferCommon.ACCOUNT_ID);
     final String enclosedAccountType = rdbEngine.enclose(TransferCommon.ACCOUNT_TYPE);
     final String enclosedBalance = rdbEngine.enclose(TransferCommon.BALANCE);
