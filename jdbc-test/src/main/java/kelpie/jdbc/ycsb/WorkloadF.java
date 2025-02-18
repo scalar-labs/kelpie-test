@@ -79,7 +79,6 @@ public class WorkloadF extends TimeBasedProcessor {
 
   @Override
   public void close() throws Exception {
-    // manager.close();
     setState(
         Json.createObjectBuilder()
             .add("transaction-retry-count", transactionRetryCount.toString())

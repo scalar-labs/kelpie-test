@@ -1,11 +1,9 @@
 package kelpie.jdbc;
 
+import com.scalar.kelpie.config.Config;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
-import com.scalar.kelpie.config.Config;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 
 public class DataSourceManager {
@@ -31,7 +29,7 @@ public class DataSourceManager {
     String url = config.getUserString(table, "url", "jdbc:mysql://localhost/jdbc_test");
     String driver = config.getUserString(table, "driver", "com.mysql.cj.jdbc.Driver");
     String username = config.getUserString(table, "username", "root");
-    String password = config.getUserString(table, "password", "example");
+    String password = config.getUserString(table, "password", "mysql");
     int minIdle = (int)config.getUserLong(table, "min_idle", (long)0);
     int maxActive = (int)config.getUserLong(table, "max_active", (long)8);
 
@@ -43,25 +41,6 @@ public class DataSourceManager {
     dataSource.setPassword(password);
     dataSource.setMinIdle(minIdle);
     dataSource.setMaxTotal(maxActive);
-    return (DataSource)dataSource;
-  }
-
-  private DataSource getDataSourceHikari(String table) {
-    String url = config.getUserString(table, "url", "jdbc:mysql://localhost/jdbc_test");
-    String driver = config.getUserString(table, "driver", "com.mysql.cj.jdbc.Driver");
-    String username = config.getUserString(table, "username", "root");
-    String password = config.getUserString(table, "password", "example");
-    int minIdle = (int)config.getUserLong(table, "min_idle", (long)0);
-    int maxActive = (int)config.getUserLong(table, "max_active", (long)8);
-
-    HikariConfig config = new HikariConfig();
-    config.setJdbcUrl(url);
-    config.setDriverClassName(driver);
-    config.addDataSourceProperty("user", username);
-    config.addDataSourceProperty("password", password);
-    config.addDataSourceProperty("minimumIdle", minIdle);
-    config.addDataSourceProperty("maximumPoolSize", maxActive);
-
-    return new HikariDataSource(config);
+    return dataSource;
   }
 }

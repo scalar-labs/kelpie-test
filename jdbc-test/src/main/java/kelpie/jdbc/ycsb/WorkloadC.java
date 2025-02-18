@@ -19,7 +19,7 @@ import kelpie.jdbc.Common;
 import kelpie.jdbc.DataSourceManager;
 
 public class WorkloadC extends TimeBasedProcessor {
-  private static final long DEFAULT_OPS_PER_TX = 1;
+  private static final long DEFAULT_OPS_PER_TX = 2;
   private final DataSourceManager manager;
   private final int recordCount;
   private final int opsPerTx;
@@ -69,7 +69,6 @@ public class WorkloadC extends TimeBasedProcessor {
 
   @Override
   public void close() throws Exception {
-    // manager.close();
     setState(
         Json.createObjectBuilder()
             .add("transaction-retry-count", transactionRetryCount.toString())
