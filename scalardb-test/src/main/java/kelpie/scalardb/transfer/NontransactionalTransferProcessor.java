@@ -7,7 +7,6 @@ import com.scalar.db.api.Result;
 import com.scalar.db.exception.storage.ExecutionException;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
-
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -27,12 +26,16 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-   transfer(fromId, toId, amount);
+    transfer(fromId, toId, amount);
   }
 
   @Override
   public void close() {
-    storage.close();
+    try {
+      storage.close();
+    } catch (Exception e) {
+      logWarn("Failed to close the storage", e);
+    }
   }
 
   private void transfer(int fromId, int toId, int amount) throws ExecutionException {

@@ -46,14 +46,20 @@ public class SensorChecker extends PostProcessor {
   }
 
   @Override
-  public void close() {}
+  public void close() {
+    try {
+      manager.close();
+    } catch (Exception e) {
+      logWarn("Failed to close the transaction manager", e);
+    }
+  }
 
   private List<Result> readRecordsWithRetry(int timestamp) {
     int maxRetry = (int) config.getUserLong("test_config", "checker_max_retries_for_read", 10L);
-    long retryIntervalSleepTime = config.getUserLong("test_config", "checker_retry_interval_millis",
-        1000L);
-    Retry retry = Common.getRetryWithExponentialBackoff("readBalances", maxRetry,
-        retryIntervalSleepTime);
+    long retryIntervalSleepTime =
+        config.getUserLong("test_config", "checker_retry_interval_millis", 1000L);
+    Retry retry =
+        Common.getRetryWithExponentialBackoff("readBalances", maxRetry, retryIntervalSleepTime);
     Supplier<List<Result>> decorated = Retry.decorateSupplier(retry, () -> readRecords(timestamp));
 
     try {

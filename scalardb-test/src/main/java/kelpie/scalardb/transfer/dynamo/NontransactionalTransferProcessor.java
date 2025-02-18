@@ -38,7 +38,11 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
 
   @Override
   public void close() {
-    client.close();
+    try {
+      client.close();
+    } catch (Exception e) {
+      logWarn("Failed to close the DynamoDB client", e);
+    }
   }
 
   private void transfer(int fromId, int toId, int amount) {

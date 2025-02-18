@@ -15,12 +15,14 @@ import org.apache.commons.dbcp2.BasicDataSource;
 
 public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedProcessor {
   private final int numAccounts;
-  private final BasicDataSource dataSource;
+  private final BasicDataSource dataSource1;
+  private final BasicDataSource dataSource2;
 
   public TransferWithTwoPhaseCommitTransactionProcessor(Config config) {
     super(config);
     numAccounts = (int) config.getUserLong("test_config", "num_accounts");
-    dataSource = SqlCommon.getDataSource(config, TransactionMode.TWO_PHASE_COMMIT_TRANSACTION);
+    dataSource1 = SqlCommon.getDataSource1(config, TransactionMode.TWO_PHASE_COMMIT_TRANSACTION);
+    dataSource2 = SqlCommon.getDataSource2(config, TransactionMode.TWO_PHASE_COMMIT_TRANSACTION);
   }
 
   @Override
@@ -29,8 +31,8 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-    try (Connection connection1 = dataSource.getConnection();
-        Connection connection2 = dataSource.getConnection()) {
+    try (Connection connection1 = dataSource1.getConnection();
+        Connection connection2 = dataSource2.getConnection()) {
       transfer(connection1, connection2, fromId, toId, amount);
     }
   }
@@ -38,9 +40,15 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
   @Override
   public void close() {
     try {
-      dataSource.close();
-    } catch (SQLException ignore) {
-      // ignored
+      dataSource1.close();
+    } catch (SQLException e) {
+      logWarn("Failed to close DataSource", e);
+    }
+
+    try {
+      dataSource2.close();
+    } catch (SQLException e) {
+      logWarn("Failed to close DataSource", e);
     }
   }
 

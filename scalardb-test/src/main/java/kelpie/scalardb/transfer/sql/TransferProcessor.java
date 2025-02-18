@@ -29,14 +29,18 @@ public class TransferProcessor extends TimeBasedProcessor {
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-    try (SqlSession sqlSession = sqlSessionFactory.getSqlSession()) {
+    try (SqlSession sqlSession = sqlSessionFactory.createSqlSession()) {
       transfer(sqlSession, fromId, toId, amount);
     }
   }
 
   @Override
   public void close() {
-    sqlSessionFactory.close();
+    try {
+      sqlSessionFactory.close();
+    } catch (Exception e) {
+      logWarn("Failed to close SqlSessionFactory", e);
+    }
   }
 
   private void transfer(SqlSession sqlSession, int fromId, int toId, int amount) {

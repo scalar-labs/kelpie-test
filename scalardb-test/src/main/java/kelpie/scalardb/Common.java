@@ -14,6 +14,7 @@ import io.github.resilience4j.core.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
@@ -44,10 +45,19 @@ public class Common {
     return manager;
   }
 
-  public static TwoPhaseCommitTransactionManager getTwoPhaseCommitTransactionManager(
+  public static TwoPhaseCommitTransactionManager getTwoPhaseCommitTransactionManager1(
       Config config, String keyspace, String table) {
-    DatabaseConfig dbConfig = getDatabaseConfig(config);
-    TransactionFactory factory = new TransactionFactory(dbConfig);
+    return getTwoPhaseCommitTransactionManager(getDatabaseConfig1(config), keyspace, table);
+  }
+
+  public static TwoPhaseCommitTransactionManager getTwoPhaseCommitTransactionManager2(
+      Config config, String keyspace, String table) {
+    return getTwoPhaseCommitTransactionManager(getDatabaseConfig2(config), keyspace, table);
+  }
+
+  private static TwoPhaseCommitTransactionManager getTwoPhaseCommitTransactionManager(
+      Properties properties, String keyspace, String table) {
+    TransactionFactory factory = TransactionFactory.create(properties);
     TwoPhaseCommitTransactionManager manager = factory.getTwoPhaseCommitTransactionManager();
     manager.with(keyspace, table);
     return manager;
@@ -91,6 +101,27 @@ public class Common {
     props.setProperty("scalar.db.isolation_level", isolationLevel);
     props.setProperty("scalar.db.consensus_commit.serializable_strategy", serializableStrategy);
     return new DatabaseConfig(props);
+  }
+
+  public static Properties getDatabaseConfig1(Config config) {
+    return getDatabaseConfig(config, "config_file1");
+  }
+
+  public static Properties getDatabaseConfig2(Config config) {
+    return getDatabaseConfig(config, "config_file2");
+  }
+
+  private static Properties getDatabaseConfig(Config config, String configName) {
+    String configFile = config.getUserString("storage_config", configName);
+    try {
+      Properties ret = new Properties();
+      try (FileInputStream stream = new FileInputStream(configFile)) {
+        ret.load(stream);
+      }
+      return ret;
+    } catch (IOException e) {
+      throw new RuntimeException("failed to load the specified config file: " + configFile, e);
+    }
   }
 
   public static boolean isCommitted(Coordinator coordinator, String txId) {

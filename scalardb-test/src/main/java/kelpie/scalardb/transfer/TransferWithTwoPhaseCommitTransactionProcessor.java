@@ -19,7 +19,8 @@ import javax.json.JsonObjectBuilder;
 
 public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedProcessor {
 
-  private final TwoPhaseCommitTransactionManager manager;
+  private final TwoPhaseCommitTransactionManager manager1;
+  private final TwoPhaseCommitTransactionManager manager2;
   private final int numAccounts;
   private final boolean isVerification;
   private final boolean useCompactLog;
@@ -29,7 +30,8 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
 
   public TransferWithTwoPhaseCommitTransactionProcessor(Config config) {
     super(config);
-    this.manager = TransferCommon.getTwoPhaseCommitTransactionManager(config);
+    manager1 = TransferCommon.getTwoPhaseCommitTransactionManager1(config);
+    manager2 = TransferCommon.getTwoPhaseCommitTransactionManager2(config);
 
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
     this.isVerification = config.getUserBoolean("test_config", "is_verification", false);
@@ -42,8 +44,8 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-    TwoPhaseCommitTransaction tx1 = manager.start();
-    TwoPhaseCommitTransaction tx2 = manager.join(tx1.getId());
+    TwoPhaseCommitTransaction tx1 = manager1.start();
+    TwoPhaseCommitTransaction tx2 = manager2.join(tx1.getId());
 
     logStart(tx1.getId(), fromId, toId, amount);
 
@@ -58,12 +60,22 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
 
   @Override
   public void close() {
-    manager.close();
+    try {
+      manager1.close();
+    } catch (Exception e) {
+      logWarn("Failed to close the transaction manager", e);
+    }
+
+    try {
+      manager2.close();
+    } catch (Exception e) {
+      logWarn("Failed to close the transaction manager", e);
+    }
+
     JsonObjectBuilder builder = Json.createObjectBuilder();
     unknownTransactions.forEach(
         (txId, ids) ->
             builder.add(txId, Json.createArrayBuilder().add(ids.get(0)).add(ids.get(1)).build()));
-
     setState(Json.createObjectBuilder().add("unknown_transaction", builder.build()).build());
   }
 

@@ -50,8 +50,13 @@ public class SensorProcessor extends TimeBasedProcessor {
 
   @Override
   public void close() {
-    int endTimestamp = (int) (System.currentTimeMillis() / 1000L);
+    try {
+      manager.close();
+    } catch (Exception e) {
+      logWarn("Failed to close the transaction manager", e);
+    }
 
+    int endTimestamp = (int) (System.currentTimeMillis() / 1000L);
     setState(
         Json.createObjectBuilder()
             .add("start_timestamp", startTimestamp)

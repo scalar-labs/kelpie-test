@@ -15,13 +15,16 @@ import kelpie.scalardb.transfer.TransferCommon;
 
 public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedProcessor {
   private final int numAccounts;
-  private final SqlSessionFactory sqlSessionFactory;
+  private final SqlSessionFactory sqlSessionFactory1;
+  private final SqlSessionFactory sqlSessionFactory2;
 
   public TransferWithTwoPhaseCommitTransactionProcessor(Config config) {
     super(config);
     numAccounts = (int) config.getUserLong("test_config", "num_accounts");
-    sqlSessionFactory =
-        SqlCommon.getSqlSessionFactory(config, TransactionMode.TWO_PHASE_COMMIT_TRANSACTION);
+    sqlSessionFactory1 =
+        SqlCommon.getSqlSessionFactory1(config, TransactionMode.TWO_PHASE_COMMIT_TRANSACTION);
+    sqlSessionFactory2 =
+        SqlCommon.getSqlSessionFactory2(config, TransactionMode.TWO_PHASE_COMMIT_TRANSACTION);
   }
 
   @Override
@@ -30,15 +33,25 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
     int toId = ThreadLocalRandom.current().nextInt(numAccounts);
     int amount = ThreadLocalRandom.current().nextInt(1000) + 1;
 
-    try (SqlSession sqlSession1 = sqlSessionFactory.getSqlSession();
-        SqlSession sqlSession2 = sqlSessionFactory.getSqlSession()) {
+    try (SqlSession sqlSession1 = sqlSessionFactory1.createSqlSession();
+        SqlSession sqlSession2 = sqlSessionFactory2.createSqlSession()) {
       transfer(sqlSession1, sqlSession2, fromId, toId, amount);
     }
   }
 
   @Override
   public void close() {
-    sqlSessionFactory.close();
+    try {
+      sqlSessionFactory1.close();
+    } catch (Exception e) {
+      logWarn("Failed to close SqlSessionFactory", e);
+    }
+
+    try {
+      sqlSessionFactory2.close();
+    } catch (Exception e) {
+      logWarn("Failed to close SqlSessionFactory", e);
+    }
   }
 
   private void transfer(
