@@ -25,7 +25,7 @@ public class TransferPreparer extends PreProcessor {
 
   public TransferPreparer(Config config) {
     super(config);
-    this.manager = TransferCommon.getTransactionManager(config);
+    this.manager = Common.getTransactionManager(config);
   }
 
   @Override

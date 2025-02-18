@@ -102,7 +102,7 @@ public class TransferPreparer extends PreProcessor {
                 PreparedStatement preparedStatement =
                     sqlSession.prepareStatement(
                         "INSERT INTO "
-                            + TransferCommon.KEYSPACE
+                            + TransferCommon.NAMESPACE
                             + "."
                             + TransferCommon.TABLE
                             + " VALUES(?,?,?)");

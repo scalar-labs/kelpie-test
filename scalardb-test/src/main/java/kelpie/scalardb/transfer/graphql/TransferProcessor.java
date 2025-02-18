@@ -77,9 +77,9 @@ public class TransferProcessor extends TimeBasedProcessor {
     try {
       ScalarDbSchema.Builder scalarDBSchemaBuilder = ScalarDbSchema.newBuilder();
       scalarDBSchemaBuilder.tableMetadata(
-          TransferCommon.KEYSPACE,
+          TransferCommon.NAMESPACE,
           TransferCommon.TABLE,
-          transactionAdmin.getTableMetadata(TransferCommon.KEYSPACE, TransferCommon.TABLE));
+          transactionAdmin.getTableMetadata(TransferCommon.NAMESPACE, TransferCommon.TABLE));
       scalarDbSchema = scalarDBSchemaBuilder.build();
     } finally {
       try {

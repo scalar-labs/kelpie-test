@@ -100,7 +100,7 @@ public class TransferPreparer extends PreProcessor {
               try (PreparedStatement preparedStatement =
                   connection.prepareStatement(
                       "INSERT INTO "
-                          + TransferCommon.KEYSPACE
+                          + TransferCommon.NAMESPACE
                           + "."
                           + TransferCommon.TABLE
                           + " VALUES(?,?,?)")) {

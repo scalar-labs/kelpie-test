@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Common {
-  private static final Logger LOGGER = LoggerFactory.getLogger(Common.class);
+  private static final Logger logger = LoggerFactory.getLogger(Common.class);
 
   private static final int WAIT_MILLS = 1000;
   private static final long SLEEP_BASE_MILLIS = 100L;
@@ -36,31 +36,26 @@ public class Common {
     return factory.getStorage();
   }
 
-  public static DistributedTransactionManager getTransactionManager(
-      Config config, String keyspace, String table) {
+  public static DistributedTransactionManager getTransactionManager(Config config) {
     DatabaseConfig dbConfig = getDatabaseConfig(config);
     TransactionFactory factory = new TransactionFactory(dbConfig);
-    DistributedTransactionManager manager = factory.getTransactionManager();
-    manager.with(keyspace, table);
-    return manager;
+    return factory.getTransactionManager();
   }
 
   public static TwoPhaseCommitTransactionManager getTwoPhaseCommitTransactionManager1(
-      Config config, String keyspace, String table) {
-    return getTwoPhaseCommitTransactionManager(getDatabaseConfig1(config), keyspace, table);
+      Config config) {
+    return getTwoPhaseCommitTransactionManager(getDatabaseConfig1(config));
   }
 
   public static TwoPhaseCommitTransactionManager getTwoPhaseCommitTransactionManager2(
-      Config config, String keyspace, String table) {
-    return getTwoPhaseCommitTransactionManager(getDatabaseConfig2(config), keyspace, table);
+      Config config) {
+    return getTwoPhaseCommitTransactionManager(getDatabaseConfig2(config));
   }
 
   private static TwoPhaseCommitTransactionManager getTwoPhaseCommitTransactionManager(
-      Properties properties, String keyspace, String table) {
+      Properties properties) {
     TransactionFactory factory = TransactionFactory.create(properties);
-    TwoPhaseCommitTransactionManager manager = factory.getTwoPhaseCommitTransactionManager();
-    manager.with(keyspace, table);
-    return manager;
+    return factory.getTwoPhaseCommitTransactionManager();
   }
 
   public static DatabaseConfig getDatabaseConfig(Config config) {
@@ -74,7 +69,7 @@ public class Common {
       try {
         return new DatabaseConfig(new File(configFile));
       } catch (IOException e) {
-        LOGGER.warn("failed to load the specified config file: " + configFile, e);
+        logger.warn("failed to load the specified config file: {}", configFile, e);
       }
     }
 

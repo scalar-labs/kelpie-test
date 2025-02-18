@@ -7,7 +7,6 @@ import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.Get;
 import com.scalar.db.api.Put;
 import com.scalar.db.api.Result;
-import com.scalar.db.api.TwoPhaseCommitTransactionManager;
 import com.scalar.db.exception.storage.ExecutionException;
 import com.scalar.db.exception.transaction.AbortException;
 import com.scalar.db.exception.transaction.TransactionException;
@@ -21,7 +20,7 @@ import java.util.function.Supplier;
 import kelpie.scalardb.Common;
 
 public class TransferCommon {
-  public static final String KEYSPACE = "transfer";
+  public static final String NAMESPACE = "transfer";
   public static final String TABLE = "tx_transfer";
   public static final String ACCOUNT_ID = "account_id";
   public static final String ACCOUNT_TYPE = "account_type";
@@ -30,47 +29,38 @@ public class TransferCommon {
   public static final int INITIAL_BALANCE = 10000;
   public static final int NUM_TYPES = 2;
 
-  public static DistributedTransactionManager getTransactionManager(Config config) {
-    return Common.getTransactionManager(config, KEYSPACE, TABLE);
-  }
-
-  public static TwoPhaseCommitTransactionManager getTwoPhaseCommitTransactionManager1(
-      Config config) {
-    return Common.getTwoPhaseCommitTransactionManager1(config, KEYSPACE, TABLE);
-  }
-
-  public static TwoPhaseCommitTransactionManager getTwoPhaseCommitTransactionManager2(
-      Config config) {
-    return Common.getTwoPhaseCommitTransactionManager2(config, KEYSPACE, TABLE);
-  }
-
-  public static DistributedStorage getStorage(Config config) {
-    DistributedStorage storage = Common.getStorage(config);
-    storage.with(KEYSPACE, TABLE);
-    return storage;
-  }
-
   public static Get prepareGet(int id, int type) {
-    Key partitionKey = new Key(ACCOUNT_ID, id);
-    Key clusteringKey = new Key(ACCOUNT_TYPE, type);
+    Key partitionKey = Key.ofInt(ACCOUNT_ID, id);
+    Key clusteringKey = Key.ofInt(ACCOUNT_TYPE, type);
 
-    return new Get(partitionKey, clusteringKey).withConsistency(Consistency.LINEARIZABLE);
+    return Get.newBuilder()
+        .namespace(NAMESPACE)
+        .table(TABLE)
+        .partitionKey(partitionKey)
+        .clusteringKey(clusteringKey)
+        .consistency(Consistency.LINEARIZABLE)
+        .build();
   }
 
   public static Put preparePut(int id, int type, int amount) {
-    Key partitionKey = new Key(ACCOUNT_ID, id);
-    Key clusteringKey = new Key(ACCOUNT_TYPE, type);
-    return new Put(partitionKey, clusteringKey)
-        .withConsistency(Consistency.LINEARIZABLE)
-        .withValue(BALANCE, amount);
+    Key partitionKey = Key.ofInt(ACCOUNT_ID, id);
+    Key clusteringKey = Key.ofInt(ACCOUNT_TYPE, type);
+    return Put.newBuilder()
+        .namespace(NAMESPACE)
+        .table(TABLE)
+        .partitionKey(partitionKey)
+        .clusteringKey(clusteringKey)
+        .consistency(Consistency.LINEARIZABLE)
+        .intValue(BALANCE, amount)
+        .build();
   }
 
   public static List<Result> readRecordsWithRetry(Config config) {
     int maxRetry = (int) config.getUserLong("test_config", "checker_max_retries_for_read", 10L);
     long retryIntervalSleepTime =
         config.getUserLong("test_config", "checker_retry_interval_millis", 1000L);
-    DistributedTransactionManager manager = getTransactionManager(config);
-    DistributedStorage storage = getStorage(config);
+    DistributedTransactionManager manager = Common.getTransactionManager(config);
+    DistributedStorage storage = Common.getStorage(config);
     Retry retry =
         Common.getRetryWithExponentialBackoff("readBalances", maxRetry, retryIntervalSleepTime);
     Supplier<List<Result>> decorated =
@@ -138,7 +128,7 @@ public class TransferCommon {
   }
 
   public static int getBalanceFromResult(Result result) {
-    return result.getValue(BALANCE).get().getAsInt();
+    return result.getInt(BALANCE);
   }
 
   public static int getTotalInitialBalance(Config config) {
@@ -151,6 +141,6 @@ public class TransferCommon {
   }
 
   public static int getActualTotalBalance(List<Result> results) {
-    return results.stream().mapToInt(r -> r.getValue(BALANCE).get().getAsInt()).sum();
+    return results.stream().mapToInt(r -> r.getInt(BALANCE)).sum();
   }
 }

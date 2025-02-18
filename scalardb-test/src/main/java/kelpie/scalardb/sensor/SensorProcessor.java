@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.json.Json;
+import kelpie.scalardb.Common;
 
 public class SensorProcessor extends TimeBasedProcessor {
   private final DistributedTransactionManager manager;
@@ -23,7 +24,7 @@ public class SensorProcessor extends TimeBasedProcessor {
 
   public SensorProcessor(Config config) {
     super(config);
-    this.manager = SensorCommon.getTransactionManager(config);
+    this.manager = Common.getTransactionManager(config);
     this.numDevices = (int) config.getUserLong("test_config", "num_devices");
     this.isVerification =
         new AtomicBoolean(config.getUserBoolean("test_config", "is_verification", false));

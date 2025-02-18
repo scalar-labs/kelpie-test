@@ -25,7 +25,7 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
     super(config);
 
     client = CosmosUtil.createCosmosClient(config);
-    container = client.getDatabase(TransferCommon.KEYSPACE).getContainer(TABLE);
+    container = client.getDatabase(TransferCommon.NAMESPACE).getContainer(TABLE);
     numAccounts = (int) config.getUserLong("test_config", "num_accounts");
     useStoredProcedure = config.getUserBoolean("cosmos_config", "use_stored_procedure");
     if (useStoredProcedure) {

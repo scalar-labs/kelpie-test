@@ -56,7 +56,7 @@ public class TransferProcessor extends TimeBasedProcessor {
     try (PreparedStatement preparedStatement =
         connection.prepareStatement(
             "SELECT * FROM "
-                + TransferCommon.KEYSPACE
+                + TransferCommon.NAMESPACE
                 + "."
                 + TransferCommon.TABLE
                 + " WHERE "
@@ -88,7 +88,7 @@ public class TransferProcessor extends TimeBasedProcessor {
     try (PreparedStatement preparedStatement =
         connection.prepareStatement(
             "UPDATE "
-                + TransferCommon.KEYSPACE
+                + TransferCommon.NAMESPACE
                 + "."
                 + TransferCommon.TABLE
                 + " SET "

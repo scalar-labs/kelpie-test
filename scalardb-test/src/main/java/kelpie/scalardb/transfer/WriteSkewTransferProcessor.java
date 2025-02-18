@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
+import kelpie.scalardb.Common;
 
 public class WriteSkewTransferProcessor extends TimeBasedProcessor {
   private final DistributedTransactionManager manager;
@@ -35,7 +36,7 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
 
   public WriteSkewTransferProcessor(Config config) {
     super(config);
-    this.manager = TransferCommon.getTransactionManager(config);
+    this.manager = Common.getTransactionManager(config);
 
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
     this.isVerification =
