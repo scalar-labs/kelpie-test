@@ -3,7 +3,7 @@
 ## Usage
 1. Set up an environment
     - This job requires a client to execute this job and PostgreSQL or MySQL which can be accessed from the client
-    - Create a database on your own database to use for benchmarking.
+    - Create a database on your own database to use for benchmarking
 
 2. Build
     ```console
