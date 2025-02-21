@@ -17,14 +17,13 @@
 [stats]
   realtime_report_enabled = true
 
-[test_config]
+[ycsb_config]
   record_count = 1000000
   ops_per_tx = 1
-  # population_concurrency = 10
-  # population_insert_batch_size = 100
-  # batch_size = 1
+  # load_concurrency = 4
+  # load_batch_size = 10
 
-[db_config]
+[database_config]
   url = "jdbc:postgresql://localhost:5432/ycsb"
   # url = "jdbc:mysql://localhost:3306/ycsb?useSSL=false&serverTimezone=UTC"
   username = "postgres"

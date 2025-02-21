@@ -10,13 +10,11 @@ import java.util.Random;
 public class YcsbCommon {
   static final long DEFAULT_RECORD_COUNT = 1000;
   static final long DEFAULT_PAYLOAD_SIZE = 1000;
-  static final String NAMESPACE = "ycsb";
   static final String TABLE = "usertable";
   static final String YCSB_KEY = "ycsb_key";
-  static final String INT_KEY = "tx_state"; // just for testing
   static final String PAYLOAD = "payload";
-  static final String CONFIG_NAME = "test_config";
-  static final String DB_CONFIG_NAME = "db_config";
+  static final String CONFIG_NAME = "ycsb_config";
+  static final String DB_CONFIG_NAME = "database_config";
   static final String RECORD_COUNT = "record_count";
   static final String PAYLOAD_SIZE = "payload_size";
   static final String OPS_PER_TX = "ops_per_tx";
@@ -94,26 +92,6 @@ public class YcsbCommon {
     return result;
   }
 
-  public static int readInt(Connection connection, int userId) throws SQLException {
-    PreparedStatement statement = null;
-    int result;
-    String sql = "select " + INT_KEY + " from " + TABLE + " where " + YCSB_KEY + " = ?";
-    try {
-      statement = connection.prepareStatement(sql);
-      statement.setInt(1, userId);
-      ResultSet resultSet = statement.executeQuery();
-      resultSet.next();
-      result = resultSet.getInt(INT_KEY);
-    } catch (SQLException e) {
-      throw e;
-    } finally {
-      if (statement != null) {
-        statement.close();
-      }
-    }
-    return result;
-  }
-
   public static String write(Connection connection, int userId, String payload) throws SQLException {
     PreparedStatement statement = null;
     String result = null;
@@ -121,25 +99,6 @@ public class YcsbCommon {
     try {
       statement = connection.prepareStatement(sql);
       statement.setString(1, payload);
-      statement.setInt(2, userId);
-      statement.executeUpdate();
-    } catch (SQLException e) {
-      throw e;
-    } finally {
-      if (statement != null) {
-        statement.close();
-      }
-    }
-    return result;
-  }
-
-  public static String writeInt(Connection connection, int userId, int value) throws SQLException {
-    PreparedStatement statement = null;
-    String result = null;
-    String sql = "update " + TABLE + " set " + INT_KEY + " = ? where " + YCSB_KEY + " = ?";
-    try {
-      statement = connection.prepareStatement(sql);
-      statement.setInt(1, value);
       statement.setInt(2, userId);
       statement.executeUpdate();
     } catch (SQLException e) {
