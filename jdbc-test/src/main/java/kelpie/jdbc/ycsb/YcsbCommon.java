@@ -73,41 +73,23 @@ public class YcsbCommon {
   }
 
   public static String read(Connection connection, int userId) throws SQLException {
-    PreparedStatement statement = null;
-    String result = null;
     String sql = "select * from " + TABLE + " where " + YCSB_KEY + " = ?";
-    try {
-      statement = connection.prepareStatement(sql);
+    try (PreparedStatement statement = connection.prepareStatement(sql)) {
       statement.setInt(1, userId);
       ResultSet resultSet = statement.executeQuery();
-      resultSet.next();
-      result = resultSet.getString(PAYLOAD);
-    } catch (SQLException e) {
-      throw e;
-    } finally {
-      if (statement != null) {
-        statement.close();
+      if (resultSet.next()) {
+        return resultSet.getString(PAYLOAD);
       }
+      return null;
     }
-    return result;
   }
 
-  public static String write(Connection connection, int userId, String payload) throws SQLException {
-    PreparedStatement statement = null;
-    String result = null;
+  public static void write(Connection connection, int userId, String payload) throws SQLException {
     String sql = "update " + TABLE + " set " + PAYLOAD + " = ? where " + YCSB_KEY + " = ?";
-    try {
-      statement = connection.prepareStatement(sql);
+    try (PreparedStatement statement = connection.prepareStatement(sql)) {
       statement.setString(1, payload);
       statement.setInt(2, userId);
       statement.executeUpdate();
-    } catch (SQLException e) {
-      throw e;
-    } finally {
-      if (statement != null) {
-        statement.close();
-      }
     }
-    return result;
   }
 }

@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.LongAdder;
 import javax.json.Json;
-import kelpie.jdbc.Common;
 import kelpie.jdbc.DataSourceManager;
 
 public class WorkloadF extends TimeBasedProcessor {
@@ -50,7 +49,7 @@ public class WorkloadF extends TimeBasedProcessor {
       payloads.add(new String(payload));
     }
 
-    Connection connection = null;
+    Connection connection;
     while (true) {
       connection = manager.getConnection();
       connection.setAutoCommit(false);
@@ -64,21 +63,19 @@ public class WorkloadF extends TimeBasedProcessor {
         break;
       } catch (SQLException e) {
         connection.rollback();
-        e.printStackTrace();
+        logWarn("An error occurred during the transaction. Retrying...", e);
         transactionRetryCount.increment();
       } catch (Exception e) {
         connection.rollback();
         throw e;
       } finally {
-        if (connection != null) {
-          connection.close();
-        }
+        connection.close();
       }
     }
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     setState(
         Json.createObjectBuilder()
             .add("transaction-retry-count", transactionRetryCount.toString())

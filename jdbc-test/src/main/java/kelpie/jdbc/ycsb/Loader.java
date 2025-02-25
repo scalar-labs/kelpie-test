@@ -33,11 +33,11 @@ public class Loader extends PreProcessor {
   private static final String LOAD_BATCH_SIZE = "load_batch_size";
   private static final int MAX_RETRIES = 10;
   private static final int WAIT_DURATION_MILLIS = 1000;
-  private static final String INSERT_SQL = "insert into " + TABLE + "(" + YCSB_KEY + ", " + PAYLOAD +") values (?, ?)";
+  private static final String INSERT_SQL =
+      "insert into " + TABLE + "(" + YCSB_KEY + ", " + PAYLOAD + ") values (?, ?)";
   private final DataSourceManager manager;
   private final int concurrency;
   private final int recordCount;
-  private final int payloadSize;
   private final char[] payload;
   private final int batchSize;
 
@@ -46,7 +46,7 @@ public class Loader extends PreProcessor {
     concurrency = (int) config.getUserLong(CONFIG_NAME, LOAD_CONCURRENCY, DEFAULT_LOAD_CONCURRENCY);
     batchSize = (int) config.getUserLong(CONFIG_NAME, LOAD_BATCH_SIZE, DEFAULT_LOAD_BATCH_SIZE);
     recordCount = getRecordCount(config);
-    payloadSize = getPayloadSize(config);
+    int payloadSize = getPayloadSize(config);
     payload = new char[payloadSize];
 
     manager = new DataSourceManager(config, DB_CONFIG_NAME);
@@ -70,8 +70,7 @@ public class Loader extends PreProcessor {
   }
 
   @Override
-  public void close() throws Exception {
-  }
+  public void close() throws Exception {}
 
   private class PopulationRunner {
     private final int id;
@@ -128,7 +127,8 @@ public class Loader extends PreProcessor {
       }
     }
 
-    private void prepareInsert(PreparedStatement statement, int id, String payload) throws SQLException {
+    private void prepareInsert(PreparedStatement statement, int id, String payload)
+        throws SQLException {
       try {
         statement.setInt(1, id);
         statement.setString(2, payload);
@@ -142,24 +142,17 @@ public class Loader extends PreProcessor {
 
   private void createTable(DataSourceManager ds, int payloadSize) throws SQLException {
     String dropSQL = "drop table if exists " + TABLE;
-    String createSQL = "create table " + TABLE
-        + " (ycsb_key int not null, payload varchar(" + payloadSize + ")," + "primary key (ycsb_key))";
-    Connection connection = null;
-    Statement statement = null;
-    try {
-      connection = ds.getConnection();
-      statement = connection.createStatement();
+    String createSQL =
+        "create table "
+            + TABLE
+            + " (ycsb_key int not null, payload varchar("
+            + payloadSize
+            + "),"
+            + "primary key (ycsb_key))";
+    try (Connection connection = ds.getConnection();
+        Statement statement = connection.createStatement()) {
       statement.executeUpdate(dropSQL);
       statement.executeUpdate(createSQL);
-    } catch (SQLException e) {
-      throw e;
-    } finally {
-      if (statement != null) {
-        statement.close();
-      }
-      if (connection != null) {
-        connection.close();
-      }
     }
   }
 }
