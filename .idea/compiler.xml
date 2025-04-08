@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="client-test" target="1.8" />
+      <module name="client-test.main" target="1.8" />
+      <module name="client-test.test" target="1.8" />
+      <module name="lamb" target="1.8" />
+      <module name="lamb.main" target="1.8" />
+      <module name="lamb.test" target="1.8" />
+      <module name="ledger-test" target="1.8" />
+      <module name="ledger-test.main" target="1.8" />
+      <module name="ledger-test.test" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
