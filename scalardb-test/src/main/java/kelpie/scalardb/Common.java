@@ -81,8 +81,6 @@ public class Common {
     String isolationLevel = config.getUserString("storage_config", "isolation_level", "SNAPSHOT");
     String transactionManager =
         config.getUserString("storage_config", "transaction_manager", "consensus-commit");
-    String serializableStrategy =
-        config.getUserString("storage_config", "serializable_strategy", "EXTRA_READ");
 
     Properties props = new Properties();
     props.setProperty("scalar.db.contact_points", contactPoints);
@@ -94,7 +92,6 @@ public class Common {
     props.setProperty("scalar.db.storage", storage);
     props.setProperty("scalar.db.transaction_manager", transactionManager);
     props.setProperty("scalar.db.isolation_level", isolationLevel);
-    props.setProperty("scalar.db.consensus_commit.serializable_strategy", serializableStrategy);
     return new DatabaseConfig(props);
   }
 

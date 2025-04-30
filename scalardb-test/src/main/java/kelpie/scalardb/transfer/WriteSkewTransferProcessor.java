@@ -27,8 +27,6 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
   private final DistributedTransactionManager manager;
   private final int numAccounts;
   private final AtomicBoolean isVerification;
-  private final AtomicBoolean isSerializable;
-  private final AtomicBoolean isExtraRead;
   private final AtomicInteger numUpdates = new AtomicInteger(0);
 
   // for verification
@@ -41,16 +39,6 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
     this.isVerification =
         new AtomicBoolean(config.getUserBoolean("test_config", "is_verification", false));
-    this.isSerializable =
-        new AtomicBoolean(
-            config
-                .getUserString("storage_config", "isolation_level", "SNAPSHOT")
-                .equals("SERIALIZABLE"));
-    this.isExtraRead =
-        new AtomicBoolean(
-            config
-                .getUserString("storage_config", "serializable_strategy", "EXTRA_READ")
-                .equals("EXTRA_READ"));
   }
 
   @Override
@@ -147,15 +135,7 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
   private void logSuccess(String txId, int fromId, int fromType, int toId, int toType, int amount) {
     if (isVerification.get()) {
       logTxInfo("succeeded", txId, fromId, fromType, toId, toType, amount);
-      if (isSerializable.get() && !isExtraRead.get()) {
-        if (fromId != toId) {
-          numUpdates.getAndAdd(TransferCommon.NUM_TYPES + 1);
-        } else {
-          numUpdates.getAndAdd(TransferCommon.NUM_TYPES);
-        }
-      } else {
-        numUpdates.getAndAdd(2);
-      }
+      numUpdates.getAndAdd(2);
     }
   }
 

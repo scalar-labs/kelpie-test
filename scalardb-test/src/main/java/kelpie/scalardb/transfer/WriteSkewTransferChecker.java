@@ -12,13 +12,9 @@ import javax.json.JsonObject;
 import kelpie.scalardb.Common;
 
 public class WriteSkewTransferChecker extends PostProcessor {
-  private final boolean isSerializable;
-  private final boolean isExtraRead;
 
   public WriteSkewTransferChecker(Config config) {
     super(config);
-    this.isSerializable = config.getUserBoolean("test_config", "is_serializable", false);
-    this.isExtraRead = config.getUserBoolean("test_config", "is_extra_read", false);
   }
 
   @Override
@@ -41,7 +37,8 @@ public class WriteSkewTransferChecker extends PostProcessor {
   }
 
   @Override
-  public void close() {}
+  public void close() {
+  }
 
   private int getNumOfUpdatesFromCoordinator(Config config) {
     Coordinator coordinator = new Coordinator(Common.getStorage(config));
@@ -73,15 +70,7 @@ public class WriteSkewTransferChecker extends PostProcessor {
                 + ","
                 + toType
                 + " succeeded, not failed");
-        if (isSerializable && !isExtraRead) {
-          if (fromId != toId) {
-            numUpdates += TransferCommon.NUM_TYPES + 1;
-          } else {
-            numUpdates += TransferCommon.NUM_TYPES;
-          }
-        } else {
-          numUpdates += 2;
-        }
+        numUpdates += 2;
       }
     }
 
