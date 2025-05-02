@@ -22,8 +22,6 @@
 
 [test_config]
   is_verification = true
-  is_serializable = false
-  is_extra_read = false
   num_accounts = 10
   population_concurrency = 8
 
@@ -33,7 +31,6 @@
   #password = "cassandra"
   #storage = "cassandra"
   isolation_level = "SERIALIZABLE"
-  serializable_strategy = "EXTRA_READ"
 
 [killer_config]
   ssh_user = "centos"
