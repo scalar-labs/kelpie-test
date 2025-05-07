@@ -1,7 +1,6 @@
 plugins {
     id 'java-library-distribution'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
-    id 'com.palantir.docker' version '0.25.0'
 }
 
 repositories {
@@ -26,7 +25,6 @@ repositories {
 }
 
 def awssdkVersion = "2.29.1"
-def dockerVersion = project.hasProperty('dockerVersion') ? project.dockerVersion : 'latest'
 def scalarDbVersion = "4.0.0-SNAPSHOT"
 
 dependencies {
@@ -51,18 +49,6 @@ dependencies {
 shadowJar {
     mergeServiceFiles()
     zip64 true
-}
-
-docker {
-    name "ghcr.io/scalar-labs/kelpie-test-scalardb:${dockerVersion}"
-    files tasks.shadowJar.outputs
-    copySpec.with {
-        from('.') {
-            include 'build/classes/**'
-            include 'grpc-config.toml.tmpl'
-            into '.'
-        }
-    }
 }
 
 sourceCompatibility = 1.8

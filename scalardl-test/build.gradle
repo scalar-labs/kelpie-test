@@ -1,7 +1,6 @@
 plugins {
     id 'java-library-distribution'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
-    id 'com.palantir.docker' version '0.25.0'
 }
 
 repositories {
@@ -10,8 +9,6 @@ repositories {
         url 'https://oss.sonatype.org/content/repositories/snapshots/'
     }
 }
-
-def dockerVersion = project.hasProperty('dockerVersion') ? project.dockerVersion : 'latest'
 
 dependencies {
     implementation group: 'com.scalar-labs', name: 'kelpie', version: '1.2.3'
@@ -23,19 +20,6 @@ dependencies {
 shadowJar {
     mergeServiceFiles()
     exclude 'contract/*'
-}
-
-docker {
-    name "ghcr.io/scalar-labs/kelpie-test-scalardl:$dockerVersion"
-    files tasks.shadowJar.outputs
-    copySpec.with {
-        from('.') {
-            include 'sample-keys/**'
-            include 'build/classes/**'
-            include 'config.toml.tmpl'
-            into '.'
-        }
-    }
 }
 
 sourceCompatibility = 1.8
