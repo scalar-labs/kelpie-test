@@ -78,6 +78,8 @@ public class SensorProcessor extends TimeBasedProcessor {
 
     boolean hasDuplicatedRevision;
     List<Result> results;
+
+    // Alternate between scan() and getScanner() based on the attempt count.
     boolean scannerUsed = numAttempts.getAndIncrement() % 2 == 0;
     if (!scannerUsed) {
       // Use scan()
