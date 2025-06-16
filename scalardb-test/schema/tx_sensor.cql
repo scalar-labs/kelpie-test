@@ -35,3 +35,5 @@ CREATE TABLE IF NOT EXISTS scalardb.namespaces (
 );
 
 INSERT INTO scalardb.namespaces (name) VALUES ('sensor');
+INSERT INTO scalardb.namespaces (name) VALUES ('coordinator');
+INSERT INTO scalardb.namespaces (name) VALUES ('scalardb');
