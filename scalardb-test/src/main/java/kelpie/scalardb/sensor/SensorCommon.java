@@ -55,7 +55,7 @@ public class SensorCommon {
     return maxRevision.orElse(0);
   }
 
-  private static int getRevisionFromResult(Result result) {
+  public static int getRevisionFromResult(Result result) {
     return result.getInt(REVISION);
   }
 }

@@ -5,14 +5,20 @@ import com.scalar.db.api.DistributedTransactionManager;
 import com.scalar.db.api.Put;
 import com.scalar.db.api.Result;
 import com.scalar.db.api.Scan;
+import com.scalar.db.api.TransactionCrudOperable;
 import com.scalar.db.exception.transaction.TransactionException;
 import com.scalar.db.exception.transaction.UnknownTransactionStatusException;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.ProcessFatalException;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.json.Json;
 import kelpie.scalardb.Common;
 
@@ -21,6 +27,7 @@ public class SensorProcessor extends TimeBasedProcessor {
   private final int numDevices;
   private final AtomicBoolean isVerification;
   private final int startTimestamp;
+  private final AtomicInteger numAttempts = new AtomicInteger();
 
   public SensorProcessor(Config config) {
     super(config);
@@ -67,13 +74,41 @@ public class SensorProcessor extends TimeBasedProcessor {
 
   private void updateRevision(DistributedTransaction transaction, int timestamp, int deviceId)
       throws TransactionException {
-
     Scan scan = SensorCommon.prepareScan(timestamp);
-    List<Result> results = transaction.scan(scan);
 
-    boolean hasDuplicatedRevision = SensorCommon.hasDuplicatedRevision(results);
+    boolean hasDuplicatedRevision;
+    List<Result> results;
+    boolean scannerUsed = numAttempts.getAndIncrement() % 2 == 0;
+    if (!scannerUsed) {
+      // Use scan()
+      results = transaction.scan(scan);
+      hasDuplicatedRevision = SensorCommon.hasDuplicatedRevision(results);
+    } else {
+      // Use getScanner()
+      hasDuplicatedRevision = false;
+      results = new ArrayList<>();
+      try (TransactionCrudOperable.Scanner scanner = transaction.getScanner(scan)) {
+        Set<Integer> tempSet = new HashSet<>();
+        while (true) {
+          Optional<Result> result = scanner.one();
+          if (!result.isPresent()) {
+            break;
+          }
+
+          int revision = SensorCommon.getRevisionFromResult(result.get());
+          if (!tempSet.add(revision)) {
+            hasDuplicatedRevision = true;
+            break;
+          }
+
+          results.add(result.get());
+        }
+      }
+    }
+
     if (hasDuplicatedRevision) {
-      throw new ProcessFatalException("A revision is duplicated at " + timestamp);
+      throw new ProcessFatalException(
+          "A revision is duplicated. timestamp: " + timestamp + "; scannerUsed: " + scannerUsed);
     }
 
     int revision = SensorCommon.getMaxRevision(results) + 1;

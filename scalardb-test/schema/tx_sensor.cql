@@ -2,6 +2,7 @@ DROP KEYSPACE IF EXISTS sensor;
 CREATE KEYSPACE IF NOT EXISTS sensor WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 };
 DROP KEYSPACE IF EXISTS coordinator;
 CREATE KEYSPACE IF NOT EXISTS coordinator WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 };
+CREATE KEYSPACE IF NOT EXISTS scalardb WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 };
 
 CREATE TABLE IF NOT EXISTS sensor.tx_sensor (
     timestamp int,
@@ -27,3 +28,10 @@ CREATE TABLE IF NOT EXISTS coordinator.state (
     tx_created_at bigint,
     PRIMARY KEY (tx_id)
 );
+
+CREATE TABLE IF NOT EXISTS scalardb.namespaces (
+    name text,
+    PRIMARY KEY (name)
+);
+
+INSERT INTO scalardb.namespaces (name) VALUES ('sensor');
