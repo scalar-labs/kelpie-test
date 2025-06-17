@@ -40,7 +40,7 @@ public class SensorChecker extends PostProcessor {
     }
 
     if (isDuplicated) {
-      logError("dupilication happened !");
+      logError("Duplication happened !");
       throw new PostProcessException("Inconsistency happened!");
     }
   }
