@@ -2,6 +2,7 @@ DROP KEYSPACE IF EXISTS sensor;
 CREATE KEYSPACE IF NOT EXISTS sensor WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 };
 DROP KEYSPACE IF EXISTS coordinator;
 CREATE KEYSPACE IF NOT EXISTS coordinator WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 };
+DROP KEYSPACE IF EXISTS scalardb;
 CREATE KEYSPACE IF NOT EXISTS scalardb WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 };
 
 CREATE TABLE IF NOT EXISTS sensor.tx_sensor (
