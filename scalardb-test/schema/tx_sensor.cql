@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS sensor.tx_sensor (
 
 CREATE TABLE IF NOT EXISTS coordinator.state (
     tx_id text,
+    tx_child_ids text,
     tx_state int,
     tx_created_at bigint,
     PRIMARY KEY (tx_id)
