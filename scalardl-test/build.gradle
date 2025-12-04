@@ -20,6 +20,7 @@ dependencies {
 shadowJar {
     mergeServiceFiles()
     exclude 'contract/*'
+    zip64 true
 }
 
 sourceCompatibility = 1.8
