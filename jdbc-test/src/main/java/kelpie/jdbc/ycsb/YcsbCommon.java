@@ -5,7 +5,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class YcsbCommon {
   static final long DEFAULT_RECORD_COUNT = 1000;
@@ -72,24 +77,60 @@ public class YcsbCommon {
     return (chars);
   }
 
-  public static String read(Connection connection, int userId) throws SQLException {
-    String sql = "select * from " + TABLE + " where " + YCSB_KEY + " = ?";
-    try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      statement.setInt(1, userId);
-      ResultSet resultSet = statement.executeQuery();
-      if (resultSet.next()) {
-        return resultSet.getString(PAYLOAD);
-      }
-      return null;
+  public static List<String> read(Connection connection, List<Integer> userIds)
+      throws SQLException {
+    if (userIds.isEmpty()) {
+      return new ArrayList<>();
     }
+
+    String placeholders = userIds.stream().map(id -> "?").collect(Collectors.joining(", "));
+    String sql =
+        "select "
+            + YCSB_KEY
+            + ", "
+            + PAYLOAD
+            + " from "
+            + TABLE
+            + " where "
+            + YCSB_KEY
+            + " in ("
+            + placeholders
+            + ")";
+
+    Map<Integer, String> resultMap = new HashMap<>();
+    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+      for (int i = 0; i < userIds.size(); i++) {
+        statement.setInt(i + 1, userIds.get(i));
+      }
+      ResultSet resultSet = statement.executeQuery();
+      while (resultSet.next()) {
+        int key = resultSet.getInt(YCSB_KEY);
+        String payload = resultSet.getString(PAYLOAD);
+        resultMap.put(key, payload);
+      }
+    }
+
+    List<String> results = new ArrayList<>(userIds.size());
+    for (int userId : userIds) {
+      results.add(resultMap.get(userId));
+    }
+    return results;
   }
 
-  public static void write(Connection connection, int userId, String payload) throws SQLException {
+  public static void write(Connection connection, List<Integer> userIds, List<String> payloads)
+      throws SQLException {
+    if (userIds.isEmpty()) {
+      return;
+    }
+
     String sql = "update " + TABLE + " set " + PAYLOAD + " = ? where " + YCSB_KEY + " = ?";
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      statement.setString(1, payload);
-      statement.setInt(2, userId);
-      statement.executeUpdate();
+      for (int i = 0; i < userIds.size(); i++) {
+        statement.setString(1, payloads.get(i));
+        statement.setInt(2, userIds.get(i));
+        statement.addBatch();
+      }
+      statement.executeBatch();
     }
   }
 }

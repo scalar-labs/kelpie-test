@@ -54,11 +54,8 @@ public class WorkloadF extends TimeBasedProcessor {
       connection = manager.getConnection();
       connection.setAutoCommit(false);
       try {
-        for (int i = 0; i < userIds.size(); i++) {
-          int userId = userIds.get(i);
-          read(connection, userId);
-          write(connection, userId, payloads.get(i));
-        }
+        read(connection, userIds);
+        write(connection, userIds, payloads);
         connection.commit();
         break;
       } catch (SQLException e) {

@@ -34,31 +34,19 @@ public class WorkloadC extends TimeBasedProcessor {
   }
 
   @Override
-  public void executeEach() throws SQLException {
+  public void executeEach() {
     List<Integer> userIds = new ArrayList<>(opsPerTx);
     for (int i = 0; i < opsPerTx; ++i) {
       userIds.add(ThreadLocalRandom.current().nextInt(recordCount));
     }
 
-    Connection connection;
     while (true) {
-      connection = manager.getConnection();
-      connection.setAutoCommit(false);
-      try {
-        for (int userId : userIds) {
-          read(connection, userId);
-        }
-        connection.commit();
+      try (Connection connection = manager.getConnection()) {
+        read(connection, userIds);
         break;
       } catch (SQLException e) {
-        connection.rollback();
         logWarn("An error occurred during the transaction. Retrying...", e);
         transactionRetryCount.increment();
-      } catch (Exception e) {
-        connection.rollback();
-        throw e;
-      } finally {
-        connection.close();
       }
     }
   }

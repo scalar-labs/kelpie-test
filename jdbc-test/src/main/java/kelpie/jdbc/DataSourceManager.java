@@ -1,10 +1,10 @@
 package kelpie.jdbc;
 
 import com.scalar.kelpie.config.Config;
+import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
-import org.apache.commons.dbcp2.BasicDataSource;
 
 public class DataSourceManager {
   private static final String DEFAULT_DB_CONFIG_NAME = "db_config";
@@ -30,17 +30,17 @@ public class DataSourceManager {
     String driver = config.getUserString(table, "driver", "com.mysql.cj.jdbc.Driver");
     String username = config.getUserString(table, "username", "root");
     String password = config.getUserString(table, "password", "mysql");
-    int minIdle = (int)config.getUserLong(table, "min_idle", (long)0);
-    int maxActive = (int)config.getUserLong(table, "max_active", (long)8);
+    int minIdle = (int) config.getUserLong(table, "min_idle", (long) 0);
+    int maxActive = (int) config.getUserLong(table, "max_active", (long) 8);
 
-    BasicDataSource dataSource = new BasicDataSource();
+    HikariDataSource dataSource = new HikariDataSource();
 
-    dataSource.setUrl(url);
+    dataSource.setJdbcUrl(url);
     dataSource.setDriverClassName(driver);
     dataSource.setUsername(username);
     dataSource.setPassword(password);
-    dataSource.setMinIdle(minIdle);
-    dataSource.setMaxTotal(maxActive);
+    dataSource.setMinimumIdle(minIdle);
+    dataSource.setMaximumPoolSize(maxActive);
     return dataSource;
   }
 }
