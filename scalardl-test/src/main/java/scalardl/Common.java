@@ -43,6 +43,7 @@ public class Common {
     properties.setProperty(ClientConfig.CERT_HOLDER_ID, CERT_HOLDER_ID);
     properties.setProperty(ClientConfig.CERT_PATH, certificate);
     properties.setProperty(ClientConfig.PRIVATE_KEY_PATH, privateKey);
+    properties.setProperty(ClientConfig.AUTO_BOOTSTRAP, "false");
 
     ClientConfig clientConfig = null;
     try {
