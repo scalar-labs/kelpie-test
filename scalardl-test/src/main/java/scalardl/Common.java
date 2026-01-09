@@ -56,9 +56,8 @@ public class Common {
 
   public static ClientService getClientService(Config config) {
     ClientConfig clientConfig = getClientConfig(config);
-    ClientServiceFactory factory = new ClientServiceFactory(clientConfig);
-
-    return factory.getClientService();
+    ClientServiceFactory factory = new ClientServiceFactory();
+    return factory.create(clientConfig);
   }
 
   public static int getTotalInitialBalance(Config config) {
