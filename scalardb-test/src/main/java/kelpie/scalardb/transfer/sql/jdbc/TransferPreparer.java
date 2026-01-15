@@ -3,6 +3,7 @@ package kelpie.scalardb.transfer.sql.jdbc;
 import com.scalar.db.sql.TransactionMode;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.PreProcessor;
+import com.zaxxer.hikari.HikariDataSource;
 import io.github.resilience4j.retry.Retry;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,7 +17,6 @@ import java.util.stream.IntStream;
 import kelpie.scalardb.Common;
 import kelpie.scalardb.transfer.TransferCommon;
 import kelpie.scalardb.transfer.sql.SqlCommon;
-import org.apache.commons.dbcp2.BasicDataSource;
 
 public class TransferPreparer extends PreProcessor {
   private static final long DEFAULT_POPULATION_CONCURRENCY = 32L;
@@ -24,7 +24,7 @@ public class TransferPreparer extends PreProcessor {
   private static final long DEFAULT_POPULATION_MAX_RETRIES = 10;
   private static final long DEFAULT_POPULATION_WAIT_MILLS = 1000;
 
-  private final BasicDataSource dataSource;
+  private final HikariDataSource dataSource;
 
   public TransferPreparer(Config config) {
     super(config);
@@ -55,11 +55,7 @@ public class TransferPreparer extends PreProcessor {
 
   @Override
   public void close() {
-    try {
-      dataSource.close();
-    } catch (SQLException e) {
-      logWarn("Failed to close DataSource", e);
-    }
+    dataSource.close();
   }
 
   private class PopulationRunner {

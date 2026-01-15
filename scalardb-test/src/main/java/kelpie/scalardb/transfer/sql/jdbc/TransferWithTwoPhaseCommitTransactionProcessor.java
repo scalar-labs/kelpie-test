@@ -3,6 +3,7 @@ package kelpie.scalardb.transfer.sql.jdbc;
 import com.scalar.db.sql.TransactionMode;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
+import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,12 +12,11 @@ import java.sql.Statement;
 import java.util.concurrent.ThreadLocalRandom;
 import kelpie.scalardb.transfer.TransferCommon;
 import kelpie.scalardb.transfer.sql.SqlCommon;
-import org.apache.commons.dbcp2.BasicDataSource;
 
 public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedProcessor {
   private final int numAccounts;
-  private final BasicDataSource dataSource1;
-  private final BasicDataSource dataSource2;
+  private final HikariDataSource dataSource1;
+  private final HikariDataSource dataSource2;
 
   public TransferWithTwoPhaseCommitTransactionProcessor(Config config) {
     super(config);
@@ -39,17 +39,8 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
 
   @Override
   public void close() {
-    try {
-      dataSource1.close();
-    } catch (SQLException e) {
-      logWarn("Failed to close DataSource", e);
-    }
-
-    try {
-      dataSource2.close();
-    } catch (SQLException e) {
-      logWarn("Failed to close DataSource", e);
-    }
+    dataSource1.close();
+    dataSource2.close();
   }
 
   private void transfer(
