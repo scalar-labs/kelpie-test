@@ -7,6 +7,7 @@ import com.scalar.db.storage.jdbc.RdbEngineFactory;
 import com.scalar.db.storage.jdbc.RdbEngineStrategy;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
+import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,11 +15,10 @@ import java.sql.SQLException;
 import java.util.concurrent.ThreadLocalRandom;
 import kelpie.scalardb.Common;
 import kelpie.scalardb.transfer.TransferCommon;
-import org.apache.commons.dbcp2.BasicDataSource;
 
 public class NontransactionalTransferProcessor extends TimeBasedProcessor {
   private final int numAccounts;
-  private final BasicDataSource dataSource;
+  private final HikariDataSource dataSource;
   private final RdbEngineStrategy rdbEngine;
 
   public NontransactionalTransferProcessor(Config config) {
@@ -42,11 +42,7 @@ public class NontransactionalTransferProcessor extends TimeBasedProcessor {
 
   @Override
   public void close() {
-    try {
-      dataSource.close();
-    } catch (SQLException e) {
-      throw new RuntimeException("fail to close the dataSource", e);
-    }
+    dataSource.close();
   }
 
   private void transfer(int fromId, int toId, int amount) throws SQLException {

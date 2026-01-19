@@ -37,7 +37,7 @@ dependencies {
     implementation 'com.azure:azure-cosmos:4.64.0'
     implementation "software.amazon.awssdk:dynamodb:${awssdkVersion}"
     implementation "software.amazon.awssdk:core:${awssdkVersion}"
-    implementation 'org.apache.commons:commons-dbcp2:2.12.0'
+    implementation 'com.zaxxer:HikariCP:4.0.3'
     implementation "com.scalar-labs:scalardb-sql-direct-mode:${scalarDbVersion}"
     implementation "com.scalar-labs:scalardb-sql-jdbc:${scalarDbVersion}"
     implementation "com.scalar-labs:scalardb-graphql:${scalarDbVersion}"

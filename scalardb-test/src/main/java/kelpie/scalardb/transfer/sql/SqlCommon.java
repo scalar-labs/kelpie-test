@@ -4,7 +4,8 @@ import com.scalar.db.sql.SqlConfig;
 import com.scalar.db.sql.SqlSessionFactory;
 import com.scalar.db.sql.TransactionMode;
 import com.scalar.kelpie.config.Config;
-import org.apache.commons.dbcp2.BasicDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 public final class SqlCommon {
 
@@ -34,39 +35,36 @@ public final class SqlCommon {
         .build();
   }
 
-  public static BasicDataSource getDataSource(Config config, TransactionMode transactionMode) {
+  public static HikariDataSource getDataSource(Config config, TransactionMode transactionMode) {
     return getDataSource(config, transactionMode, "config_file");
   }
 
-  public static BasicDataSource getDataSource1(Config config, TransactionMode transactionMode) {
+  public static HikariDataSource getDataSource1(Config config, TransactionMode transactionMode) {
     return getDataSource(config, transactionMode, "config_file1");
   }
 
-  public static BasicDataSource getDataSource2(Config config, TransactionMode transactionMode) {
+  public static HikariDataSource getDataSource2(Config config, TransactionMode transactionMode) {
     return getDataSource(config, transactionMode, "config_file2");
   }
 
-  private static BasicDataSource getDataSource(
+  private static HikariDataSource getDataSource(
       Config config, TransactionMode transactionMode, String configName) {
     String configFile = config.getUserString("sql_config", configName);
 
-    BasicDataSource dataSource = new BasicDataSource();
-    dataSource.setDriver(new com.scalar.db.Driver());
-    dataSource.setUrl(
+    HikariConfig hikariConfig = new HikariConfig();
+    hikariConfig.setDriverClassName("com.scalar.db.Driver");
+    hikariConfig.setJdbcUrl(
         "jdbc:scalardb:"
             + configFile
             + "?"
             + SqlConfig.DEFAULT_TRANSACTION_MODE
             + "="
             + transactionMode.name());
-    dataSource.setDefaultAutoCommit(false);
-    dataSource.setAutoCommitOnReturn(false);
-    dataSource.setMinIdle(
+    hikariConfig.setAutoCommit(false);
+    hikariConfig.setMinimumIdle(
         (int) config.getUserLong("sql_config", "jdbc_connection_pool_min_idle", 20L));
-    dataSource.setMaxIdle(
-        (int) config.getUserLong("sql_config", "jdbc_connection_pool_max_idle", 50L));
-    dataSource.setMaxTotal(
+    hikariConfig.setMaximumPoolSize(
         (int) config.getUserLong("sql_config", "jdbc_connection_pool_max_total", 200L));
-    return dataSource;
+    return new HikariDataSource(hikariConfig);
   }
 }
