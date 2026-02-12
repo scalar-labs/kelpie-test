@@ -4,7 +4,7 @@ import com.scalar.db.sql.PreparedStatement;
 import com.scalar.db.sql.SqlSession;
 import com.scalar.db.sql.SqlSessionFactory;
 import com.scalar.db.sql.TransactionMode;
-import com.scalar.db.sql.Value;
+import com.scalar.db.sql.statement.BoundStatement;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.PreProcessor;
 import io.github.resilience4j.retry.Retry;
@@ -109,11 +109,11 @@ public class TransferPreparer extends PreProcessor {
 
                 for (int i = startId; i < endId; ++i) {
                   for (int j = 0; j < TransferCommon.NUM_TYPES; ++j) {
-                    preparedStatement.clearParameters();
-                    preparedStatement.set(0, Value.ofInt(i));
-                    preparedStatement.set(1, Value.ofInt(j));
-                    preparedStatement.set(2, Value.ofInt(TransferCommon.INITIAL_BALANCE));
-                    preparedStatement.execute();
+                    BoundStatement boundStatement = preparedStatement.bind();
+                    boundStatement.setInt(0, i);
+                    boundStatement.setInt(1, j);
+                    boundStatement.setInt(2, TransferCommon.INITIAL_BALANCE);
+                    sqlSession.execute(boundStatement);
                   }
                 }
 
