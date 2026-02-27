@@ -16,6 +16,10 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import scalardl.Common;
 
+/**
+ * Pre-processor that registers certificates and contracts, then populates initial
+ * account balances for the transfer test.
+ */
 public class TransferPreparer extends PreProcessor {
 
   private final long POPULATION_CONCURRENCY = 16L;
@@ -29,6 +33,11 @@ public class TransferPreparer extends PreProcessor {
   private final String balanceContractPath;
   private final boolean isVerification;
 
+  /**
+   * Creates a TransferPreparer with the given Kelpie config.
+   *
+   * @param config Kelpie configuration
+   */
   public TransferPreparer(Config config) {
     super(config);
 

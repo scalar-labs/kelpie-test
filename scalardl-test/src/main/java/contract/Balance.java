@@ -7,7 +7,13 @@ import java.util.Optional;
 import javax.json.Json;
 import javax.json.JsonObject;
 
+/**
+ * Scalar DL contract that returns the balance and age of an asset identified by asset_id.
+ */
 public class Balance extends Contract {
+
+  /** Creates a new Balance contract instance. */
+  public Balance() {}
 
   @Override
   public JsonObject invoke(Ledger ledger, JsonObject argument, Optional<JsonObject> properties) {

@@ -23,8 +23,17 @@ import javax.json.JsonArray;
 import javax.json.JsonObject;
 import scalardl.Common;
 
+/**
+ * Post-processor that verifies transfer test consistency by comparing ledger balances
+ * and coordinator state.
+ */
 public class TransferChecker extends PostProcessor {
 
+  /**
+   * Creates a TransferChecker with the given Kelpie config.
+   *
+   * @param config Kelpie configuration
+   */
   public TransferChecker(Config config) {
     super(config);
   }

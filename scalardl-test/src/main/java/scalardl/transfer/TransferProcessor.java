@@ -17,6 +17,10 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import scalardl.Common;
 
+/**
+ * Time-based processor that executes random transfers between accounts using
+ * the Scalar DL transfer contract.
+ */
 public class TransferProcessor extends TimeBasedProcessor {
 
   private final String transferContractName;
@@ -27,6 +31,11 @@ public class TransferProcessor extends TimeBasedProcessor {
   // for verification
   private final Map<String, List<Integer>> unknownTransactions = new ConcurrentHashMap<>();
 
+  /**
+   * Creates a TransferProcessor with the given Kelpie config.
+   *
+   * @param config Kelpie configuration
+   */
   public TransferProcessor(Config config) {
     super(config);
     this.service = Common.getClientService(config);

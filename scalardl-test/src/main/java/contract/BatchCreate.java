@@ -7,7 +7,13 @@ import java.util.stream.IntStream;
 import javax.json.Json;
 import javax.json.JsonObject;
 
+/**
+ * Scalar DL contract that creates a batch of assets with the same initial amount.
+ */
 public class BatchCreate extends Contract {
+
+  /** Creates a new BatchCreate contract instance. */
+  public BatchCreate() {}
 
   @Override
   public JsonObject invoke(Ledger ledger, JsonObject argument, Optional<JsonObject> properties) {

@@ -9,7 +9,13 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 
+/**
+ * Scalar DL contract that transfers an amount between two assets identified by asset_ids.
+ */
 public class Transfer extends Contract {
+
+  /** Creates a new Transfer contract instance. */
+  public Transfer() {}
 
   @Override
   public JsonObject invoke(Ledger ledger, JsonObject argument, Optional<JsonObject> properties) {

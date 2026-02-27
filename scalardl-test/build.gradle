@@ -1,6 +1,7 @@
 plugins {
-    id 'java-library-distribution'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'java-library'
+    id 'distribution'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 repositories {
@@ -10,18 +11,32 @@ repositories {
     }
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
 dependencies {
-    implementation group: 'com.scalar-labs', name: 'kelpie', version: '1.2.3'
-    implementation group: 'com.scalar-labs', name: 'scalardl-java-client-sdk', version: '4.0.0-SNAPSHOT'
-    implementation group: 'com.google.inject', name: 'guice', version: '5.0.1'
-    implementation group: "io.github.resilience4j", name: "resilience4j-retry", version: "1.3.1"
+    implementation 'com.scalar-labs:kelpie:1.2.3'
+    implementation 'com.scalar-labs:scalardl-java-client-sdk:4.0.0-SNAPSHOT'
+
+    implementation 'com.google.inject:guice:7.0.0'
+    implementation 'io.github.resilience4j:resilience4j-retry:2.2.0'
+    implementation 'dnsjava:dnsjava:3.5.3'
 }
 
 shadowJar {
     mergeServiceFiles()
     exclude 'contract/*'
     zip64 true
+
+    archiveClassifier.set('all')
+
+    manifest {
+        attributes 'Multi-Release': 'true'
+    }
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8

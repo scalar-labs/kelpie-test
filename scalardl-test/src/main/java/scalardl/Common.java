@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Properties;
 
+/**
+ * Shared configuration and utility methods for Scalar DL test clients.
+ */
 public class Common {
   private static String HOST = "localhost";
   private static String PORT = "50051";
@@ -23,8 +26,18 @@ public class Common {
   private static final Duration WAIT_DURATION = Duration.ofMillis(1000);
   private static final long SLEEP_BASE_MILLIS = 100L;
 
+  /** Initial balance amount assigned to each account. */
   public static final int INITIAL_BALANCE = 10000;
 
+  /** Private constructor for utility class. */
+  private Common() {}
+
+  /**
+   * Builds a Scalar DL client config from the given Kelpie config.
+   *
+   * @param config Kelpie configuration containing client_config section
+   * @return configured ClientConfig for Scalar DL client
+   */
   public static ClientConfig getClientConfig(Config config) {
     String host = config.getUserString("client_config", "dl_server", HOST);
     String port = config.getUserString("client_config", "dl_server_port", PORT);
@@ -54,18 +67,36 @@ public class Common {
     return clientConfig;
   }
 
+  /**
+   * Creates a Scalar DL ClientService from the given Kelpie config.
+   *
+   * @param config Kelpie configuration containing client_config section
+   * @return ClientService instance for interacting with Scalar DL
+   */
   public static ClientService getClientService(Config config) {
     ClientConfig clientConfig = getClientConfig(config);
     ClientServiceFactory factory = new ClientServiceFactory();
     return factory.create(clientConfig);
   }
 
+  /**
+   * Returns the total initial balance across all accounts (num_accounts * INITIAL_BALANCE).
+   *
+   * @param config Kelpie configuration containing test_config.num_accounts
+   * @return total initial balance
+   */
   public static int getTotalInitialBalance(Config config) {
     int numAccounts = (int) config.getUserLong("test_config", "num_accounts");
 
     return INITIAL_BALANCE * numAccounts;
   }
 
+  /**
+   * Creates a Retry with fixed wait duration between attempts.
+   *
+   * @param name name of the retry instance
+   * @return Retry configured with MAX_RETRIES and WAIT_DURATION
+   */
   public static Retry getRetryWithFixedWaitDuration(String name) {
     RetryConfig retryConfig =
         RetryConfig.custom().maxAttempts(MAX_RETRIES).waitDuration(WAIT_DURATION).build();
@@ -73,10 +104,24 @@ public class Common {
     return Retry.of(name, retryConfig);
   }
 
+  /**
+   * Creates a Retry with exponential backoff using default max retries and base wait time.
+   *
+   * @param name name of the retry instance
+   * @return Retry configured with exponential backoff
+   */
   public static Retry getRetryWithExponentialBackoff(String name) {
     return getRetryWithExponentialBackoff(name, MAX_RETRIES, SLEEP_BASE_MILLIS);
   }
 
+  /**
+   * Creates a Retry with exponential backoff.
+   *
+   * @param name name of the retry instance
+   * @param maxRetries maximum number of retry attempts
+   * @param waitMillis base wait time in milliseconds (doubled each attempt)
+   * @return Retry configured with exponential backoff
+   */
   public static Retry getRetryWithExponentialBackoff(String name, int maxRetries, long waitMillis) {
     IntervalFunction intervalFunc = IntervalFunction.ofExponentialBackoff(waitMillis, 2.0);
 
