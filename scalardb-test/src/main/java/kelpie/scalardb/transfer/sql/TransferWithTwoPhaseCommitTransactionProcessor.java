@@ -89,9 +89,9 @@ public class TransferWithTwoPhaseCommitTransactionProcessor extends TimeBasedPro
     try {
       sqlSession1.begin();
       String transactionId =
-              sqlSession1
-                      .getTransactionId()
-                      .orElseThrow(() -> new IllegalStateException("Transaction ID is not available"));
+          sqlSession1
+              .getTransactionId()
+              .orElseThrow(() -> new IllegalStateException("Transaction ID is not available"));
       sqlSession2.join(transactionId);
 
       BoundStatement boundStatement = sqlSession1.prepareStatement(SELECT_QUERY).bind();
