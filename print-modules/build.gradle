@@ -14,7 +14,9 @@ dependencies {
 }
 
 shadowJar {
-    archiveFileName = 'print-modules-all.jar'
+    archiveBaseName.set('print-modules')
+    archiveClassifier.set('all')
+    archiveVersion.set('')
 }
 
 sourceCompatibility = 1.8
