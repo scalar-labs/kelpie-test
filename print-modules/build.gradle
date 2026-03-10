@@ -13,5 +13,9 @@ dependencies {
     implementation group: 'org.glassfish', name: 'javax.json', version: '1.1.4'
 }
 
+shadowJar {
+    archiveFileName = 'print-modules-all.jar'
+}
+
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
