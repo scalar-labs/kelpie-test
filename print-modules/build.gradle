@@ -15,7 +15,6 @@ dependencies {
 
 shadowJar {
     archiveBaseName.set('print-modules')
-    archiveClassifier.set('all')
     archiveVersion.set('')
 }
 
