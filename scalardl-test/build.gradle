@@ -18,6 +18,11 @@ dependencies {
 }
 
 shadowJar {
+    manifest {
+        attributes(
+                'Multi-Release': 'true'
+        )
+    }
     mergeServiceFiles()
     exclude 'contract/*'
     zip64 true
