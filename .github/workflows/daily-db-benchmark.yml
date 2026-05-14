@@ -268,11 +268,12 @@ jobs:
       - name: Notify Slack
         if: always()
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+          SLACK_CHANNEL: eng-benchmark
         working-directory: ${{ github.workspace }}
         run: |
-          if [ -z "${SLACK_WEBHOOK_URL}" ]; then
-            echo "SLACK_WEBHOOK_URL is not set; skipping Slack notification."
+          if [ -z "${SLACK_TOKEN}" ]; then
+            echo "SLACK_TOKEN is not set; skipping Slack notification."
             exit 0
           fi
 
@@ -298,11 +299,13 @@ jobs:
 
           if [ "${image_ready}" = "true" ]; then
             BODY=$(jq -n \
+              --arg channel "${SLACK_CHANNEL}" \
               --arg date "${DATE}" \
               --arg img "${IMG_URL}" \
               --arg page "${PAGE_URL}" \
               --arg run "${RUN_URL}" \
               '{
+                channel: $channel,
                 text: ("Daily DB benchmark — " + $date),
                 blocks: [
                   {type: "section",
@@ -313,15 +316,23 @@ jobs:
               }')
           else
             BODY=$(jq -n \
+              --arg channel "${SLACK_CHANNEL}" \
               --arg date "${DATE}" \
               --arg page "${PAGE_URL}" \
               --arg run "${RUN_URL}" \
-              '{text: ("Daily DB benchmark — " + $date + " (image not yet deployed — <" + $page + "|dashboard> · <" + $run + "|run>)")}')
+              '{channel: $channel,
+                text: ("Daily DB benchmark — " + $date + " (image not yet deployed — <" + $page + "|dashboard> · <" + $run + "|run>)")}')
           fi
 
-          curl -fsS -X POST -H 'Content-type: application/json' \
-            --data "${BODY}" \
-            "${SLACK_WEBHOOK_URL}"
+          RESPONSE=$(curl -sS -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer ${SLACK_TOKEN}" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            --data "${BODY}")
+          echo "${RESPONSE}"
+          if [ "$(echo "${RESPONSE}" | jq -r '.ok')" != "true" ]; then
+            echo "Slack post failed." >&2
+            exit 1
+          fi
 
       - name: Stop PostgreSQL
         if: always()
