@@ -234,8 +234,7 @@ jobs:
           python3 "${{ github.workspace }}/.github/scripts/update_report.py" \
             --csv results/summary.csv \
             --date "$(date -u +%F)" \
-            --pages-dir "${{ github.workspace }}/gh-pages" \
-            --target-concurrency 64
+            --pages-dir "${{ github.workspace }}/gh-pages"
 
       - name: Plot throughput-vs-date PNG
         if: always()
