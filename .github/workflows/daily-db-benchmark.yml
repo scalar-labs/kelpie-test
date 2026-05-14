@@ -1,6 +1,8 @@
-name: ScalarDB benchmark concurrency sweep
+name: Daily DB benchmark
 
 on:
+  schedule:
+    - cron: "0 15 * * *"
   workflow_dispatch:
     inputs:
       kelpie_version:
@@ -25,7 +27,7 @@ on:
         default: "1,2,8,16,32,64,128"
 
 permissions:
-  contents: read
+  contents: write
   packages: read
 
 jobs:
@@ -37,24 +39,26 @@ jobs:
         working-directory: scalardb-test
 
     env:
-      KELPIE_VERSION: ${{ inputs.kelpie_version }}
-      SCHEMA_LOADER_VERSION: ${{ inputs.schema_loader_version }}
-      RUN_FOR_SEC: ${{ inputs.run_for_sec }}
-      RAMP_FOR_SEC: ${{ inputs.ramp_for_sec }}
-      CONCURRENCIES: ${{ inputs.concurrencies }}
+      # Fallback defaults are needed for `schedule` triggers, which do not
+      # apply `workflow_dispatch` input defaults.
+      KELPIE_VERSION: ${{ inputs.kelpie_version || '1.2.4' }}
+      SCHEMA_LOADER_VERSION: ${{ inputs.schema_loader_version || '3.18.0' }}
+      RUN_FOR_SEC: ${{ inputs.run_for_sec || '200' }}
+      RAMP_FOR_SEC: ${{ inputs.ramp_for_sec || '10' }}
+      CONCURRENCIES: ${{ inputs.concurrencies || '1,2,8,16,32,64,128' }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build shadow jar
         env:
@@ -88,12 +92,12 @@ jobs:
 
       - name: Cache Kelpie and Schema Loader
         id: cache-tools
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ${{ runner.temp }}/kelpie
             ${{ runner.temp }}/scalardb-schema-loader.jar
-          key: tools-kelpie-${{ inputs.kelpie_version }}-loader-${{ inputs.schema_loader_version }}
+          key: tools-kelpie-${{ inputs.kelpie_version || '1.2.4' }}-loader-${{ inputs.schema_loader_version || '3.18.0' }}
 
       - name: Download Kelpie
         if: steps.cache-tools.outputs.cache-hit != 'true'
@@ -162,9 +166,11 @@ jobs:
         run: |
           IFS=',' read -ra LEVELS <<< "${CONCURRENCIES}"
           extract() {
-            # $1 = log file, $2 = grep pattern, $3 = awk field number
             grep -E "$2" "$1" | tail -n1 | awk -v f="$3" '{print $f}'
           }
+
+          echo "concurrency,throughput,succeeded,failed,mean_ms,sd_ms,p50_ms,p90_ms,p99_ms,max_ms" > results/summary.csv
+
           {
             echo "# ScalarDB benchmark sweep"
             echo ""
@@ -179,30 +185,143 @@ jobs:
               LOG="results/run-c${c}.log"
               if [ ! -f "$LOG" ]; then
                 echo "| ${c} | (no log) | - | - | - | - | - | - | - | - |"
+                echo "${c},,,,,,,,," >> results/summary.csv
                 continue
               fi
-              tp=$(extract   "$LOG" '^Throughput: '                  2)
-              suc=$(extract  "$LOG" '^Succeeded operations: '        3)
-              fail=$(extract "$LOG" '^Failed operations: '           3)
-              mean=$(extract "$LOG" '^Mean latency: '                3)
-              sd=$(extract   "$LOG" '^SD of latency: '               4)
-              p50=$(extract  "$LOG" '^Latency at 50 percentile: '    5)
-              p90=$(extract  "$LOG" '^Latency at 90 percentile: '    5)
-              p99=$(extract  "$LOG" '^Latency at 99 percentile: '    5)
-              max=$(extract  "$LOG" '^Max latency: '                 3)
+              tp=$(extract   "$LOG" '^Throughput: '               2)
+              suc=$(extract  "$LOG" '^Succeeded operations: '     3)
+              fail=$(extract "$LOG" '^Failed operations: '        3)
+              mean=$(extract "$LOG" '^Mean latency: '             3)
+              sd=$(extract   "$LOG" '^SD of latency: '            4)
+              p50=$(extract  "$LOG" '^Latency at 50 percentile: ' 5)
+              p90=$(extract  "$LOG" '^Latency at 90 percentile: ' 5)
+              p99=$(extract  "$LOG" '^Latency at 99 percentile: ' 5)
+              max=$(extract  "$LOG" '^Max latency: '              3)
               echo "| ${c} | ${tp:--} | ${suc:--} | ${fail:--} | ${mean:--} | ${sd:--} | ${p50:--} | ${p90:--} | ${p99:--} | ${max:--} |"
+              echo "${c},${tp},${suc},${fail},${mean},${sd},${p50},${p90},${p99},${max}" >> results/summary.csv
             done
-            echo ""
-            echo "Raw logs (and any latency CSVs) are attached as the \`benchmark-results\` artifact."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Plot throughput vs concurrency (PNG)
+        if: always()
+        run: |
+          if [ ! -s results/summary.csv ]; then
+            echo "No summary.csv; skipping plot."
+            exit 0
+          fi
+          python3 -m pip install --quiet matplotlib
+          python3 "${{ github.workspace }}/.github/scripts/plot_throughput.py" \
+            results/summary.csv results/throughput-vs-concurrency.png
 
       - name: Upload results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-results
           path: scalardb-test/results
           if-no-files-found: warn
+
+      - name: Checkout gh-pages branch
+        if: always()
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Update daily report
+        if: always()
+        run: |
+          python3 "${{ github.workspace }}/.github/scripts/update_report.py" \
+            --csv results/summary.csv \
+            --date "$(date -u +%F)" \
+            --pages-dir "${{ github.workspace }}/gh-pages" \
+            --target-concurrency 64
+
+      - name: Plot throughput-vs-date PNG
+        if: always()
+        run: |
+          if [ ! -s "${{ github.workspace }}/gh-pages/data.json" ]; then
+            echo "No data.json; skipping date-axis plot."
+            exit 0
+          fi
+          python3 -m pip install --quiet matplotlib
+          python3 "${{ github.workspace }}/.github/scripts/plot_throughput_history.py" \
+            --data-json "${{ github.workspace }}/gh-pages/data.json" \
+            --out "${{ github.workspace }}/gh-pages/throughput-vs-date.png" \
+            --target-concurrency 64 \
+            --days 14
+
+      - name: Commit and push daily report
+        if: always()
+        working-directory: ${{ github.workspace }}/gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Daily benchmark report: $(date -u +%F)"
+          git push origin gh-pages
+
+      - name: Notify Slack
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        working-directory: ${{ github.workspace }}
+        run: |
+          if [ -z "${SLACK_WEBHOOK_URL}" ]; then
+            echo "SLACK_WEBHOOK_URL is not set; skipping Slack notification."
+            exit 0
+          fi
+
+          DATE="$(date -u +%F)"
+          PAGES_BASE="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          IMG_URL="${PAGES_BASE}/throughput-vs-date.png?v=${{ github.sha }}"
+          PAGE_URL="${PAGES_BASE}/?v=${{ github.sha }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          # GitHub Pages takes a moment to redeploy after the push; wait for the
+          # new PNG to be reachable so Slack fetches the fresh image.
+          image_ready=false
+          if [ -s gh-pages/throughput-vs-date.png ]; then
+            for i in $(seq 1 24); do
+              code=$(curl -s -o /dev/null -w "%{http_code}" "${IMG_URL}" || echo "000")
+              if [ "${code}" = "200" ]; then
+                image_ready=true
+                break
+              fi
+              sleep 5
+            done
+          fi
+
+          if [ "${image_ready}" = "true" ]; then
+            BODY=$(jq -n \
+              --arg date "${DATE}" \
+              --arg img "${IMG_URL}" \
+              --arg page "${PAGE_URL}" \
+              --arg run "${RUN_URL}" \
+              '{
+                text: ("Daily DB benchmark — " + $date),
+                blocks: [
+                  {type: "section",
+                   text: {type: "mrkdwn",
+                          text: ("*Daily DB benchmark — " + $date + "*\nConcurrency 64, last 14 days. <" + $page + "|Dashboard> · <" + $run + "|Workflow run>")}},
+                  {type: "image", image_url: $img, alt_text: "Throughput vs Date"}
+                ]
+              }')
+          else
+            BODY=$(jq -n \
+              --arg date "${DATE}" \
+              --arg page "${PAGE_URL}" \
+              --arg run "${RUN_URL}" \
+              '{text: ("Daily DB benchmark — " + $date + " (image not yet deployed — <" + $page + "|dashboard> · <" + $run + "|run>)")}')
+          fi
+
+          curl -fsS -X POST -H 'Content-type: application/json' \
+            --data "${BODY}" \
+            "${SLACK_WEBHOOK_URL}"
 
       - name: Stop PostgreSQL
         if: always()
