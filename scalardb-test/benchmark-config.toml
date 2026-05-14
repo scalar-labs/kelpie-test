@@ -10,7 +10,7 @@
     path = "build/libs/scalardb-test-all.jar"
 
 [common]
-  concurrency = 1
+  concurrency = 8
   run_for_sec = 200
   ramp_for_sec = 10
 

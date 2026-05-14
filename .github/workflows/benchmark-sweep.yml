@@ -1,0 +1,212 @@
+name: ScalarDB benchmark concurrency sweep
+
+on:
+  workflow_dispatch:
+    inputs:
+      kelpie_version:
+        description: "Kelpie release version"
+        type: string
+        default: "1.2.4"
+      schema_loader_version:
+        description: "scalardb-schema-loader release version"
+        type: string
+        default: "3.18.0"
+      run_for_sec:
+        description: "Workload duration in seconds"
+        type: string
+        default: "200"
+      ramp_for_sec:
+        description: "Ramp-up duration in seconds"
+        type: string
+        default: "10"
+      concurrencies:
+        description: "Comma-separated list of workload concurrencies"
+        type: string
+        default: "1,2,8,16,32,64,128"
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        working-directory: scalardb-test
+
+    env:
+      KELPIE_VERSION: ${{ inputs.kelpie_version }}
+      SCHEMA_LOADER_VERSION: ${{ inputs.schema_loader_version }}
+      RUN_FOR_SEC: ${{ inputs.run_for_sec }}
+      RAMP_FOR_SEC: ${{ inputs.ramp_for_sec }}
+      CONCURRENCIES: ${{ inputs.concurrencies }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build shadow jar
+        env:
+          GPR_USERNAME: ${{ github.actor }}
+          GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew shadowJar
+
+      - name: Start PostgreSQL
+        working-directory: .
+        run: |
+          docker run --name pg-dev \
+            -e POSTGRES_PASSWORD=postgres \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_DB=postgres \
+            -p 5432:5432 \
+            -d postgres:18-alpine
+
+      - name: Wait for PostgreSQL to be ready
+        working-directory: .
+        run: |
+          for i in $(seq 1 60); do
+            if docker exec pg-dev pg_isready -U postgres -d postgres >/dev/null 2>&1; then
+              echo "PostgreSQL is ready."
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "PostgreSQL did not become ready in time." >&2
+          docker logs pg-dev >&2 || true
+          exit 1
+
+      - name: Cache Kelpie and Schema Loader
+        id: cache-tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ runner.temp }}/kelpie
+            ${{ runner.temp }}/scalardb-schema-loader.jar
+          key: tools-kelpie-${{ inputs.kelpie_version }}-loader-${{ inputs.schema_loader_version }}
+
+      - name: Download Kelpie
+        if: steps.cache-tools.outputs.cache-hit != 'true'
+        working-directory: .
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/kelpie.zip" \
+            "https://github.com/scalar-labs/kelpie/releases/download/v${KELPIE_VERSION}/kelpie-${KELPIE_VERSION}.zip"
+          unzip -q "$RUNNER_TEMP/kelpie.zip" -d "$RUNNER_TEMP"
+          mv "$RUNNER_TEMP/kelpie-${KELPIE_VERSION}" "$RUNNER_TEMP/kelpie"
+          rm "$RUNNER_TEMP/kelpie.zip"
+
+      - name: Download Schema Loader
+        if: steps.cache-tools.outputs.cache-hit != 'true'
+        working-directory: .
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/scalardb-schema-loader.jar" \
+            "https://github.com/scalar-labs/scalardb/releases/download/v${SCHEMA_LOADER_VERSION}/scalardb-schema-loader-${SCHEMA_LOADER_VERSION}.jar"
+
+      - name: Apply fixed config values
+        run: |
+          sed -i -E "s/^( *run_for_sec *= *).*/\1${RUN_FOR_SEC}/" benchmark-config.toml
+          sed -i -E "s/^( *ramp_for_sec *= *).*/\1${RAMP_FOR_SEC}/" benchmark-config.toml
+          mkdir -p results
+
+      - name: Run benchmark sweep
+        run: |
+          set -u
+          IFS=',' read -ra LEVELS <<< "${CONCURRENCIES}"
+          SCHEMA_LOADER_JAR="$RUNNER_TEMP/scalardb-schema-loader.jar"
+          KELPIE_BIN="$RUNNER_TEMP/kelpie/bin/kelpie"
+
+          for c in "${LEVELS[@]}"; do
+            c="$(echo "$c" | tr -d '[:space:]')"
+            echo "::group::Reset schema for concurrency=${c}"
+            java -jar "$SCHEMA_LOADER_JAR" --jdbc \
+              -f schema/tx_transfer.json \
+              -j jdbc:postgresql://localhost:5432/postgres \
+              -u postgres -p postgres -D || true
+            java -jar "$SCHEMA_LOADER_JAR" --jdbc \
+              -f schema/tx_transfer.json \
+              -j jdbc:postgresql://localhost:5432/postgres \
+              -u postgres -p postgres
+            echo "::endgroup::"
+
+            echo "::group::Patch concurrency=${c}"
+            sed -i -E "s/^( *concurrency *= *).*/\1${c}/" benchmark-config.toml
+            grep -E "^ *concurrency *= *" benchmark-config.toml
+            echo "::endgroup::"
+
+            echo "::group::Run kelpie (concurrency=${c})"
+            LOG="results/run-c${c}.log"
+            if "$KELPIE_BIN" --config benchmark-config.toml 2>&1 | tee "$LOG"; then
+              echo "Run for concurrency=${c} succeeded."
+            else
+              echo "Run for concurrency=${c} FAILED with exit ${PIPESTATUS[0]}." >&2
+            fi
+            # Move any latency CSV produced by kelpie into the results dir.
+            for f in latency-*.log latency.log; do
+              [ -f "$f" ] && mv "$f" "results/latency-c${c}-$(basename "$f")"
+            done
+            echo "::endgroup::"
+          done
+
+      - name: Summarize results
+        if: always()
+        run: |
+          IFS=',' read -ra LEVELS <<< "${CONCURRENCIES}"
+          extract() {
+            # $1 = log file, $2 = grep pattern, $3 = awk field number
+            grep -E "$2" "$1" | tail -n1 | awk -v f="$3" '{print $f}'
+          }
+          {
+            echo "# ScalarDB benchmark sweep"
+            echo ""
+            echo "- Kelpie: \`${KELPIE_VERSION}\`"
+            echo "- Schema Loader: \`${SCHEMA_LOADER_VERSION}\`"
+            echo "- run_for_sec: \`${RUN_FOR_SEC}\`, ramp_for_sec: \`${RAMP_FOR_SEC}\`"
+            echo ""
+            echo "| Concurrency | Throughput (ops/s) | Succeeded | Failed | Mean (ms) | SD (ms) | p50 (ms) | p90 (ms) | p99 (ms) | Max (ms) |"
+            echo "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"
+            for c in "${LEVELS[@]}"; do
+              c="$(echo "$c" | tr -d '[:space:]')"
+              LOG="results/run-c${c}.log"
+              if [ ! -f "$LOG" ]; then
+                echo "| ${c} | (no log) | - | - | - | - | - | - | - | - |"
+                continue
+              fi
+              tp=$(extract   "$LOG" '^Throughput: '                  2)
+              suc=$(extract  "$LOG" '^Succeeded operations: '        3)
+              fail=$(extract "$LOG" '^Failed operations: '           3)
+              mean=$(extract "$LOG" '^Mean latency: '                3)
+              sd=$(extract   "$LOG" '^SD of latency: '               4)
+              p50=$(extract  "$LOG" '^Latency at 50 percentile: '    5)
+              p90=$(extract  "$LOG" '^Latency at 90 percentile: '    5)
+              p99=$(extract  "$LOG" '^Latency at 99 percentile: '    5)
+              max=$(extract  "$LOG" '^Max latency: '                 3)
+              echo "| ${c} | ${tp:--} | ${suc:--} | ${fail:--} | ${mean:--} | ${sd:--} | ${p50:--} | ${p90:--} | ${p99:--} | ${max:--} |"
+            done
+            echo ""
+            echo "Raw logs (and any latency CSVs) are attached as the \`benchmark-results\` artifact."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: scalardb-test/results
+          if-no-files-found: warn
+
+      - name: Stop PostgreSQL
+        if: always()
+        working-directory: .
+        run: |
+          docker logs pg-dev > scalardb-test/results/postgres.log 2>&1 || true
+          docker rm -f pg-dev || true
