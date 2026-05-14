@@ -80,7 +80,10 @@ INDEX_HTML_TEMPLATE = """<!doctype html>
   <h1>Daily DB benchmark &mdash; throughput at concurrency __TARGET__</h1>
   <p class="meta">Last 14 days. Gaps indicate a failed or missing run.</p>
   <canvas id="chart" height="120"></canvas>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+          integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer"></script>
   <script>
     const TARGET_CONCURRENCY = __TARGET__;
     fetch('data.json', { cache: 'no-store' })
