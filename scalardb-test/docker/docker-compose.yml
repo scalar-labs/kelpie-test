@@ -1,24 +1,28 @@
 # 3-node Cassandra cluster + a client container for running the kelpie
-# verification test (sensor workload). The Cassandra image is extended with
-# sshd + sudo so that CassandraKiller can SSH in as `centos` and kill/restart
-# the Cassandra process via /etc/init.d/cassandra.
+# verification tests. The Cassandra image is extended with sshd + sudo
+# so that CassandraKiller can SSH in as `root` and kill/restart the
+# Cassandra process via /etc/init.d/cassandra.
 #
 # Usage (from this directory):
-#   ./make-key.sh                                 # generates ssh/id_ed25519 (gitignored)
+#   ./make-key.sh         # generates ssh/id_ed25519 (gitignored)
 #   docker compose build
-#   docker compose up -d                          # waits for all 3 nodes to become healthy
+#   docker compose up -d  # waits for all 3 nodes to become healthy
 #
-#   # Load the sensor schema (RF=3, no quoting headaches via stdin):
-#   sed 's/replication_factor.: 1/replication_factor": 3/' \
-#       ../schema/tx_sensor.cql \
-#     | docker compose exec -T cassandra1 cqlsh
+#   # Load the sensor schema (RF=3):
+#   docker compose run --rm client java -jar /opt/scalardb-schema-loader.jar \
+#       --cassandra \
+#       --schema-file schema/tx_sensor.json \
+#       --host cassandra1 \
+#       --user cassandra \
+#       --password cassandra \
+#       --replication-factor 3 \
+#       --coordinator
 #
 #   # Build the test jar and run kelpie inside the client container:
-#   docker compose run --rm client bash -lc "\
-#       ./gradlew shadowJar && \
-#       kelpie --config verification-config.toml.docker"
+#   docker compose run --rm client bash -lc \
+#       "kelpie --config phantom-write-config.toml"
 #
-#   docker compose down -v                        # tear everything down
+#   docker compose down -v  # tear everything down
 
 x-cassandra-common: &cassandra-common
   build: ./cassandra
