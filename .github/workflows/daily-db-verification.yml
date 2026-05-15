@@ -106,7 +106,104 @@ jobs:
           path: scalardb-test/docker/logs
           if-no-files-found: warn
 
+      - name: Record result
+        if: always()
+        run: |
+          mkdir -p results
+          if [ "${{ steps.kelpie.outcome }}" = "success" ]; then
+            echo "${{ matrix.test.name }}:success" > "results/result-${{ matrix.test.name }}.txt"
+          else
+            echo "${{ matrix.test.name }}:failure" > "results/result-${{ matrix.test.name }}.txt"
+          fi
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: result-${{ matrix.test.name }}
+          path: scalardb-test/results/result-${{ matrix.test.name }}.txt
+
       - name: Tear down
         if: always()
         working-directory: scalardb-test/docker
         run: docker compose down -v
+
+  notify-slack:
+    name: Notify Slack
+    if: always()
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+
+    steps:
+      - name: Download result artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p results
+          gh api --paginate \
+            "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+            --jq '.artifacts[] | select(.name | startswith("result-")) | .name' | \
+            while read name; do
+              echo "Downloading $name"
+              gh run download ${{ github.run_id }} -n "$name" -D results -R "${{ github.repository }}"
+            done
+
+      - name: Build Slack message
+        id: message
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          successes=""
+          failures=""
+          timeouts=""
+
+          # Names of every matrix shard that ran (or was supposed to run).
+          expected=$(gh api --paginate \
+            "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs" \
+            --jq '.jobs[] | select(.name | startswith("verify (")) | .name | sub("^verify \\("; "") | sub("\\)$"; "")')
+
+          found=""
+          for file in results/result-*.txt; do
+            [ -f "$file" ] || continue
+            while read -r line; do
+              name=$(echo "$line" | cut -d: -f1)
+              status=$(echo "$line" | cut -d: -f2)
+              found="${found} ${name}"
+              case "$status" in
+                success) successes="${successes}- ${name}\n" ;;
+                timeout) timeouts="${timeouts}- ${name}\n" ;;
+                *)       failures="${failures}- ${name}\n" ;;
+              esac
+            done < "$file"
+          done
+
+          for test in $expected; do
+            if ! echo "$found" | grep -qw "$test"; then
+              timeouts="${timeouts}- ${test} (no result)\n"
+            fi
+          done
+
+          if [ -n "$failures" ] || [ -n "$timeouts" ]; then
+            icon=":fire:"
+          else
+            icon=":white_check_mark:"
+          fi
+
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          {
+            echo "message<<EOF"
+            printf "%s *Daily DB verification — %s*\n\n" "$icon" "$(date -u +%F)"
+            printf "*Success:*\n%s\n" "$successes"
+            printf "*Failed:*\n%s\n"  "$failures"
+            printf "*Timed out:*\n%s\n" "$timeouts"
+            printf "<%s|View workflow run>\n" "$RUN_URL"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Post to Slack
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
