@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         test:
-          - name: sensor
+          - name: phantom-write
             schema: schema/tx_sensor.json
             config: phantom-write-config.toml
           - name: write-skew
