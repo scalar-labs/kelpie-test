@@ -1,0 +1,52 @@
+#!/bin/bash
+# Minimal /etc/init.d/cassandra used by the SSH-based fault injector.
+# Backgrounds Cassandra via the upstream docker-entrypoint and records the PID
+# at /var/run/cassandra/cassandra.pid so `pkill -F` can target it.
+
+PIDFILE=/var/run/cassandra/cassandra.pid
+LOGFILE=/var/log/cassandra/stdout.log
+
+start() {
+  if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+    echo "Cassandra is already running (PID $(cat "$PIDFILE"))."
+    return 0
+  fi
+  mkdir -p /var/run/cassandra /var/log/cassandra
+  chown cassandra:cassandra /var/run/cassandra /var/log/cassandra
+  nohup /usr/local/bin/docker-entrypoint.sh cassandra -f \
+      </dev/null >"$LOGFILE" 2>&1 &
+  PID=$!
+  echo "$PID" > "$PIDFILE"
+  echo "Cassandra started (PID $PID)."
+}
+
+stop() {
+  if [ ! -f "$PIDFILE" ]; then
+    echo "Cassandra is not running (no pidfile)."
+    return 0
+  fi
+  PID=$(cat "$PIDFILE")
+  if kill "$PID" 2>/dev/null; then
+    echo "Sent SIGTERM to PID $PID."
+  else
+    echo "PID $PID not running."
+  fi
+  rm -f "$PIDFILE"
+}
+
+status() {
+  if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+    echo "Cassandra is running (PID $(cat "$PIDFILE"))."
+    return 0
+  fi
+  echo "Cassandra is not running."
+  return 1
+}
+
+case "$1" in
+  start)   start ;;
+  stop)    stop ;;
+  restart) stop; sleep 2; start ;;
+  status)  status ;;
+  *) echo "Usage: $0 {start|stop|restart|status}"; exit 1 ;;
+esac
