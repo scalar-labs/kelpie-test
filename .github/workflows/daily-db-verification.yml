@@ -1,0 +1,112 @@
+name: Daily DB verification
+
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        test:
+          - name: sensor
+            schema: schema/tx_sensor.json
+            config: phantom-write-config.toml
+          - name: write-skew
+            schema: schema/tx_transfer.json
+            config: write-skew-config.toml
+    name: verify (${{ matrix.test.name }})
+    defaults:
+      run:
+        working-directory: scalardb-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build shadow jar
+        env:
+          GPR_USERNAME: ${{ github.actor }}
+          GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew shadowJar
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build images (with GHA cache)
+        working-directory: scalardb-test/docker
+        run: |
+          docker buildx bake -f docker-compose.yml \
+            --set "*.cache-from=type=gha" \
+            --set "*.cache-to=type=gha,mode=max" \
+            --load
+
+      - name: Generate SSH key
+        working-directory: scalardb-test/docker
+        run: ./make-key.sh
+
+      - name: Bring up the cluster
+        working-directory: scalardb-test/docker
+        run: docker compose up -d --wait
+
+      - name: Create tables
+        working-directory: scalardb-test/docker
+        run: |
+          docker compose exec -T client \
+            java -jar /opt/scalardb-schema-loader.jar \
+              --cassandra \
+              --schema-file ${{ matrix.test.schema }} \
+              --host cassandra1 \
+              --user cassandra \
+              --password cassandra \
+              --replication-factor 3 \
+              --coordinator
+
+      - name: Run verification
+        id: kelpie
+        working-directory: scalardb-test/docker
+        run: |
+          mkdir -p logs
+          set -o pipefail
+          docker compose exec -T client \
+            kelpie --config ${{ matrix.test.config }} \
+            2>&1 | tee logs/kelpie.log
+
+      - name: Collect Cassandra logs
+        if: always()
+        working-directory: scalardb-test/docker
+        run: |
+          mkdir -p logs
+          for node in cassandra1 cassandra2 cassandra3; do
+            docker compose cp "$node:/var/log/cassandra" "logs/$node" || true
+          done
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: verification-logs-${{ matrix.test.name }}
+          path: scalardb-test/docker/logs
+          if-no-files-found: warn
+
+      - name: Tear down
+        if: always()
+        working-directory: scalardb-test/docker
+        run: docker compose down -v

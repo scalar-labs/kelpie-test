@@ -16,6 +16,7 @@
   concurrency = 5
   run_for_sec = 900
   ramp_for_sec = 0
+  log_enabled_when_error = false
 
 [stats]
   realtime_report_enabled = false
@@ -26,15 +27,15 @@
   population_concurrency = 8
 
 [storage_config]
-  contact_points = "localhost"
-  #username = "cassandra"
-  #password = "cassandra"
-  #storage = "cassandra"
+  storage = "cassandra"
+  contact_points = "cassandra1,cassandra2,cassandra3"
+  username = "cassandra"
+  password = "cassandra"
   isolation_level = "SERIALIZABLE"
 
 [killer_config]
-  ssh_user = "centos"
+  ssh_user = "root"
   ssh_port = 22
-  ssh_private_key = "/home/centos/.ssh/private_key"
-  contact_points = "localhost"
-  max_kill_interval_sec = 300
+  ssh_private_key = "/root/.ssh/id_ed25519"
+  contact_points = "cassandra1,cassandra2,cassandra3"
+  max_kill_interval_sec = 60
