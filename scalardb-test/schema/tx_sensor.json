@@ -1,0 +1,16 @@
+{
+  "sensor.tx_sensor": {
+    "transaction": true,
+    "partition-key": [
+      "timestamp"
+    ],
+    "clustering-key": [
+      "device_id"
+    ],
+    "columns": {
+      "timestamp": "INT",
+      "device_id": "INT",
+      "revision": "INT"
+    }
+  }
+}

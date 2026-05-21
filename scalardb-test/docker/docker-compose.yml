@@ -1,0 +1,94 @@
+# 3-node Cassandra cluster + a client container for running the kelpie
+# verification tests. The Cassandra image is extended with sshd + sudo
+# so that CassandraKiller can SSH in as `root` and kill/restart the
+# Cassandra process via /etc/init.d/cassandra.
+#
+# Usage (from this directory):
+#   ./make-key.sh         # generates ssh/id_ed25519 (gitignored)
+#   docker compose build
+#   docker compose up -d  # waits for all 3 nodes to become healthy
+#
+#   # Load the sensor schema (RF=3):
+#   docker compose run --rm client java -jar /opt/scalardb-schema-loader.jar \
+#       --cassandra \
+#       --schema-file schema/tx_sensor.json \
+#       --host cassandra1 \
+#       --user cassandra \
+#       --password cassandra \
+#       --replication-factor 3 \
+#       --coordinator
+#
+#   # Build the test jar and run kelpie inside the client container:
+#   docker compose run --rm client bash -lc \
+#       "kelpie --config phantom-write-config.toml"
+#
+#   docker compose down -v  # tear everything down
+
+x-cassandra-common: &cassandra-common
+  build: ./cassandra
+  image: scalardb-test/cassandra:5.0-ssh
+  environment:
+    CASSANDRA_CLUSTER_NAME: scalardb-test
+    CASSANDRA_DC: dc1
+    CASSANDRA_RACK: rack1
+    CASSANDRA_ENDPOINT_SNITCH: SimpleSnitch
+    CASSANDRA_SEEDS: cassandra1
+    MAX_HEAP_SIZE: 1G
+    HEAP_NEWSIZE: 256M
+  volumes:
+    - ./ssh:/keys:ro
+  networks:
+    - scalardb-net
+  healthcheck:
+    test: ["CMD-SHELL", "nodetool statusbinary | grep -q '^running$'"]
+    interval: 10s
+    timeout: 5s
+    retries: 30
+    start_period: 90s
+
+services:
+  cassandra1:
+    <<: *cassandra-common
+    container_name: cassandra1
+    hostname: cassandra1
+
+  cassandra2:
+    <<: *cassandra-common
+    container_name: cassandra2
+    hostname: cassandra2
+    depends_on:
+      cassandra1:
+        condition: service_healthy
+
+  cassandra3:
+    <<: *cassandra-common
+    container_name: cassandra3
+    hostname: cassandra3
+    depends_on:
+      cassandra2:
+        condition: service_healthy
+
+  client:
+    build: ./client
+    image: scalardb-test/client:latest
+    container_name: scalardb-test-client
+    volumes:
+      - ../..:/work
+      - ./ssh:/keys:ro
+    networks:
+      - scalardb-net
+    working_dir: /work/scalardb-test
+    tty: true
+    stdin_open: true
+    depends_on:
+      cassandra1:
+        condition: service_healthy
+      cassandra2:
+        condition: service_healthy
+      cassandra3:
+        condition: service_healthy
+    command: ["bash"]
+
+networks:
+  scalardb-net:
+    driver: bridge
