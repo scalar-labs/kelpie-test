@@ -61,10 +61,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Build shadow jar
-        env:
-          GPR_USERNAME: ${{ github.actor }}
-          GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew shadowJar
+        run: ./gradlew shadowJar -PgprUsername="${{ github.repository_owner }}" -PgprPassword="${{ secrets.CR_PAT }}"
 
       - name: Start PostgreSQL
         working-directory: .
@@ -222,14 +219,14 @@ jobs:
           if-no-files-found: warn
 
       - name: Checkout gh-pages branch
-        if: always()
+        if: always() && github.event_name != 'workflow_dispatch'
         uses: actions/checkout@v6
         with:
           ref: gh-pages
           path: gh-pages
 
       - name: Update daily report
-        if: always()
+        if: always() && github.event_name != 'workflow_dispatch'
         run: |
           python3 "${{ github.workspace }}/.github/scripts/update_report.py" \
             --csv results/summary.csv \
@@ -237,7 +234,7 @@ jobs:
             --pages-dir "${{ github.workspace }}/gh-pages"
 
       - name: Plot throughput-vs-date PNG
-        if: always()
+        if: always() && github.event_name != 'workflow_dispatch'
         run: |
           if [ ! -s "${{ github.workspace }}/gh-pages/data.json" ]; then
             echo "No data.json; skipping date-axis plot."
@@ -251,7 +248,7 @@ jobs:
             --days 14
 
       - name: Commit and push daily report
-        if: always()
+        if: always() && github.event_name != 'workflow_dispatch'
         working-directory: ${{ github.workspace }}/gh-pages
         run: |
           git config user.name "github-actions[bot]"
@@ -265,7 +262,7 @@ jobs:
           git push origin gh-pages
 
       - name: Notify Slack
-        if: always()
+        if: always() && github.event_name != 'workflow_dispatch'
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
           SLACK_CHANNEL: eng-benchmark
