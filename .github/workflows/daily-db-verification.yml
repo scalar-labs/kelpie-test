@@ -42,10 +42,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Build shadow jar
-        env:
-          GPR_USERNAME: ${{ github.actor }}
-          GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew shadowJar
+        run: ./gradlew shadowJar -PgprUsername="${{ github.repository_owner }}" -PgprPassword="${{ secrets.CR_PAT }}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
