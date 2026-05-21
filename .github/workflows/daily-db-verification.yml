@@ -73,7 +73,8 @@ jobs:
               --host cassandra1 \
               --user cassandra \
               --password cassandra \
-              --replication-factor 3
+              --replication-factor 3 \
+              --repair-all
 
       - name: Run verification
         id: kelpie
@@ -203,3 +204,5 @@ jobs:
       - name: Post to Slack
         run: |
           curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\": \"${{ steps.message.outputs.message }}\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
