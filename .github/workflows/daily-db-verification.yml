@@ -73,8 +73,7 @@ jobs:
               --host cassandra1 \
               --user cassandra \
               --password cassandra \
-              --replication-factor 3 \
-              --coordinator
+              --replication-factor 3
 
       - name: Run verification
         id: kelpie
