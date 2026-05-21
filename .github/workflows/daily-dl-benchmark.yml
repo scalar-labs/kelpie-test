@@ -193,14 +193,14 @@ jobs:
           if-no-files-found: warn
 
       - name: Checkout gh-pages branch
-        if: always()
+        if: always() && github.event_name != 'workflow_dispatch'
         uses: actions/checkout@v6
         with:
           ref: gh-pages
           path: gh-pages
 
       - name: Update daily report
-        if: always()
+        if: always() && github.event_name != 'workflow_dispatch'
         run: |
           mkdir -p "${{ github.workspace }}/gh-pages/dl"
           python3 "${{ github.workspace }}/.github/scripts/update_report.py" \
@@ -209,7 +209,7 @@ jobs:
             --pages-dir "${{ github.workspace }}/gh-pages/dl"
 
       - name: Plot throughput-vs-date PNG
-        if: always()
+        if: always() && github.event_name != 'workflow_dispatch'
         run: |
           if [ ! -s "${{ github.workspace }}/gh-pages/dl/data.json" ]; then
             echo "No data.json; skipping date-axis plot."
@@ -223,7 +223,7 @@ jobs:
             --days 14
 
       - name: Commit and push daily report
-        if: always()
+        if: always() && github.event_name != 'workflow_dispatch'
         working-directory: ${{ github.workspace }}/gh-pages
         run: |
           git config user.name "github-actions[bot]"
@@ -237,7 +237,7 @@ jobs:
           git push origin gh-pages
 
       - name: Notify Slack
-        if: always()
+        if: always() && github.event_name != 'workflow_dispatch'
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
           SLACK_CHANNEL: eng-benchmark
