@@ -66,9 +66,9 @@ jobs:
       - name: Create tables
         working-directory: scalardb-test/docker
         run: |
+          docker compose cp ../${{ matrix.test.schema }} cassandra1:/tmp/schema.cql
           docker compose exec -T cassandra1 \
-            cqlsh -u cassandra -p cassandra \
-              -f ${{ matrix.test.schema }}
+            cqlsh -u cassandra -p cassandra -f /tmp/schema.cql
 
       - name: Run verification
         id: kelpie
