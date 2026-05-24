@@ -187,11 +187,11 @@ jobs:
 
           {
             echo "message<<EOF"
-            printf "%s *Daily DB verification — %s*\n\n" "$icon" "$(date -u +%F)"
+            printf "%s *ScalarDB verification*\n\n" "$icon"
             printf "*Success:*\n%s\n" "$successes"
             printf "*Failed:*\n%s\n"  "$failures"
             printf "*Timed out:*\n%s\n" "$timeouts"
-            printf "<%s|View workflow run>\n" "$RUN_URL"
+            printf "<%s|View logs>\n" "$RUN_URL"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
