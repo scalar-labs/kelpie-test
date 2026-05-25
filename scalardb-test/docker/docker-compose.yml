@@ -8,15 +8,10 @@
 #   docker compose build
 #   docker compose up -d  # waits for all 3 nodes to become healthy
 #
-#   # Load the sensor schema (RF=3):
-#   docker compose run --rm client java -jar /opt/scalardb-schema-loader.jar \
-#       --cassandra \
-#       --schema-file schema/tx_sensor.json \
-#       --host cassandra1 \
-#       --user cassandra \
-#       --password cassandra \
-#       --replication-factor 3 \
-#       --coordinator
+#   # Load the sensor schema (check the replication factor):
+#   docker compose cp schema.cql cassandra1:/tmp/schema.cql
+#   docker compose exec -T cassandra1 \
+#     cqlsh -u cassandra -p cassandra -f /tmp/schema.cql
 #
 #   # Build the test jar and run kelpie inside the client container:
 #   docker compose run --rm client bash -lc \
