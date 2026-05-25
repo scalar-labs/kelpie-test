@@ -40,6 +40,8 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          add-job-summary: never
 
       - name: Build shadow jar
         run: ./gradlew shadowJar -PgprUsername="${{ github.repository_owner }}" -PgprPassword="${{ secrets.CR_PAT }}"
