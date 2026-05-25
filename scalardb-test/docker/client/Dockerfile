@@ -1,7 +1,6 @@
 FROM eclipse-temurin:21-jdk-jammy
 
 ARG KELPIE_VERSION=1.2.4
-ARG SCHEMA_LOADER_VERSION=3.18.0
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -18,10 +17,6 @@ RUN curl -fsSL -o /tmp/kelpie.zip \
     mv "/opt/kelpie-${KELPIE_VERSION}" /opt/kelpie && \
     rm /tmp/kelpie.zip
 ENV PATH=/opt/kelpie/bin:$PATH
-
-RUN curl -fsSL -o /opt/scalardb-schema-loader.jar \
-      "https://github.com/scalar-labs/scalardb/releases/download/v${SCHEMA_LOADER_VERSION}/scalardb-schema-loader-${SCHEMA_LOADER_VERSION}.jar"
-ENV SCHEMA_LOADER_JAR=/opt/scalardb-schema-loader.jar
 
 COPY entrypoint.sh /usr/local/bin/client-entrypoint.sh
 RUN chmod +x /usr/local/bin/client-entrypoint.sh
