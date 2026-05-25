@@ -24,7 +24,7 @@ on:
       concurrencies:
         description: "Comma-separated list of workload concurrencies"
         type: string
-        default: "1,2,8,16,32,64,128"
+        default: "1,2,4,8,16,32"
 
 permissions:
   contents: write
@@ -45,7 +45,7 @@ jobs:
       SCHEMA_LOADER_VERSION: ${{ inputs.schema_loader_version || '3.18.0' }}
       RUN_FOR_SEC: ${{ inputs.run_for_sec || '200' }}
       RAMP_FOR_SEC: ${{ inputs.ramp_for_sec || '10' }}
-      CONCURRENCIES: ${{ inputs.concurrencies || '1,2,8,16,32,64,128' }}
+      CONCURRENCIES: ${{ inputs.concurrencies || '1,2,4,8,16,32' }}
 
     steps:
       - name: Checkout
@@ -59,6 +59,8 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          add-job-summary: never
 
       - name: Build shadow jar
         run: ./gradlew shadowJar -PgprUsername="${{ github.repository_owner }}" -PgprPassword="${{ secrets.CR_PAT }}"
