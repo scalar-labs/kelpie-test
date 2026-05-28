@@ -12,7 +12,7 @@ RUN apt-get update && \
 RUN pip3 install --no-cache-dir cqlsh
 
 RUN curl -fsSL -o /tmp/kelpie.zip \
-      "https://github.com/scalar-labs/kelpie/releases/download/${KELPIE_VERSION}/kelpie-${KELPIE_VERSION}.zip" && \
+      "https://github.com/scalar-labs/kelpie/releases/download/v${KELPIE_VERSION}/kelpie-${KELPIE_VERSION}.zip" && \
     unzip -q /tmp/kelpie.zip -d /opt && \
     mv "/opt/kelpie-${KELPIE_VERSION}" /opt/kelpie && \
     rm /tmp/kelpie.zip
