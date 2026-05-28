@@ -2,35 +2,194 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Daily DB benchmark</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daily DB report</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-           margin: 2rem auto; max-width: 900px; padding: 0 1rem; color: #222; }
-    h1 { font-size: 1.4rem; }
-    .meta { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --pass: #3fb950;
+      --fail: #f85149;
+      --warn: #d29922;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    main {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 0 1rem 3rem;
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin: 0 0 0.25rem;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+    .tab {
+      background: transparent;
+      color: var(--muted);
+      border: 0;
+      border-bottom: 2px solid transparent;
+      padding: 0.6rem 1rem;
+      font: inherit;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transform: translateY(1px);
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .card h2 {
+      font-size: 1.05rem;
+      margin: 0 0 0.75rem;
+      font-weight: 600;
+    }
     canvas { max-width: 100%; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+    th, td {
+      text-align: right;
+      padding: 0.5rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    th { color: var(--muted); font-weight: 500; }
+    th:first-child, td:first-child { text-align: left; }
+    tbody tr:last-child td { border-bottom: 0; }
+    td.muted { color: var(--muted); }
+    .badge {
+      display: inline-block;
+      padding: 0.1rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .badge-pass { background: rgba(63, 185, 80, 0.15); color: var(--pass); }
+    .badge-fail { background: rgba(248, 81, 73, 0.15); color: var(--fail); }
+    .badge-na   { background: rgba(139, 148, 158, 0.15); color: var(--muted); }
+    .empty {
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 1rem 0;
+    }
   </style>
 </head>
 <body>
-  <h1>Daily DB benchmark &mdash; throughput at concurrency 64</h1>
-  <p class="meta">Last 14 days. Gaps indicate a failed or missing run.</p>
-  <canvas id="chart" height="120"></canvas>
+  <main>
+    <h1>Daily DB report</h1>
+    <p class="meta">Last 14 days. Gaps indicate a failed or missing run.</p>
+
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-panel="benchmark" role="tab">Benchmark</button>
+      <button class="tab"        data-panel="verification" role="tab">Verification</button>
+    </div>
+
+    <section id="benchmark" class="panel active" role="tabpanel">
+      <div class="card">
+        <h2>Throughput at concurrency 16</h2>
+        <canvas id="chart" height="120"></canvas>
+      </div>
+      <div class="card">
+        <h2>Summary (concurrency 16)</h2>
+        <div id="benchmark-table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="verification" class="panel" role="tabpanel">
+      <div class="card">
+        <h2>Daily verification results</h2>
+        <div id="verification-table-wrap"></div>
+      </div>
+    </section>
+  </main>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
           integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
           crossorigin="anonymous"
           referrerpolicy="no-referrer"></script>
   <script>
-    const TARGET_CONCURRENCY = 64;
+    const TARGET_CONCURRENCY = 16;
+    const DAYS = 14;
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b === btn));
+        const target = btn.dataset.panel;
+        document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === target));
+      });
+    });
+
+    // Dark-mode defaults for Chart.js
+    if (window.Chart) {
+      Chart.defaults.color = '#c9d1d9';
+      Chart.defaults.borderColor = 'rgba(139, 148, 158, 0.25)';
+    }
+
+    const fmt = (v, digits = 2) =>
+      v == null || Number.isNaN(v) ? '—'
+        : (typeof v === 'number'
+            ? (Number.isInteger(v) ? v.toLocaleString() : v.toFixed(digits))
+            : v);
+
+    function renderEmpty(el, message) {
+      el.innerHTML = `<p class="empty">${message}</p>`;
+    }
+
+    // --- Benchmark ---
     fetch('data.json', { cache: 'no-store' })
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : [])
+      .catch(() => [])
       .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          renderEmpty(document.getElementById('benchmark-table-wrap'), 'No benchmark data yet.');
+          return;
+        }
         const sorted = data.slice().sort((a, b) => a.date.localeCompare(b.date));
-        const last = sorted.slice(-14);
+        const last = sorted.slice(-DAYS);
         const labels = last.map(e => e.date);
-        const values = last.map(e => {
-          const row = (e.results || []).find(r => r.concurrency === TARGET_CONCURRENCY);
-          return row && row.throughput != null ? row.throughput : null;
+        const rowsForConcurrency = last.map(e => {
+          const r = (e.results || []).find(r => r.concurrency === TARGET_CONCURRENCY);
+          return { date: e.date, row: r || null };
         });
+        const values = rowsForConcurrency.map(({ row }) =>
+          row && row.throughput != null ? row.throughput : null
+        );
+
         new Chart(document.getElementById('chart'), {
           type: 'line',
           data: {
@@ -38,18 +197,89 @@
             datasets: [{
               label: 'Throughput (ops/s)',
               data: values,
+              borderColor: '#58a6ff',
+              backgroundColor: 'rgba(88, 166, 255, 0.2)',
               borderWidth: 2,
               spanGaps: false,
               tension: 0.2,
             }],
           },
           options: {
+            plugins: { legend: { labels: { color: '#c9d1d9' } } },
             scales: {
-              y: { beginAtZero: true, title: { display: true, text: 'Throughput (ops/s)' } },
-              x: { title: { display: true, text: 'Date (UTC)' } },
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Throughput (ops/s)', color: '#8b949e' },
+                grid:  { color: 'rgba(139,148,158,0.15)' },
+                ticks: { color: '#c9d1d9' },
+              },
+              x: {
+                title: { display: true, text: 'Date (UTC)', color: '#8b949e' },
+                grid:  { color: 'rgba(139,148,158,0.15)' },
+                ticks: { color: '#c9d1d9' },
+              },
             },
           },
         });
+
+        // Summary table — newest first
+        const tableRows = rowsForConcurrency.slice().reverse().map(({ date, row }) => {
+          if (!row) {
+            return `<tr><td>${date}</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td></tr>`;
+          }
+          return `<tr>
+            <td>${date}</td>
+            <td>${fmt(row.throughput)}</td>
+            <td>${fmt(row.mean_ms)}</td>
+            <td>${fmt(row.p99_ms)}</td>
+            <td>${fmt(row.max_ms)}</td>
+          </tr>`;
+        }).join('');
+
+        document.getElementById('benchmark-table-wrap').innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Throughput (ops/s)</th>
+                <th>Mean (ms)</th>
+                <th>p99 (ms)</th>
+                <th>Max (ms)</th>
+              </tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+          </table>`;
+      });
+
+    // --- Verification ---
+    const VERIFICATION_TESTS = ['phantom-write', 'write-skew'];
+
+    function badge(status) {
+      if (status === 'PASS') return '<span class="badge badge-pass">PASS</span>';
+      if (status === 'FAIL') return '<span class="badge badge-fail">FAIL</span>';
+      return '<span class="badge badge-na">—</span>';
+    }
+
+    fetch('verification.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : [])
+      .catch(() => [])
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          renderEmpty(document.getElementById('verification-table-wrap'), 'No verification data yet.');
+          return;
+        }
+        const sorted = data.slice().sort((a, b) => a.date.localeCompare(b.date));
+        const last = sorted.slice(-DAYS).reverse();
+        const headerCells = VERIFICATION_TESTS.map(t => `<th>${t}</th>`).join('');
+        const rows = last.map(e => {
+          const cells = VERIFICATION_TESTS.map(t => `<td>${badge((e.tests || {})[t])}</td>`).join('');
+          return `<tr><td>${e.date}</td>${cells}</tr>`;
+        }).join('');
+        document.getElementById('verification-table-wrap').innerHTML = `
+          <table>
+            <thead><tr><th>Date</th>${headerCells}</tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`;
       });
   </script>
 </body>
