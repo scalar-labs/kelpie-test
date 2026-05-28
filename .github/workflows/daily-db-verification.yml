@@ -204,3 +204,55 @@ jobs:
           curl -X POST -H 'Content-type: application/json' \
             --data "{\"text\": \"${{ steps.message.outputs.message }}\"}" \
             ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  update-pages:
+    name: Update GitHub Pages
+    if: always() && github.event_name != 'workflow_dispatch'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Download result artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p results
+          gh api --paginate \
+            "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+            --jq '.artifacts[] | select(.name | startswith("result-")) | .name' | \
+            while read name; do
+              echo "Downloading $name"
+              gh run download ${{ github.run_id }} -n "$name" -D results -R "${{ github.repository }}"
+            done
+
+      - name: Update verification.json
+        run: |
+          python3 .github/scripts/update_verification.py \
+            --results-dir results \
+            --date "$(date -u +%F)" \
+            --pages-dir gh-pages
+
+      - name: Commit and push
+        working-directory: gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Daily verification report: $(date -u +%F)"
+          git push origin gh-pages
