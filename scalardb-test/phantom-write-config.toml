@@ -39,4 +39,4 @@
   ssh_port = 22
   ssh_private_key = "/root/.ssh/id_ed25519"
   contact_points = "cassandra1,cassandra2,cassandra3"
-  max_kill_interval_sec = 60
+  max_kill_interval_sec = 300
