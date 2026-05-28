@@ -18,10 +18,10 @@ jobs:
       matrix:
         test:
           - name: phantom-write
-            schema: schema/tx_sensor.json
+            schema: schema/tx_sensor.cql
             config: phantom-write-config.toml
           - name: write-skew
-            schema: schema/tx_transfer.json
+            schema: schema/tx_transfer.cql
             config: write-skew-config.toml
     name: verify (${{ matrix.test.name }})
     defaults:
@@ -40,12 +40,11 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          add-job-summary: never
 
       - name: Build shadow jar
-        env:
-          GPR_USERNAME: ${{ github.actor }}
-          GPR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew shadowJar
+        run: ./gradlew shadowJar -PgprUsername="${{ github.repository_owner }}" -PgprPassword="${{ secrets.CR_PAT }}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -69,15 +68,11 @@ jobs:
       - name: Create tables
         working-directory: scalardb-test/docker
         run: |
-          docker compose exec -T client \
-            java -jar /opt/scalardb-schema-loader.jar \
-              --cassandra \
-              --schema-file ${{ matrix.test.schema }} \
-              --host cassandra1 \
-              --user cassandra \
-              --password cassandra \
-              --replication-factor 3 \
-              --coordinator
+          sed "s/'replication_factor': 1/'replication_factor': 3/g" \
+            ../${{ matrix.test.schema }} \
+            | docker compose exec -T cassandra1 sh -c 'cat > /tmp/schema.cql'
+          docker compose exec -T cassandra1 \
+            cqlsh -u cassandra -p cassandra -f /tmp/schema.cql
 
       - name: Run verification
         id: kelpie
@@ -86,7 +81,7 @@ jobs:
           mkdir -p logs
           set -o pipefail
           docker compose exec -T client \
-            kelpie --config ${{ matrix.test.config }} \
+            kelpie --config ${{ matrix.test.config }} --inject \
             2>&1 | tee logs/kelpie.log
 
       - name: Collect Cassandra logs
@@ -196,14 +191,16 @@ jobs:
 
           {
             echo "message<<EOF"
-            printf "%s *Daily DB verification — %s*\n\n" "$icon" "$(date -u +%F)"
+            printf "%s *ScalarDB verification*\n\n" "$icon"
             printf "*Success:*\n%s\n" "$successes"
             printf "*Failed:*\n%s\n"  "$failures"
             printf "*Timed out:*\n%s\n" "$timeouts"
-            printf "<%s|View workflow run>\n" "$RUN_URL"
+            printf "<%s|View logs>\n" "$RUN_URL"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
       - name: Post to Slack
         run: |
           curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\": \"${{ steps.message.outputs.message }}\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

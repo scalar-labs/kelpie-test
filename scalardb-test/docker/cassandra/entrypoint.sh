@@ -12,6 +12,14 @@ else
   echo "WARN: /keys/id_ed25519.pub not found; SSH login will fail." >&2
 fi
 
+# Persist CASSANDRA_* + heap env so SSH-triggered restarts can recover them.
+# CassandraKiller runs `sudo /etc/init.d/cassandra start`, and sudo strips the
+# environment by default without this, the upstream entrypoint would re-run
+# with empty env, rewriting cassandra.yaml so the seed list collapses to the
+# node's own IP and the heap reverts to defaults that OOM-kill the JVM.
+declare -x | grep -E ' (CASSANDRA_[A-Z_]+|MAX_HEAP_SIZE|HEAP_NEWSIZE)=' \
+    > /etc/cassandra/cluster.env || true
+
 # Background Cassandra via the init script (writes the PID file the killer reads).
 /etc/init.d/cassandra start
 

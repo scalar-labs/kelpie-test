@@ -13,7 +13,17 @@ start() {
   fi
   mkdir -p /var/run/cassandra /var/log/cassandra
   chown cassandra:cassandra /var/run/cassandra /var/log/cassandra
-  nohup /usr/local/bin/docker-entrypoint.sh cassandra -f \
+  ulimit -n 100000
+  export JAVA_HOME=/opt/java/openjdk
+  # Ensure the cassandra binary is resolvable: sudo's secure_path drops
+  # /opt/cassandra/bin on SSH-triggered restarts, so docker-entrypoint.sh's
+  # final `exec cassandra` would otherwise fail with "command not found".
+  export PATH="/opt/cassandra/bin:$PATH"
+  # SSH-triggered restarts come through sudo, which strips the container env;
+  # reload CASSANDRA_* + heap sizing so the entrypoint substitutes the correct
+  # seeds into cassandra.yaml and the JVM starts with the configured heap.
+  [ -f /etc/cassandra/cluster.env ] && . /etc/cassandra/cluster.env
+  nohup /usr/local/bin/docker-entrypoint.sh cassandra -f -R \
       </dev/null >"$LOGFILE" 2>&1 &
   PID=$!
   echo "$PID" > "$PIDFILE"
