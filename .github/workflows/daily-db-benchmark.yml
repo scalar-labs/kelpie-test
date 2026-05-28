@@ -103,7 +103,7 @@ jobs:
         working-directory: .
         run: |
           curl -fsSL -o "$RUNNER_TEMP/kelpie.zip" \
-            "https://github.com/scalar-labs/kelpie/releases/download/${KELPIE_VERSION}/kelpie-${KELPIE_VERSION}.zip"
+            "https://github.com/scalar-labs/kelpie/releases/download/v${KELPIE_VERSION}/kelpie-${KELPIE_VERSION}.zip"
           unzip -q "$RUNNER_TEMP/kelpie.zip" -d "$RUNNER_TEMP"
           mv "$RUNNER_TEMP/kelpie-${KELPIE_VERSION}" "$RUNNER_TEMP/kelpie"
           rm "$RUNNER_TEMP/kelpie.zip"
