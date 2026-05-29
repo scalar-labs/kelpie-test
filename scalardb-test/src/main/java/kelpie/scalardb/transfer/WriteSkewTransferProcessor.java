@@ -100,6 +100,11 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
       Get get = TransferCommon.prepareGet(fromId, i);
       Optional<Result> result = transaction.get(get);
       int balance = TransferCommon.getBalanceFromResult(result.get());
+      if (balance == 0) {
+        logWarn("UNEXPECTED BALANCE: " + fromId + "," + fromType + " Balance: " + balance);
+        logWarn("Retrieved result: " + result);
+      }
+
       if (i == fromType) {
         fromBalance = balance;
       }
