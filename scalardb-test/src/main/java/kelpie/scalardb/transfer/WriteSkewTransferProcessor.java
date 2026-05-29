@@ -95,14 +95,17 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
       throws TransactionException {
     int fromBalance = 0;
     int totalBalance = 0;
+		int balance0 = 0;
+		int balance1 = 0;
 
     for (int i = 0; i < TransferCommon.NUM_TYPES; i++) {
       Get get = TransferCommon.prepareGet(fromId, i);
       Optional<Result> result = transaction.get(get);
       int balance = TransferCommon.getBalanceFromResult(result.get());
-      if (balance == 0) {
-        logWarn("UNEXPECTED BALANCE: " + fromId + "," + fromType + " Balance: " + balance);
-        logWarn("Retrieved result: " + result);
+      if (i == 0) {
+        balance0 = balance;
+      } else {
+        balance1 = balance;
       }
 
       if (i == fromType) {
@@ -112,6 +115,9 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     }
 
     if (totalBalance < 0) {
+      logWarn("UNEXPECTED TOTAL BALANCE: " + fromId + " Balance: " + totalBalance);
+      logWarn("UNEXPECTED BALANCE: " + fromId + ",0 Balance: " + balance0);
+      logWarn("UNEXPECTED BALANCE: " + fromId + ",1 Balance: " + balance1);
       throw new ProcessFatalException("The total balance of " + fromId + " is negative");
     }
 
