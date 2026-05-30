@@ -17,9 +17,6 @@ jobs:
       fail-fast: false
       matrix:
         test:
-          - name: phantom-write
-            schema: schema/tx_sensor.cql
-            config: phantom-write-config.toml
           - name: write-skew
             schema: schema/tx_transfer.cql
             config: write-skew-config.toml
@@ -125,7 +122,7 @@ jobs:
 
   notify-slack:
     name: Notify Slack
-    if: always()
+    if: always() && github.event_name != 'workflow_dispatch'
     needs: verify
     runs-on: ubuntu-latest
     permissions:

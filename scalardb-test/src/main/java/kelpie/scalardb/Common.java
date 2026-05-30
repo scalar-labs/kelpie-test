@@ -92,6 +92,8 @@ public class Common {
     props.setProperty("scalar.db.storage", storage);
     props.setProperty("scalar.db.transaction_manager", transactionManager);
     props.setProperty("scalar.db.consensus_commit.isolation_level", isolationLevel);
+    logWarn("ISOLATION_LEVEL: " + isolationLevel);
+
     return new DatabaseConfig(props);
   }
 
