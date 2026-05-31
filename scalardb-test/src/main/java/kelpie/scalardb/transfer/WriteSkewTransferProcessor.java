@@ -57,7 +57,11 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     logStart(txId, fromId, fromType, toId, toType, amount);
 
     try {
-      transfer(transaction, fromId, fromType, toId, toType, amount);
+      if (fromId != toId) {
+        transfer(transaction, fromId, fromType, toId, toType, amount);
+      } else {
+        checkSkew(transaction, fromId);
+      }
     } catch (Exception e) {
       logFailure(txId, fromId, fromType, toId, toType, amount, e);
       throw e;
@@ -95,8 +99,8 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
       throws TransactionException {
     int fromBalance = 0;
     int totalBalance = 0;
-		int balance0 = 0;
-		int balance1 = 0;
+    int balance0 = 0;
+    int balance1 = 0;
 
     for (int i = 0; i < TransferCommon.NUM_TYPES; i++) {
       Get get = TransferCommon.prepareGet(fromId, i);
@@ -115,13 +119,6 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
       totalBalance += balance;
     }
 
-    if (totalBalance < 0) {
-      logWarn("UNEXPECTED TOTAL BALANCE: " + fromId + " Balance: " + totalBalance);
-      logWarn("UNEXPECTED BALANCE: " + fromId + ",0 Balance: " + balance0);
-      logWarn("UNEXPECTED BALANCE: " + fromId + ",1 Balance: " + balance1);
-      throw new ProcessFatalException("The total balance of " + fromId + " is negative");
-    }
-
     if ((totalBalance - amount) < 0) {
       throw new ProcessException("the account doesn't have the enough balance");
     }
@@ -138,15 +135,44 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     transaction.commit();
   }
 
+  private void checkSkew(DistributedTransaction transaction, int accountId)
+      throws TransactionException {
+    int totalBalance = 0;
+
+    for (int i = 0; i < TransferCommon.NUM_TYPES; i++) {
+      Get get = TransferCommon.prepareGet(accountId, i);
+      Optional<Result> result = transaction.get(get);
+      int balance = TransferCommon.getBalanceFromResult(result.get());
+
+      totalBalance += balance;
+    }
+
+    transaction.commit();
+
+    // check only if no other transaction updates these balances
+    if (totalBalance < 0) {
+      throw new ProcessFatalException(
+          "The total balance of " + accountId + " is negative: " + totalBalance);
+    }
+  }
+
   private void logStart(String txId, int fromId, int fromType, int toId, int toType, int amount) {
     if (isVerification.get()) {
-      logTxInfo("started", txId, fromId, fromType, toId, toType, amount);
+      if (fromId == toId) {
+        logInfo("started to check skew - id: " + txId + " account ID: " + fromId);
+      } else {
+        logTxInfo("started", txId, fromId, fromType, toId, toType, amount);
+      }
     }
   }
 
   private void logSuccess(String txId, int fromId, int fromType, int toId, int toType, int amount) {
     if (isVerification.get()) {
-      logTxInfo("succeeded", txId, fromId, fromType, toId, toType, amount);
+      if (fromId == toId) {
+        logInfo("The total balance of " + fromId + " is larger than or equal to zero");
+      } else {
+        logTxInfo("succeeded", txId, fromId, fromType, toId, toType, amount);
+      }
       numUpdates.getAndAdd(2);
     }
   }
