@@ -107,6 +107,7 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
       } else {
         balance1 = balance;
       }
+      logWarn("DEBUGGING BALANCE: " + fromId + "," + i + " Balance: " + balance);
 
       if (i == fromType) {
         fromBalance = balance;
