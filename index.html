@@ -133,11 +133,11 @@
 
     <section id="dl-benchmark" class="panel" role="tabpanel">
       <div class="card">
-        <h2>Throughput at concurrency 64</h2>
+        <h2>Throughput at concurrency 16</h2>
         <canvas id="dl-chart" height="120"></canvas>
       </div>
       <div class="card">
-        <h2>Summary (concurrency 64)</h2>
+        <h2>Summary (concurrency 16)</h2>
         <div id="dl-benchmark-table-wrap"></div>
       </div>
     </section>
@@ -267,7 +267,7 @@
 
     renderBenchmark({ url: 'data.json', concurrency: 16, chartId: 'chart',
                       tableWrapId: 'benchmark-table-wrap', emptyMsg: 'No DB benchmark data yet.' });
-    renderBenchmark({ url: 'dl_data.json', concurrency: 64, chartId: 'dl-chart',
+    renderBenchmark({ url: 'dl_data.json', concurrency: 16, chartId: 'dl-chart',
                       tableWrapId: 'dl-benchmark-table-wrap', emptyMsg: 'No DL benchmark data yet.' });
 
     // --- Verification ---
