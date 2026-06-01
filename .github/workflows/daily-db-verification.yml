@@ -17,6 +17,9 @@ jobs:
       fail-fast: false
       matrix:
         test:
+          - name: phantom-write
+            schema: schema/tx_sensor.cql
+            config: phantom-write-config.toml
           - name: write-skew
             schema: schema/tx_transfer.cql
             config: write-skew-config.toml

@@ -99,20 +99,11 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
       throws TransactionException {
     int fromBalance = 0;
     int totalBalance = 0;
-    int balance0 = 0;
-    int balance1 = 0;
 
     for (int i = 0; i < TransferCommon.NUM_TYPES; i++) {
       Get get = TransferCommon.prepareGet(fromId, i);
       Optional<Result> result = transaction.get(get);
       int balance = TransferCommon.getBalanceFromResult(result.get());
-      if (i == 0) {
-        balance0 = balance;
-      } else {
-        balance1 = balance;
-      }
-      logWarn("DEBUGGING BALANCE: " + fromId + "," + i + " Balance: " + balance);
-
       if (i == fromType) {
         fromBalance = balance;
       }
