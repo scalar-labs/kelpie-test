@@ -184,12 +184,18 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     }
 
     if (e instanceof UnknownTransactionStatusException) {
-      unknownTransactions.put(txId, Arrays.asList(fromId, fromType, toId, toType));
+      if (fromId != toId) {
+        unknownTransactions.put(txId, Arrays.asList(fromId, fromType, toId, toType));
+      }
       logWarn("the status of the transaction is unknown: " + txId, e);
       logTxInfo("unknown", txId, fromId, fromType, toId, toType, amount);
     } else {
       logWarn(txId + " failed", e);
-      logTxInfo("failed", txId, fromId, fromType, toId, toType, amount);
+      if (fromId == toId) {
+        logInfo("Checking the total balance of " + fromId + " failed");
+      } else {
+        logTxInfo("failed", txId, fromId, fromType, toId, toType, amount);
+      }
     }
   }
 
