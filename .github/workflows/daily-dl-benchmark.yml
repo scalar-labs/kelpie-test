@@ -24,7 +24,7 @@ on:
       concurrencies:
         description: "Comma-separated list of workload concurrencies"
         type: string
-        default: "1,2,8,16,32,64,128"
+        default: "1,2,4,8,16,32"
 
 permissions:
   contents: write
@@ -42,7 +42,7 @@ jobs:
       SCALARDL_VERSION: ${{ inputs.scalardl_version || '4.0.0-SNAPSHOT' }}
       RUN_FOR_SEC: ${{ inputs.run_for_sec || '200' }}
       RAMP_FOR_SEC: ${{ inputs.ramp_for_sec || '10' }}
-      CONCURRENCIES: ${{ inputs.concurrencies || '1,2,8,16,32,64,128' }}
+      CONCURRENCIES: ${{ inputs.concurrencies || '1,2,4,8,16,32' }}
 
     steps:
       - name: Checkout
@@ -202,24 +202,24 @@ jobs:
       - name: Update daily report
         if: always() && github.event_name != 'workflow_dispatch'
         run: |
-          mkdir -p "${{ github.workspace }}/gh-pages/dl"
           python3 "${{ github.workspace }}/.github/scripts/update_report.py" \
             --csv scalardl-test/results/summary.csv \
             --date "$(date -u +%F)" \
-            --pages-dir "${{ github.workspace }}/gh-pages/dl"
+            --pages-dir "${{ github.workspace }}/gh-pages" \
+            --out-name dl_data.json
 
       - name: Plot throughput-vs-date PNG
         if: always() && github.event_name != 'workflow_dispatch'
         run: |
-          if [ ! -s "${{ github.workspace }}/gh-pages/dl/data.json" ]; then
+          if [ ! -s "${{ github.workspace }}/gh-pages/dl_data.json" ]; then
             echo "No data.json; skipping date-axis plot."
             exit 0
           fi
           python3 -m pip install --quiet matplotlib
           python3 "${{ github.workspace }}/.github/scripts/plot_throughput_history.py" \
-            --data-json "${{ github.workspace }}/gh-pages/dl/data.json" \
-            --out "${{ github.workspace }}/gh-pages/dl/throughput-vs-date.png" \
-            --target-concurrency 64 \
+            --data-json "${{ github.workspace }}/gh-pages/dl_data.json" \
+            --out "${{ github.workspace }}/gh-pages/dl_throughput-vs-date.png" \
+            --target-concurrency 16 \
             --days 14
 
       - name: Commit and push daily report
@@ -249,12 +249,12 @@ jobs:
 
           DATE="$(date -u +%F)"
           PAGES_BASE="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
-          IMG_URL="${PAGES_BASE}/dl/throughput-vs-date.png?v=${{ github.sha }}"
-          PAGE_URL="${PAGES_BASE}/dl/?v=${{ github.sha }}"
+          IMG_URL="${PAGES_BASE}/dl_throughput-vs-date.png?v=${{ github.sha }}"
+          PAGE_URL="${PAGES_BASE}/?v=${{ github.sha }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           image_ready=false
-          if [ -s gh-pages/dl/throughput-vs-date.png ]; then
+          if [ -s gh-pages/dl_throughput-vs-date.png ]; then
             for i in $(seq 1 24); do
               code=$(curl -s -o /dev/null -w "%{http_code}" "${IMG_URL}" || echo "000")
               if [ "${code}" = "200" ]; then
@@ -278,7 +278,7 @@ jobs:
                 blocks: [
                   {type: "section",
                    text: {type: "mrkdwn",
-                          text: ("*Daily DL benchmark — " + $date + "*\nConcurrency 64, last 14 days. <" + $page + "|Dashboard> · <" + $run + "|Workflow run>")}},
+                          text: ("*Daily DL benchmark — " + $date + "*\nConcurrency 16, last 14 days. <" + $page + "|Dashboard> · <" + $run + "|Workflow run>")}},
                   {type: "image", image_url: $img, alt_text: "Throughput vs Date"}
                 ]
               }')
