@@ -172,8 +172,8 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
         logInfo("The total balance of " + fromId + " is larger than or equal to zero");
       } else {
         logTxInfo("succeeded", txId, fromId, fromType, toId, toType, amount);
+        numUpdates.getAndAdd(2);
       }
-      numUpdates.getAndAdd(2);
     }
   }
 
