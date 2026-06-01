@@ -84,7 +84,7 @@ def main() -> int:
     plt.xlabel("Date (UTC)")
     plt.ylabel("Throughput (ops/s)")
     plt.title(
-        f"Daily DB benchmark — concurrency {args.target_concurrency} "
+        f"Daily benchmark - concurrency {args.target_concurrency} "
         f"(last {args.days} days)"
     )
     plt.grid(True, alpha=0.3)

@@ -212,7 +212,7 @@ jobs:
         if: always() && github.event_name != 'workflow_dispatch'
         run: |
           if [ ! -s "${{ github.workspace }}/gh-pages/dl_data.json" ]; then
-            echo "No data.json; skipping date-axis plot."
+            echo "No dl_data.json; skipping date-axis plot."
             exit 0
           fi
           python3 -m pip install --quiet matplotlib
@@ -241,18 +241,20 @@ jobs:
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
           SLACK_CHANNEL: eng-benchmark
+        working-directory: ${{ github.workspace }}
         run: |
           if [ -z "${SLACK_TOKEN}" ]; then
             echo "SLACK_TOKEN is not set; skipping Slack notification."
             exit 0
           fi
 
-          DATE="$(date -u +%F)"
           PAGES_BASE="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
           IMG_URL="${PAGES_BASE}/dl_throughput-vs-date.png?v=${{ github.sha }}"
           PAGE_URL="${PAGES_BASE}/?v=${{ github.sha }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
+          # GitHub Pages takes a moment to redeploy after the push; wait for the
+          # new PNG to be reachable so Slack fetches the fresh image.
           image_ready=false
           if [ -s gh-pages/dl_throughput-vs-date.png ]; then
             for i in $(seq 1 24); do
@@ -268,28 +270,26 @@ jobs:
           if [ "${image_ready}" = "true" ]; then
             BODY=$(jq -n \
               --arg channel "${SLACK_CHANNEL}" \
-              --arg date "${DATE}" \
               --arg img "${IMG_URL}" \
               --arg page "${PAGE_URL}" \
               --arg run "${RUN_URL}" \
               '{
                 channel: $channel,
-                text: ("Daily DL benchmark — " + $date),
+                text: "Daily ScalarDL benchmark",
                 blocks: [
                   {type: "section",
                    text: {type: "mrkdwn",
-                          text: ("*Daily DL benchmark — " + $date + "*\nConcurrency 16, last 14 days. <" + $page + "|Dashboard> · <" + $run + "|Workflow run>")}},
+                          text: ("*Daily ScalarDL benchmark*\nConcurrency 16, last 14 days. <" + $page + "|Dashboard> · <" + $run + "|Workflow run>")}},
                   {type: "image", image_url: $img, alt_text: "Throughput vs Date"}
                 ]
               }')
           else
             BODY=$(jq -n \
               --arg channel "${SLACK_CHANNEL}" \
-              --arg date "${DATE}" \
               --arg page "${PAGE_URL}" \
               --arg run "${RUN_URL}" \
               '{channel: $channel,
-                text: ("Daily DL benchmark — " + $date + " (image not yet deployed — <" + $page + "|dashboard> · <" + $run + "|run>)")}')
+                text: ("Daily ScalarDL benchmark (image not yet deployed - <" + $page + "|dashboard> · <" + $run + "|run>)")}')
           fi
 
           RESPONSE=$(curl -sS -X POST https://slack.com/api/chat.postMessage \

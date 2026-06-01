@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Append (or replace) today's benchmark summary into gh-pages/data.json.
+"""Append (or replace) today's benchmark summary into gh-pages/<out-name> (default: data.json).
 
 Usage:
   update_report.py --csv PATH --date YYYY-MM-DD --pages-dir PATH \
