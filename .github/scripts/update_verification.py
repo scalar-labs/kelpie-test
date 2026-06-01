@@ -7,7 +7,8 @@ Usage:
 The results directory is expected to contain `result-<test>.txt` files (one per
 matrix shard). Each file holds a single line `<test-name>:<status>` where status
 is one of `success`, `failure`, or `timeout` — the same format the verification
-workflow emits. Anything else for a known test is treated as FAIL.
+workflow emits. `timeout` is recorded as TIMEOUT; anything else for a known test
+is treated as FAIL.
 """
 
 import argparse
@@ -23,8 +24,8 @@ def _normalize_status(raw: str) -> str:
     s = (raw or "").strip().lower()
     if s == "success":
         return "PASS"
-    if s in {"failure", "timeout"}:
-        return "FAIL"
+    if s == "timeout":
+        return "TIMEOUT"
     return "FAIL"
 
 

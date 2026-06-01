@@ -105,11 +105,12 @@ jobs:
         if: always()
         run: |
           mkdir -p results
-          if [ "${{ steps.kelpie.outcome }}" = "success" ]; then
-            echo "${{ matrix.test.name }}:success" > "results/result-${{ matrix.test.name }}.txt"
-          else
-            echo "${{ matrix.test.name }}:failure" > "results/result-${{ matrix.test.name }}.txt"
-          fi
+          case "${{ steps.kelpie.outcome }}" in
+            success)   status=success ;;
+            cancelled) status=timeout ;;
+            *)         status=failure ;;
+          esac
+          echo "${{ matrix.test.name }}:${status}" > "results/result-${{ matrix.test.name }}.txt"
 
       - name: Upload result
         if: always()
