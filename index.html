@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Daily DB report</title>
+  <title>Daily DB/DL report</title>
   <style>
     :root {
       --bg: #0d1117;
@@ -100,6 +100,7 @@
     }
     .badge-pass { background: rgba(63, 185, 80, 0.15); color: var(--pass); }
     .badge-fail { background: rgba(248, 81, 73, 0.15); color: var(--fail); }
+    .badge-timeout { background: rgba(210, 153, 34, 0.15); color: var(--warn); }
     .badge-na   { background: rgba(139, 148, 158, 0.15); color: var(--muted); }
     .empty {
       color: var(--muted);
@@ -110,12 +111,13 @@
 </head>
 <body>
   <main>
-    <h1>Daily DB report</h1>
+    <h1>Daily DB/DL report</h1>
     <p class="meta">Last 14 days. Gaps indicate a failed or missing run.</p>
 
     <div class="tabs" role="tablist">
-      <button class="tab active" data-panel="benchmark" role="tab">Benchmark</button>
-      <button class="tab"        data-panel="verification" role="tab">Verification</button>
+      <button class="tab active" data-panel="benchmark" role="tab">DB benchmark</button>
+      <button class="tab"        data-panel="dl-benchmark" role="tab">DL benchmark</button>
+      <button class="tab"        data-panel="verification" role="tab">DB verification</button>
     </div>
 
     <section id="benchmark" class="panel active" role="tabpanel">
@@ -126,6 +128,17 @@
       <div class="card">
         <h2>Summary (concurrency 16)</h2>
         <div id="benchmark-table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="dl-benchmark" class="panel" role="tabpanel">
+      <div class="card">
+        <h2>Throughput at concurrency 64</h2>
+        <canvas id="dl-chart" height="120"></canvas>
+      </div>
+      <div class="card">
+        <h2>Summary (concurrency 64)</h2>
+        <div id="dl-benchmark-table-wrap"></div>
       </div>
     </section>
 
@@ -142,7 +155,6 @@
           crossorigin="anonymous"
           referrerpolicy="no-referrer"></script>
   <script>
-    const TARGET_CONCURRENCY = 16;
     const DAYS = 14;
 
     // Tab switching
@@ -170,86 +182,93 @@
       el.innerHTML = `<p class="empty">${message}</p>`;
     }
 
-    // --- Benchmark ---
-    fetch('data.json', { cache: 'no-store' })
-      .then(r => r.ok ? r.json() : [])
-      .catch(() => [])
-      .then(data => {
-        if (!Array.isArray(data) || data.length === 0) {
-          renderEmpty(document.getElementById('benchmark-table-wrap'), 'No benchmark data yet.');
-          return;
-        }
-        const sorted = data.slice().sort((a, b) => a.date.localeCompare(b.date));
-        const last = sorted.slice(-DAYS);
-        const labels = last.map(e => e.date);
-        const rowsForConcurrency = last.map(e => {
-          const r = (e.results || []).find(r => r.concurrency === TARGET_CONCURRENCY);
-          return { date: e.date, row: r || null };
-        });
-        const values = rowsForConcurrency.map(({ row }) =>
-          row && row.throughput != null ? row.throughput : null
-        );
+    // --- Benchmark (shared by DB and DL) ---
+    function renderBenchmark({ url, concurrency, chartId, tableWrapId, emptyMsg }) {
+      fetch(url, { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : [])
+        .catch(() => [])
+        .then(data => {
+          if (!Array.isArray(data) || data.length === 0) {
+            renderEmpty(document.getElementById(tableWrapId), emptyMsg);
+            return;
+          }
+          const sorted = data.slice().sort((a, b) => a.date.localeCompare(b.date));
+          const last = sorted.slice(-DAYS);
+          const labels = last.map(e => e.date);
+          const rowsForConcurrency = last.map(e => {
+            const r = (e.results || []).find(r => r.concurrency === concurrency);
+            return { date: e.date, row: r || null };
+          });
+          const values = rowsForConcurrency.map(({ row }) =>
+            row && row.throughput != null ? row.throughput : null
+          );
 
-        new Chart(document.getElementById('chart'), {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [{
-              label: 'Throughput (ops/s)',
-              data: values,
-              borderColor: '#58a6ff',
-              backgroundColor: 'rgba(88, 166, 255, 0.2)',
-              borderWidth: 2,
-              spanGaps: false,
-              tension: 0.2,
-            }],
-          },
-          options: {
-            plugins: { legend: { labels: { color: '#c9d1d9' } } },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: 'Throughput (ops/s)', color: '#8b949e' },
-                grid:  { color: 'rgba(139,148,158,0.15)' },
-                ticks: { color: '#c9d1d9' },
-              },
-              x: {
-                title: { display: true, text: 'Date (UTC)', color: '#8b949e' },
-                grid:  { color: 'rgba(139,148,158,0.15)' },
-                ticks: { color: '#c9d1d9' },
+          new Chart(document.getElementById(chartId), {
+            type: 'line',
+            data: {
+              labels,
+              datasets: [{
+                label: 'Throughput (ops/s)',
+                data: values,
+                borderColor: '#58a6ff',
+                backgroundColor: 'rgba(88, 166, 255, 0.2)',
+                borderWidth: 2,
+                spanGaps: false,
+                tension: 0.2,
+              }],
+            },
+            options: {
+              plugins: { legend: { labels: { color: '#c9d1d9' } } },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: { display: true, text: 'Throughput (ops/s)', color: '#8b949e' },
+                  grid:  { color: 'rgba(139,148,158,0.15)' },
+                  ticks: { color: '#c9d1d9' },
+                },
+                x: {
+                  title: { display: true, text: 'Date (UTC)', color: '#8b949e' },
+                  grid:  { color: 'rgba(139,148,158,0.15)' },
+                  ticks: { color: '#c9d1d9' },
+                },
               },
             },
-          },
+          });
+
+          // Summary table — newest first
+          const tableRows = rowsForConcurrency.slice().reverse().map(({ date, row }) => {
+            if (!row) {
+              return `<tr><td>${date}</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td></tr>`;
+            }
+            return `<tr>
+              <td>${date}</td>
+              <td>${fmt(row.throughput)}</td>
+              <td>${fmt(row.mean_ms)}</td>
+              <td>${fmt(row.p99_ms)}</td>
+              <td>${fmt(row.max_ms)}</td>
+            </tr>`;
+          }).join('');
+
+          document.getElementById(tableWrapId).innerHTML = `
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Throughput (ops/s)</th>
+                  <th>Mean (ms)</th>
+                  <th>p99 (ms)</th>
+                  <th>Max (ms)</th>
+                </tr>
+              </thead>
+              <tbody>${tableRows}</tbody>
+            </table>`;
         });
+    }
 
-        // Summary table — newest first
-        const tableRows = rowsForConcurrency.slice().reverse().map(({ date, row }) => {
-          if (!row) {
-            return `<tr><td>${date}</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td></tr>`;
-          }
-          return `<tr>
-            <td>${date}</td>
-            <td>${fmt(row.throughput)}</td>
-            <td>${fmt(row.mean_ms)}</td>
-            <td>${fmt(row.p99_ms)}</td>
-            <td>${fmt(row.max_ms)}</td>
-          </tr>`;
-        }).join('');
-
-        document.getElementById('benchmark-table-wrap').innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Throughput (ops/s)</th>
-                <th>Mean (ms)</th>
-                <th>p99 (ms)</th>
-                <th>Max (ms)</th>
-              </tr>
-            </thead>
-            <tbody>${tableRows}</tbody>
-          </table>`;
-      });
+    renderBenchmark({ url: 'data.json', concurrency: 16, chartId: 'chart',
+                      tableWrapId: 'benchmark-table-wrap', emptyMsg: 'No DB benchmark data yet.' });
+    renderBenchmark({ url: 'dl_data.json', concurrency: 64, chartId: 'dl-chart',
+                      tableWrapId: 'dl-benchmark-table-wrap', emptyMsg: 'No DL benchmark data yet.' });
 
     // --- Verification ---
     const VERIFICATION_TESTS = ['phantom-write', 'write-skew'];
@@ -257,6 +276,7 @@
     function badge(status) {
       if (status === 'PASS') return '<span class="badge badge-pass">PASS</span>';
       if (status === 'FAIL') return '<span class="badge badge-fail">FAIL</span>';
+      if (status === 'TIMEOUT') return '<span class="badge badge-timeout">TIMEOUT</span>';
       return '<span class="badge badge-na">—</span>';
     }
 
