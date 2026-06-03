@@ -57,16 +57,24 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     logStart(txId, fromId, fromType, toId, toType, amount);
 
     try {
-      if (fromId != toId) {
-        transfer(transaction, fromId, fromType, toId, toType, amount);
-      } else {
-        checkSkew(transaction, fromId);
-      }
+      transfer(transaction, fromId, fromType, toId, toType, amount);
     } catch (Exception e) {
       logFailure(txId, fromId, fromType, toId, toType, amount, e);
       throw e;
     }
     logSuccess(txId, fromId, fromType, toId, toType, amount);
+
+    // check fromId's balances
+    DistributedTransaction transaction = manager.start();
+    String txId = transaction.getId();
+    logInfo("started to check skew - id: " + txId + " account ID: " + fromId);
+    try {
+      checkSkew(transaction, fromId);
+    } catch (Exception e) {
+      logWarn("checking the total balance of " + fromId + " failed - id: " + tx_id, e);
+      throw e;
+    }
+    logInfo("The total balance of " + fromId + " is larger than or equal to zero");
   }
 
   @Override
@@ -149,22 +157,14 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
 
   private void logStart(String txId, int fromId, int fromType, int toId, int toType, int amount) {
     if (isVerification.get()) {
-      if (fromId == toId) {
-        logInfo("started to check skew - id: " + txId + " account ID: " + fromId);
-      } else {
-        logTxInfo("started", txId, fromId, fromType, toId, toType, amount);
-      }
+      logTxInfo("started", txId, fromId, fromType, toId, toType, amount);
     }
   }
 
   private void logSuccess(String txId, int fromId, int fromType, int toId, int toType, int amount) {
     if (isVerification.get()) {
-      if (fromId == toId) {
-        logInfo("The total balance of " + fromId + " is larger than or equal to zero");
-      } else {
-        logTxInfo("succeeded", txId, fromId, fromType, toId, toType, amount);
-        numUpdates.getAndAdd(2);
-      }
+      logTxInfo("succeeded", txId, fromId, fromType, toId, toType, amount);
+      numUpdates.getAndAdd(2);
     }
   }
 
@@ -175,20 +175,12 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     }
 
     if (e instanceof UnknownTransactionStatusException) {
+      unknownTransactions.put(txId, Arrays.asList(fromId, fromType, toId, toType));
       logWarn("the status of the transaction is unknown: " + txId, e);
-      if (fromId == toId) {
-        logInfo("Checking the total balance of " + fromId + " failed (unknown status)");
-      } else {
-        unknownTransactions.put(txId, Arrays.asList(fromId, fromType, toId, toType));
-        logTxInfo("unknown", txId, fromId, fromType, toId, toType, amount);
-      }
+      logTxInfo("unknown", txId, fromId, fromType, toId, toType, amount);
     } else {
       logWarn(txId + " failed", e);
-      if (fromId == toId) {
-        logInfo("Checking the total balance of " + fromId + " failed");
-      } else {
-        logTxInfo("failed", txId, fromId, fromType, toId, toType, amount);
-      }
+      logTxInfo("failed", txId, fromId, fromType, toId, toType, amount);
     }
   }
 
