@@ -10,9 +10,9 @@ on:
         type: string
         default: "1.2.4"
       schema_loader_version:
-        description: "scalardb-schema-loader release version"
+        description: "scalardb-schema-loader image tag"
         type: string
-        default: "3.18.0"
+        default: "4.0.0-SNAPSHOT"
       run_for_sec:
         description: "Workload duration in seconds"
         type: string
@@ -42,7 +42,7 @@ jobs:
       # Fallback defaults are needed for `schedule` triggers, which do not
       # apply `workflow_dispatch` input defaults.
       KELPIE_VERSION: ${{ inputs.kelpie_version || '1.2.4' }}
-      SCHEMA_LOADER_VERSION: ${{ inputs.schema_loader_version || '3.18.0' }}
+      SCHEMA_LOADER_VERSION: ${{ inputs.schema_loader_version || '4.0.0-SNAPSHOT' }}
       RUN_FOR_SEC: ${{ inputs.run_for_sec || '200' }}
       RAMP_FOR_SEC: ${{ inputs.ramp_for_sec || '10' }}
       CONCURRENCIES: ${{ inputs.concurrencies || '1,2,4,8,16,32' }}
@@ -64,6 +64,13 @@ jobs:
 
       - name: Build shadow jar
         run: ./gradlew shadowJar -PgprUsername="${{ github.repository_owner }}" -PgprPassword="${{ secrets.CR_PAT }}"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
 
       - name: Start PostgreSQL
         working-directory: .
@@ -89,14 +96,13 @@ jobs:
           docker logs pg-dev >&2 || true
           exit 1
 
-      - name: Cache Kelpie and Schema Loader
+      - name: Cache Kelpie
         id: cache-tools
         uses: actions/cache@v5
         with:
           path: |
             ${{ runner.temp }}/kelpie
-            ${{ runner.temp }}/scalardb-schema-loader.jar
-          key: tools-kelpie-${{ inputs.kelpie_version || '1.2.4' }}-loader-${{ inputs.schema_loader_version || '3.18.0' }}
+          key: tools-kelpie-${{ inputs.kelpie_version || '1.2.4' }}
 
       - name: Download Kelpie
         if: steps.cache-tools.outputs.cache-hit != 'true'
@@ -108,12 +114,8 @@ jobs:
           mv "$RUNNER_TEMP/kelpie-${KELPIE_VERSION}" "$RUNNER_TEMP/kelpie"
           rm "$RUNNER_TEMP/kelpie.zip"
 
-      - name: Download Schema Loader
-        if: steps.cache-tools.outputs.cache-hit != 'true'
-        working-directory: .
-        run: |
-          curl -fsSL -o "$RUNNER_TEMP/scalardb-schema-loader.jar" \
-            "https://github.com/scalar-labs/scalardb/releases/download/v${SCHEMA_LOADER_VERSION}/scalardb-schema-loader-${SCHEMA_LOADER_VERSION}.jar"
+      - name: Pull Schema Loader image
+        run: docker pull "ghcr.io/scalar-labs/scalardb-schema-loader:${SCHEMA_LOADER_VERSION}"
 
       - name: Apply fixed config values
         run: |
@@ -125,20 +127,34 @@ jobs:
         run: |
           set -u
           IFS=',' read -ra LEVELS <<< "${CONCURRENCIES}"
-          SCHEMA_LOADER_JAR="$RUNNER_TEMP/scalardb-schema-loader.jar"
+          SCHEMA_LOADER_IMAGE="ghcr.io/scalar-labs/scalardb-schema-loader:${SCHEMA_LOADER_VERSION}"
           KELPIE_BIN="$RUNNER_TEMP/kelpie/bin/kelpie"
+
+          # ScalarDB properties the schema loader uses to reach the host
+          # Postgres. The container runs with --network host, so localhost
+          # resolves to the published port.
+          LOADER_PROPS="$RUNNER_TEMP/schema-loader.properties"
+          {
+            echo "scalar.db.storage=jdbc"
+            echo "scalar.db.contact_points=jdbc:postgresql://localhost:5432/postgres"
+            echo "scalar.db.username=postgres"
+            echo "scalar.db.password=postgres"
+          } > "$LOADER_PROPS"
+
+          load_schema() {
+            docker run --rm --network host \
+              -v "$LOADER_PROPS:/scalardb.properties:ro" \
+              -v "$(pwd)/schema:/schema:ro" \
+              "$SCHEMA_LOADER_IMAGE" \
+              --config /scalardb.properties \
+              --schema-file /schema/tx_transfer.json "$@"
+          }
 
           for c in "${LEVELS[@]}"; do
             c="$(echo "$c" | tr -d '[:space:]')"
             echo "::group::Reset schema for concurrency=${c}"
-            java -jar "$SCHEMA_LOADER_JAR" --jdbc \
-              -f schema/tx_transfer.json \
-              -j jdbc:postgresql://localhost:5432/postgres \
-              -u postgres -p postgres -D || true
-            java -jar "$SCHEMA_LOADER_JAR" --jdbc \
-              -f schema/tx_transfer.json \
-              -j jdbc:postgresql://localhost:5432/postgres \
-              -u postgres -p postgres
+            load_schema --delete-all || true
+            load_schema
             echo "::endgroup::"
 
             echo "::group::Patch concurrency=${c}"
