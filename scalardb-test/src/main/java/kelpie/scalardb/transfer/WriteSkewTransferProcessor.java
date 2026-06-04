@@ -65,13 +65,13 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     logSuccess(txId, fromId, fromType, toId, toType, amount);
 
     // check fromId's balances
-    DistributedTransaction transaction = manager.start();
-    String txId = transaction.getId();
-    logInfo("started to check skew - id: " + txId + " account ID: " + fromId);
+    DistributedTransaction checkTx = manager.start();
+    String checkTxId = transaction.getId();
+    logInfo("started to check skew - id: " + checkTxId + " account ID: " + fromId);
     try {
-      checkSkew(transaction, fromId);
+      checkSkew(checkTx, fromId);
     } catch (Exception e) {
-      logWarn("checking the total balance of " + fromId + " failed - id: " + tx_id, e);
+      logWarn("checking the total balance of " + fromId + " failed - id: " + checkTxId, e);
       throw e;
     }
     logInfo("The total balance of " + fromId + " is larger than or equal to zero");
