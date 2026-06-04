@@ -147,7 +147,8 @@ jobs:
               -v "$(pwd)/schema:/schema:ro" \
               "$SCHEMA_LOADER_IMAGE" \
               --config /scalardb.properties \
-              --schema-file /schema/tx_transfer.json "$@"
+              --schema-file /schema/tx_transfer.json \
+              --coordinator "$@"
           }
 
           for c in "${LEVELS[@]}"; do
