@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
@@ -26,7 +25,6 @@ import kelpie.scalardb.Common;
 public class WriteSkewTransferProcessor extends TimeBasedProcessor {
   private final DistributedTransactionManager manager;
   private final int numAccounts;
-  private final AtomicBoolean isVerification;
   private final AtomicInteger numUpdates = new AtomicInteger(0);
 
   // for verification
@@ -37,8 +35,6 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     this.manager = Common.getTransactionManager(config);
 
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
-    this.isVerification =
-        new AtomicBoolean(config.getUserBoolean("test_config", "is_verification", false));
   }
 
   @Override
@@ -60,18 +56,20 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
       transfer(transaction, fromId, fromType, toId, toType, amount);
     } catch (Exception e) {
       logFailure(txId, fromId, fromType, toId, toType, amount, e);
+      transaction.abort();
       throw e;
     }
     logSuccess(txId, fromId, fromType, toId, toType, amount);
 
     // check fromId's balances
     DistributedTransaction checkTx = manager.start();
-    String checkTxId = transaction.getId();
+    String checkTxId = checkTx.getId();
     logInfo("started to check skew - id: " + checkTxId + " account ID: " + fromId);
     try {
       checkSkew(checkTx, fromId);
     } catch (Exception e) {
       logWarn("checking the total balance of " + fromId + " failed - id: " + checkTxId, e);
+      checkTx.abort();
       throw e;
     }
     logInfo("The total balance of " + fromId + " is larger than or equal to zero");
@@ -148,7 +146,7 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
 
     transaction.commit();
 
-    // check only if no other transaction updates these balances
+    // check if no other transaction updates these balances
     if (totalBalance < 0) {
       throw new ProcessFatalException(
           "The total balance of " + accountId + " is negative: " + totalBalance);
@@ -156,24 +154,16 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
   }
 
   private void logStart(String txId, int fromId, int fromType, int toId, int toType, int amount) {
-    if (isVerification.get()) {
-      logTxInfo("started", txId, fromId, fromType, toId, toType, amount);
-    }
+    logTxInfo("started", txId, fromId, fromType, toId, toType, amount);
   }
 
   private void logSuccess(String txId, int fromId, int fromType, int toId, int toType, int amount) {
-    if (isVerification.get()) {
-      logTxInfo("succeeded", txId, fromId, fromType, toId, toType, amount);
-      numUpdates.getAndAdd(2);
-    }
+    logTxInfo("succeeded", txId, fromId, fromType, toId, toType, amount);
+    numUpdates.getAndAdd(2);
   }
 
   private void logFailure(
       String txId, int fromId, int fromType, int toId, int toType, int amount, Throwable e) {
-    if (!isVerification.get()) {
-      return;
-    }
-
     if (e instanceof UnknownTransactionStatusException) {
       unknownTransactions.put(txId, Arrays.asList(fromId, fromType, toId, toType));
       logWarn("the status of the transaction is unknown: " + txId, e);
