@@ -751,5 +751,82 @@
         "max_ms": null
       }
     ]
+  },
+  {
+    "date": "2026-06-06",
+    "results": [
+      {
+        "concurrency": 1,
+        "throughput": null,
+        "succeeded": null,
+        "failed": null,
+        "mean_ms": null,
+        "sd_ms": null,
+        "p50_ms": null,
+        "p90_ms": null,
+        "p99_ms": null,
+        "max_ms": null
+      },
+      {
+        "concurrency": 2,
+        "throughput": null,
+        "succeeded": null,
+        "failed": null,
+        "mean_ms": null,
+        "sd_ms": null,
+        "p50_ms": null,
+        "p90_ms": null,
+        "p99_ms": null,
+        "max_ms": null
+      },
+      {
+        "concurrency": 4,
+        "throughput": null,
+        "succeeded": null,
+        "failed": null,
+        "mean_ms": null,
+        "sd_ms": null,
+        "p50_ms": null,
+        "p90_ms": null,
+        "p99_ms": null,
+        "max_ms": null
+      },
+      {
+        "concurrency": 8,
+        "throughput": null,
+        "succeeded": null,
+        "failed": null,
+        "mean_ms": null,
+        "sd_ms": null,
+        "p50_ms": null,
+        "p90_ms": null,
+        "p99_ms": null,
+        "max_ms": null
+      },
+      {
+        "concurrency": 16,
+        "throughput": null,
+        "succeeded": null,
+        "failed": null,
+        "mean_ms": null,
+        "sd_ms": null,
+        "p50_ms": null,
+        "p90_ms": null,
+        "p99_ms": null,
+        "max_ms": null
+      },
+      {
+        "concurrency": 32,
+        "throughput": null,
+        "succeeded": null,
+        "failed": null,
+        "mean_ms": null,
+        "sd_ms": null,
+        "p50_ms": null,
+        "p90_ms": null,
+        "p99_ms": null,
+        "max_ms": null
+      }
+    ]
   }
 ]
