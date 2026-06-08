@@ -15,7 +15,7 @@
   ramp_for_sec = 10
 
 [stats]
-  realtime_report_enabled = true
+  latency_log_enabled = true
 
 [test_config]
   num_accounts = 100000

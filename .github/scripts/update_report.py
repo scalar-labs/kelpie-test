@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""Append (or replace) today's benchmark summary into gh-pages/data.json.
+"""Append (or replace) today's benchmark summary into gh-pages/<out-name> (default: data.json).
 
 Usage:
-  update_report.py --csv PATH --date YYYY-MM-DD --pages-dir PATH
+  update_report.py --csv PATH --date YYYY-MM-DD --pages-dir PATH \
+                   [--out-name FILENAME]
+
+`--out-name` is the JSON file written inside --pages-dir (default data.json);
+pass e.g. dl_data.json to keep a second benchmark's history alongside the
+default one in the same directory.
 
 If the CSV is missing or empty, an entry with an empty results list is written
 for the date, so the chart can show the gap on failed days.
@@ -67,10 +72,11 @@ def main() -> int:
     parser.add_argument("--csv", required=True)
     parser.add_argument("--date", required=True)
     parser.add_argument("--pages-dir", required=True)
+    parser.add_argument("--out-name", default="data.json")
     args = parser.parse_args()
 
     pages_dir = pathlib.Path(args.pages_dir)
-    data_path = pages_dir / "data.json"
+    data_path = pages_dir / args.out_name
 
     if data_path.exists() and data_path.stat().st_size > 0:
         try:

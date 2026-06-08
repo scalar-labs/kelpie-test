@@ -1,0 +1,314 @@
+name: Daily DL benchmark
+
+on:
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+    inputs:
+      kelpie_version:
+        description: "Kelpie release version"
+        type: string
+        default: "1.2.4"
+      scalardl_version:
+        description: "ScalarDL version (tag on ghcr.io)"
+        type: string
+        default: "4.0.0-SNAPSHOT"
+      run_for_sec:
+        description: "Workload duration in seconds"
+        type: string
+        default: "200"
+      ramp_for_sec:
+        description: "Ramp-up duration in seconds"
+        type: string
+        default: "10"
+      concurrencies:
+        description: "Comma-separated list of workload concurrencies"
+        type: string
+        default: "1,2,4,8,16,32"
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    env:
+      # Fallback defaults are needed for `schedule` triggers, which do not
+      # apply `workflow_dispatch` input defaults.
+      KELPIE_VERSION: ${{ inputs.kelpie_version || '1.2.4' }}
+      SCALARDL_VERSION: ${{ inputs.scalardl_version || '4.0.0-SNAPSHOT' }}
+      RUN_FOR_SEC: ${{ inputs.run_for_sec || '200' }}
+      RAMP_FOR_SEC: ${{ inputs.ramp_for_sec || '10' }}
+      CONCURRENCIES: ${{ inputs.concurrencies || '1,2,4,8,16,32' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Checkout scalardl-samples
+        uses: actions/checkout@v6
+        with:
+          repository: scalar-labs/scalardl-samples
+          path: scalardl-samples
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build shadow jar
+        working-directory: scalardl-test
+        run: ./gradlew shadowJar
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start ScalarDL ledger
+        working-directory: scalardl-samples/postgres
+        run: |
+          SCALARDL_VERSION="${SCALARDL_VERSION}" \
+            docker compose -f docker-compose-ledger.yml up -d --wait
+
+      - name: Cache Kelpie
+        id: cache-kelpie
+        uses: actions/cache@v5
+        with:
+          path: ${{ runner.temp }}/kelpie
+          key: kelpie-${{ inputs.kelpie_version || '1.2.4' }}
+
+      - name: Download Kelpie
+        if: steps.cache-kelpie.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/kelpie.zip" \
+            "https://github.com/scalar-labs/kelpie/releases/download/v${KELPIE_VERSION}/kelpie-${KELPIE_VERSION}.zip"
+          unzip -q "$RUNNER_TEMP/kelpie.zip" -d "$RUNNER_TEMP"
+          mv "$RUNNER_TEMP/kelpie-${KELPIE_VERSION}" "$RUNNER_TEMP/kelpie"
+          rm "$RUNNER_TEMP/kelpie.zip"
+
+      - name: Apply fixed config values
+        working-directory: scalardl-test
+        run: |
+          sed -i -E "s/^( *run_for_sec *= *).*/\1${RUN_FOR_SEC}/" benchmark-config.toml
+          sed -i -E "s/^( *ramp_for_sec *= *).*/\1${RAMP_FOR_SEC}/" benchmark-config.toml
+          mkdir -p results
+
+      - name: Run benchmark sweep
+        run: |
+          set -u
+          IFS=',' read -ra LEVELS <<< "${CONCURRENCIES}"
+          KELPIE_BIN="$RUNNER_TEMP/kelpie/bin/kelpie"
+
+          for c in "${LEVELS[@]}"; do
+            c="$(echo "$c" | tr -d '[:space:]')"
+
+            echo "::group::Patch concurrency=${c}"
+            sed -i -E "s/^( *concurrency *= *).*/\1${c}/" scalardl-test/benchmark-config.toml
+            grep -E "^ *concurrency *= *" scalardl-test/benchmark-config.toml
+            echo "::endgroup::"
+
+            echo "::group::Run kelpie (concurrency=${c})"
+            LOG="scalardl-test/results/run-c${c}.log"
+            if "$KELPIE_BIN" --config scalardl-test/benchmark-config.toml 2>&1 | tee "$LOG"; then
+              echo "Run for concurrency=${c} succeeded."
+            else
+              echo "Run for concurrency=${c} FAILED with exit ${PIPESTATUS[0]}." >&2
+            fi
+            for f in latency-*.log latency.log; do
+              [ -f "$f" ] && mv "$f" "scalardl-test/results/latency-c${c}-$(basename "$f")"
+            done
+            echo "::endgroup::"
+          done
+
+      - name: Summarize results
+        if: always()
+        working-directory: scalardl-test
+        run: |
+          IFS=',' read -ra LEVELS <<< "${CONCURRENCIES}"
+          extract() {
+            grep -E "$2" "$1" | tail -n1 | awk -v f="$3" '{print $f}'
+          }
+
+          echo "concurrency,throughput,succeeded,failed,mean_ms,sd_ms,p50_ms,p90_ms,p99_ms,max_ms" > results/summary.csv
+
+          {
+            echo "# ScalarDL benchmark sweep"
+            echo ""
+            echo "- Kelpie: \`${KELPIE_VERSION}\`"
+            echo "- ScalarDL: \`${SCALARDL_VERSION}\`"
+            echo "- run_for_sec: \`${RUN_FOR_SEC}\`, ramp_for_sec: \`${RAMP_FOR_SEC}\`"
+            echo ""
+            echo "| Concurrency | Throughput (ops/s) | Succeeded | Failed | Mean (ms) | SD (ms) | p50 (ms) | p90 (ms) | p99 (ms) | Max (ms) |"
+            echo "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"
+            for c in "${LEVELS[@]}"; do
+              c="$(echo "$c" | tr -d '[:space:]')"
+              LOG="results/run-c${c}.log"
+              if [ ! -f "$LOG" ]; then
+                echo "| ${c} | (no log) | - | - | - | - | - | - | - | - |"
+                echo "${c},,,,,,,,," >> results/summary.csv
+                continue
+              fi
+              tp=$(extract   "$LOG" '^Throughput: '               2)
+              suc=$(extract  "$LOG" '^Succeeded operations: '     3)
+              fail=$(extract "$LOG" '^Failed operations: '        3)
+              mean=$(extract "$LOG" '^Mean latency: '             3)
+              sd=$(extract   "$LOG" '^SD of latency: '            4)
+              p50=$(extract  "$LOG" '^Latency at 50 percentile: ' 5)
+              p90=$(extract  "$LOG" '^Latency at 90 percentile: ' 5)
+              p99=$(extract  "$LOG" '^Latency at 99 percentile: ' 5)
+              max=$(extract  "$LOG" '^Max latency: '              3)
+              echo "| ${c} | ${tp:--} | ${suc:--} | ${fail:--} | ${mean:--} | ${sd:--} | ${p50:--} | ${p90:--} | ${p99:--} | ${max:--} |"
+              echo "${c},${tp},${suc},${fail},${mean},${sd},${p50},${p90},${p99},${max}" >> results/summary.csv
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Plot throughput vs concurrency (PNG)
+        if: always()
+        working-directory: scalardl-test
+        run: |
+          if [ ! -s results/summary.csv ]; then
+            echo "No summary.csv; skipping plot."
+            exit 0
+          fi
+          python3 -m pip install --quiet matplotlib
+          python3 "${{ github.workspace }}/.github/scripts/plot_throughput.py" \
+            results/summary.csv results/throughput-vs-concurrency.png
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dl-benchmark-results
+          path: scalardl-test/results
+          if-no-files-found: warn
+
+      - name: Checkout gh-pages branch
+        if: always() && github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Update daily report
+        if: always() && github.event_name != 'workflow_dispatch'
+        run: |
+          python3 "${{ github.workspace }}/.github/scripts/update_report.py" \
+            --csv scalardl-test/results/summary.csv \
+            --date "$(date -u +%F)" \
+            --pages-dir "${{ github.workspace }}/gh-pages" \
+            --out-name dl_data.json
+
+      - name: Plot throughput-vs-date PNG
+        if: always() && github.event_name != 'workflow_dispatch'
+        run: |
+          if [ ! -s "${{ github.workspace }}/gh-pages/dl_data.json" ]; then
+            echo "No dl_data.json; skipping date-axis plot."
+            exit 0
+          fi
+          python3 -m pip install --quiet matplotlib
+          python3 "${{ github.workspace }}/.github/scripts/plot_throughput_history.py" \
+            --data-json "${{ github.workspace }}/gh-pages/dl_data.json" \
+            --out "${{ github.workspace }}/gh-pages/dl_throughput-vs-date.png" \
+            --target-concurrency 16 \
+            --days 14
+
+      - name: Commit and push daily report
+        if: always() && github.event_name != 'workflow_dispatch'
+        working-directory: ${{ github.workspace }}/gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Daily DL benchmark report: $(date -u +%F)"
+          git push origin gh-pages
+
+      - name: Notify Slack
+        if: always() && github.event_name != 'workflow_dispatch'
+        env:
+          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+          SLACK_CHANNEL: eng-benchmark
+        working-directory: ${{ github.workspace }}
+        run: |
+          if [ -z "${SLACK_TOKEN}" ]; then
+            echo "SLACK_TOKEN is not set; skipping Slack notification."
+            exit 0
+          fi
+
+          PAGES_BASE="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          IMG_URL="${PAGES_BASE}/dl_throughput-vs-date.png?v=${{ github.sha }}"
+          PAGE_URL="${PAGES_BASE}/?v=${{ github.sha }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          # GitHub Pages takes a moment to redeploy after the push; wait for the
+          # new PNG to be reachable so Slack fetches the fresh image.
+          image_ready=false
+          if [ -s gh-pages/dl_throughput-vs-date.png ]; then
+            for i in $(seq 1 24); do
+              code=$(curl -s -o /dev/null -w "%{http_code}" "${IMG_URL}" || echo "000")
+              if [ "${code}" = "200" ]; then
+                image_ready=true
+                break
+              fi
+              sleep 5
+            done
+          fi
+
+          if [ "${image_ready}" = "true" ]; then
+            BODY=$(jq -n \
+              --arg channel "${SLACK_CHANNEL}" \
+              --arg img "${IMG_URL}" \
+              --arg page "${PAGE_URL}" \
+              --arg run "${RUN_URL}" \
+              '{
+                channel: $channel,
+                text: "Daily ScalarDL benchmark",
+                blocks: [
+                  {type: "section",
+                   text: {type: "mrkdwn",
+                          text: ("*Daily ScalarDL benchmark*\nConcurrency 16, last 14 days. <" + $page + "|Dashboard> · <" + $run + "|Workflow run>")}},
+                  {type: "image", image_url: $img, alt_text: "Throughput vs Date"}
+                ]
+              }')
+          else
+            BODY=$(jq -n \
+              --arg channel "${SLACK_CHANNEL}" \
+              --arg page "${PAGE_URL}" \
+              --arg run "${RUN_URL}" \
+              '{channel: $channel,
+                text: ("Daily ScalarDL benchmark (image not yet deployed - <" + $page + "|dashboard> · <" + $run + "|run>)")}')
+          fi
+
+          RESPONSE=$(curl -sS -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer ${SLACK_TOKEN}" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            --data "${BODY}")
+          echo "${RESPONSE}"
+          if [ "$(echo "${RESPONSE}" | jq -r '.ok')" != "true" ]; then
+            echo "Slack post failed." >&2
+            exit 1
+          fi
+
+      - name: Stop ScalarDL ledger
+        if: always()
+        working-directory: scalardl-samples/postgres
+        run: |
+          mkdir -p "${{ github.workspace }}/scalardl-test/results/docker-logs"
+          for svc in postgres scalardl-ledger ledger-envoy; do
+            docker compose -f docker-compose-ledger.yml logs --no-color "$svc" \
+              > "${{ github.workspace }}/scalardl-test/results/docker-logs/${svc}.log" 2>&1 || true
+          done
+          docker compose -f docker-compose-ledger.yml down -v || true
