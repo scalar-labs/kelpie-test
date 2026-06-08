@@ -126,7 +126,7 @@ jobs:
 
   notify-slack:
     name: Notify Slack
-    if: always()
+    if: always() && github.event_name != 'workflow_dispatch'
     needs: verify
     runs-on: ubuntu-latest
     permissions:
