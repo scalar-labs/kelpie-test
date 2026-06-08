@@ -67,6 +67,9 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     logInfo("started to check skew - id: " + checkTxId + " account ID: " + fromId);
     try {
       checkSkew(checkTx, fromId);
+    } catch (ProcessFatalException e) {
+      // throw the fatal exception without abort since write skew happened
+      throw e;
     } catch (Exception e) {
       logWarn("checking the total balance of " + fromId + " failed - id: " + checkTxId, e);
       checkTx.abort();
