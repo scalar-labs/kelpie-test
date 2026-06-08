@@ -13,15 +13,17 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      SCHEMA_LOADER_VERSION: "4.0.0-SNAPSHOT"
     strategy:
       fail-fast: false
       matrix:
         test:
           - name: phantom-write
-            schema: schema/tx_sensor.cql
+            schema: tx_sensor.json
             config: phantom-write-config.toml
           - name: write-skew
-            schema: schema/tx_transfer.cql
+            schema: tx_transfer.json
             config: write-skew-config.toml
     name: verify (${{ matrix.test.name }})
     defaults:
@@ -65,14 +67,34 @@ jobs:
         working-directory: scalardb-test/docker
         run: docker compose up -d --wait
 
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CR_PAT }}
+
       - name: Create tables
         working-directory: scalardb-test/docker
         run: |
-          sed "s/'replication_factor': 1/'replication_factor': 3/g" \
-            ../${{ matrix.test.schema }} \
-            | docker compose exec -T cassandra1 sh -c 'cat > /tmp/schema.cql'
-          docker compose exec -T cassandra1 \
-            cqlsh -u cassandra -p cassandra -f /tmp/schema.cql
+          {
+            echo "scalar.db.storage=cassandra"
+            echo "scalar.db.contact_points=cassandra1,cassandra2,cassandra3"
+            echo "scalar.db.username=cassandra"
+            echo "scalar.db.password=cassandra"
+          } > "$RUNNER_TEMP/schema-loader.properties"
+
+          # Run the schema loader on the cluster's Docker network so it can
+          # reach the Cassandra nodes by their compose hostnames.
+          net=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' cassandra1)
+          docker run --rm --network "$net" \
+            -v "$RUNNER_TEMP/schema-loader.properties:/scalardb.properties:ro" \
+            -v "$(pwd)/../schema:/schema:ro" \
+            "ghcr.io/scalar-labs/scalardb-schema-loader:${SCHEMA_LOADER_VERSION}" \
+            --config /scalardb.properties \
+            --schema-file "/schema/${{ matrix.test.schema }}" \
+            --coordinator \
+            --replication-factor 3
 
       - name: Run verification
         id: kelpie
