@@ -1,0 +1,9 @@
+[
+  {
+    "date": "2026-06-08",
+    "tests": {
+      "write-skew": "FAIL",
+      "phantom-write": "FAIL"
+    }
+  }
+]
