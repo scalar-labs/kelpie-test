@@ -74,6 +74,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Work around ledger config path in scalardl-samples
+        working-directory: scalardl-samples/postgres
+        run: |
+          # The sample compose mounts the (already-complete) ledger.properties
+          # to /scalar/ledger/ledger.properties.tmpl, expecting the image to
+          # render the template at startup. The 4.0.0-SNAPSHOT ledger image
+          # reads /scalar/ledger/ledger.properties directly and never renders
+          # the .tmpl, so mount it to the real path instead.
+          sed -i 's#ledger\.properties\.tmpl#ledger.properties#' \
+            docker-compose-ledger.yml
+
       - name: Start ScalarDL ledger
         working-directory: scalardl-samples/postgres
         run: |
