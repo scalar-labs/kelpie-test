@@ -132,7 +132,13 @@ jobs:
 
             echo "::group::Run kelpie (concurrency=${c})"
             LOG="scalardl-test/results/run-c${c}.log"
-            if "$KELPIE_BIN" --config scalardl-test/benchmark-config.toml 2>&1 | tee "$LOG"; then
+            if [[ "$c" != "1" ]]; then
+              ARGS="--config scalardl-test/benchmark-config.toml --except-pre"
+            else
+              ARGS="--config scalardl-test/benchmark-config.toml"
+            fi
+
+            if "$KELPIE_BIN" ${ARGS} 2>&1 | tee "$LOG"; then
               echo "Run for concurrency=${c} succeeded."
             else
               echo "Run for concurrency=${c} FAILED with exit ${PIPESTATUS[0]}." >&2
