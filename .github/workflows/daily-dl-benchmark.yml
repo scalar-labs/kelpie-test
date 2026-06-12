@@ -76,8 +76,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Work around ledger config path in scalardl-samples
-        working-directory: scalardl-samples/mysql
+      - name: Work around scalardl-samples ledger config
+        working-directory: scalardl-samples/postgres
         run: |
           # The sample compose mounts the (already-complete) ledger.properties
           # to /scalar/ledger/ledger.properties.tmpl, expecting the image to
@@ -87,8 +87,26 @@ jobs:
           sed -i 's#ledger\.properties\.tmpl#ledger.properties#' \
             docker-compose-ledger.yml
 
+          # Disable the JVM SecurityManager (contract sandbox). With a JDBC
+          # backend, ScalarDL's contract ProtectionDomain
+          # (LedgerModule.getProtectionDomain) does not grant the permissions
+          # the JDBC driver + HikariCP need at request time (PropertyPermission
+          # "socksProxyHost" "read", SQLPermission "setNetworkTimeout",
+          # SocketPermission to the DB host), so DB access during contract
+          # execution fails with AccessControlException. The launcher runs
+          # `java $DEFAULT_JVM_OPTS $JAVA_OPTS $SCALAR_LEDGER_OPTS`, where
+          # DEFAULT_JVM_OPTS hardcodes a bare `-Djava.security.manager`;
+          # appending `-Djava.security.manager=allow` via SCALAR_LEDGER_OPTS
+          # wins (last value) so no SM is installed.
+          sed -i '/^  scalardl-ledger:$/a\    environment:\n      SCALAR_LEDGER_OPTS: "-Djava.security.manager=allow"' \
+            docker-compose-ledger.yml
+
+          echo "::group::Patched docker-compose-ledger.yml"
+          cat docker-compose-ledger.yml
+          echo "::endgroup::"
+
       - name: Start ScalarDL ledger
-        working-directory: scalardl-samples/mysql
+        working-directory: scalardl-samples/postgres
         run: |
           SCALARDL_VERSION="${SCALARDL_VERSION}" \
             docker compose -f docker-compose-ledger.yml up -d --wait
@@ -323,10 +341,10 @@ jobs:
 
       - name: Stop ScalarDL ledger
         if: always()
-        working-directory: scalardl-samples/mysql
+        working-directory: scalardl-samples/postgres
         run: |
           mkdir -p "${{ github.workspace }}/scalardl-test/results/docker-logs"
-          for svc in mysql scalardl-ledger ledger-envoy; do
+          for svc in postgres scalardl-ledger ledger-envoy; do
             docker compose -f docker-compose-ledger.yml logs --no-color "$svc" \
               > "${{ github.workspace }}/scalardl-test/results/docker-logs/${svc}.log" 2>&1 || true
           done
