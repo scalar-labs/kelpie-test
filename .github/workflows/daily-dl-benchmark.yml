@@ -101,10 +101,6 @@ jobs:
           sed -i '/^  scalardl-ledger:$/a\    environment:\n      SCALAR_LEDGER_OPTS: "-Djava.security.manager=allow"' \
             docker-compose-ledger.yml
 
-          echo "::group::Patched docker-compose-ledger.yml"
-          cat docker-compose-ledger.yml
-          echo "::endgroup::"
-
       - name: Start ScalarDL ledger
         working-directory: scalardl-samples/postgres
         run: |
