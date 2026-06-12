@@ -62,17 +62,44 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          add-job-summary: never
 
       - name: Build shadow jar
         working-directory: scalardl-test
         run: ./gradlew shadowJar
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Work around scalardl-samples ledger config
+        working-directory: scalardl-samples/postgres
+        run: |
+          # The sample compose mounts the (already-complete) ledger.properties
+          # to /scalar/ledger/ledger.properties.tmpl, expecting the image to
+          # render the template at startup. The 4.0.0-SNAPSHOT ledger image
+          # reads /scalar/ledger/ledger.properties directly and never renders
+          # the .tmpl, so mount it to the real path instead.
+          sed -i 's#ledger\.properties\.tmpl#ledger.properties#' \
+            docker-compose-ledger.yml
+
+          # Disable the JVM SecurityManager (contract sandbox). With a JDBC
+          # backend, ScalarDL's contract ProtectionDomain
+          # (LedgerModule.getProtectionDomain) does not grant the permissions
+          # the JDBC driver + HikariCP need at request time (PropertyPermission
+          # "socksProxyHost" "read", SQLPermission "setNetworkTimeout",
+          # SocketPermission to the DB host), so DB access during contract
+          # execution fails with AccessControlException. The launcher runs
+          # `java $DEFAULT_JVM_OPTS $JAVA_OPTS $SCALAR_LEDGER_OPTS`, where
+          # DEFAULT_JVM_OPTS hardcodes a bare `-Djava.security.manager`;
+          # appending `-Djava.security.manager=allow` via SCALAR_LEDGER_OPTS
+          # wins (last value) so no SM is installed.
+          sed -i '/^  scalardl-ledger:$/a\    environment:\n      SCALAR_LEDGER_OPTS: "-Djava.security.manager=allow"' \
+            docker-compose-ledger.yml
 
       - name: Start ScalarDL ledger
         working-directory: scalardl-samples/postgres
@@ -119,7 +146,13 @@ jobs:
 
             echo "::group::Run kelpie (concurrency=${c})"
             LOG="scalardl-test/results/run-c${c}.log"
-            if "$KELPIE_BIN" --config scalardl-test/benchmark-config.toml 2>&1 | tee "$LOG"; then
+            if [[ "$c" != "1" ]]; then
+              ARGS="--config scalardl-test/benchmark-config.toml --except-pre"
+            else
+              ARGS="--config scalardl-test/benchmark-config.toml"
+            fi
+
+            if "$KELPIE_BIN" ${ARGS} 2>&1 | tee "$LOG"; then
               echo "Run for concurrency=${c} succeeded."
             else
               echo "Run for concurrency=${c} FAILED with exit ${PIPESTATUS[0]}." >&2
