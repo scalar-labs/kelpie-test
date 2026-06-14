@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
-# Create a JIRA ticket for a failed daily verification test.
+# Create a JIRA ticket for a failed daily test or benchmark.
 #
 # Usage:
-#   create_jira_ticket.sh <test_name> <test_type> <run_url>
+#   create_jira_ticket.sh <name> <type> <run_url>
 #
 # Required env:
 #   JIRA_AUTH         - "<email>:<api-token>" for curl -u
 #   JIRA_ASSIGNEE_ID  - Atlassian account id of the default assignee
 #
 # Optional env:
-#   JIRA_PROJECT_KEY  - JIRA project key (default: DLT)
-#   JIRA_BOARD_ID     - Board id used to look up the active sprint (default: 1)
+#   JIRA_PROJECT_KEY        - JIRA project key (default: DLT)
+#   JIRA_BOARD_ID           - Board id used to look up the active sprint (default: 1)
+#   JIRA_DESCRIPTION_EXTRA  - Extra text appended to the ticket description
+#   JIRA_LOG_ARTIFACT       - Name of an uploaded log artifact, referenced in the
+#                             ticket's environment field
 
 set -uo pipefail
 
@@ -37,13 +40,22 @@ Type: ${TEST_TYPE}
 Date: ${DATE}
 Run: ${RUN_URL}"
 
-ENVIRONMENT="Workflow run: ${RUN_URL}
-Test log artifact: verification-logs-${TEST_NAME}"
+if [ -n "${JIRA_DESCRIPTION_EXTRA:-}" ]; then
+  DESCRIPTION="${DESCRIPTION}
+
+${JIRA_DESCRIPTION_EXTRA}"
+fi
+
+ENVIRONMENT="Workflow run: ${RUN_URL}"
+if [ -n "${JIRA_LOG_ARTIFACT:-}" ]; then
+  ENVIRONMENT="${ENVIRONMENT}
+Log artifact: ${JIRA_LOG_ARTIFACT}"
+fi
 
 PAYLOAD=$(jq -n \
   --arg project_key "${PROJECT_KEY}" \
   --arg assignee_id "${JIRA_ASSIGNEE_ID}" \
-  --arg summary "[Failure report ${DATE}] Daily ${TEST_TYPE} test: ${TEST_NAME}" \
+  --arg summary "[Failure report ${DATE}] Daily ${TEST_TYPE}: ${TEST_NAME}" \
   --arg description "${DESCRIPTION}" \
   --arg environment "${ENVIRONMENT}" \
   --arg sprint_id "${SPRINT_ID}" \

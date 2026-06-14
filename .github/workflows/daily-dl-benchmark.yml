@@ -276,66 +276,64 @@ jobs:
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
           SLACK_CHANNEL: eng-benchmark
+          PRODUCT: ScalarDL
+          IMG_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/dl_throughput-vs-date.png?v=${{ github.sha }}
+          IMG_FILE: gh-pages/dl_throughput-vs-date.png
+          PAGE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/?v=${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        working-directory: ${{ github.workspace }}
+        run: bash .github/scripts/slack_notify.sh report
+
+      - name: Check throughput anomaly
+        id: anomaly
+        if: always() && github.event_name != 'workflow_dispatch'
         working-directory: ${{ github.workspace }}
         run: |
-          if [ -z "${SLACK_TOKEN}" ]; then
-            echo "SLACK_TOKEN is not set; skipping Slack notification."
-            exit 0
-          fi
+          python3 .github/scripts/check_throughput_anomaly.py \
+            --data-json gh-pages/dl_data.json \
+            --date "$(date -u +%F)" \
+            --target-concurrency 16 \
+            --days 14 \
+            --sigma 3
 
-          PAGES_BASE="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
-          IMG_URL="${PAGES_BASE}/dl_throughput-vs-date.png?v=${{ github.sha }}"
-          PAGE_URL="${PAGES_BASE}/?v=${{ github.sha }}"
-          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      - name: Alert throughput anomaly to Slack
+        if: always() && github.event_name != 'workflow_dispatch' && steps.anomaly.outputs.anomaly == 'true'
+        env:
+          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+          SLACK_CHANNEL: eng-benchmark
+          PRODUCT: ScalarDL
+          PAGE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/?v=${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          DIRECTION: ${{ steps.anomaly.outputs.direction }}
+          LATEST: ${{ steps.anomaly.outputs.latest }}
+          MEAN: ${{ steps.anomaly.outputs.mean }}
+          SD: ${{ steps.anomaly.outputs.sigma }}
+          LOWER: ${{ steps.anomaly.outputs.lower }}
+          UPPER: ${{ steps.anomaly.outputs.upper }}
+          DEV: ${{ steps.anomaly.outputs.deviation_sigma }}
+        working-directory: ${{ github.workspace }}
+        run: bash .github/scripts/slack_notify.sh anomaly
 
-          # GitHub Pages takes a moment to redeploy after the push; wait for the
-          # new PNG to be reachable so Slack fetches the fresh image.
-          image_ready=false
-          if [ -s gh-pages/dl_throughput-vs-date.png ]; then
-            for i in $(seq 1 24); do
-              code=$(curl -s -o /dev/null -w "%{http_code}" "${IMG_URL}" || echo "000")
-              if [ "${code}" = "200" ]; then
-                image_ready=true
-                break
-              fi
-              sleep 5
-            done
-          fi
-
-          if [ "${image_ready}" = "true" ]; then
-            BODY=$(jq -n \
-              --arg channel "${SLACK_CHANNEL}" \
-              --arg img "${IMG_URL}" \
-              --arg page "${PAGE_URL}" \
-              --arg run "${RUN_URL}" \
-              '{
-                channel: $channel,
-                text: "Daily ScalarDL benchmark",
-                blocks: [
-                  {type: "section",
-                   text: {type: "mrkdwn",
-                          text: ("*Daily ScalarDL benchmark*\nConcurrency 16, last 14 days. <" + $page + "|Dashboard> · <" + $run + "|Workflow run>")}},
-                  {type: "image", image_url: $img, alt_text: "Throughput vs Date"}
-                ]
-              }')
-          else
-            BODY=$(jq -n \
-              --arg channel "${SLACK_CHANNEL}" \
-              --arg page "${PAGE_URL}" \
-              --arg run "${RUN_URL}" \
-              '{channel: $channel,
-                text: ("Daily ScalarDL benchmark (image not yet deployed - <" + $page + "|dashboard> · <" + $run + "|run>)")}')
-          fi
-
-          RESPONSE=$(curl -sS -X POST https://slack.com/api/chat.postMessage \
-            -H "Authorization: Bearer ${SLACK_TOKEN}" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            --data "${BODY}")
-          echo "${RESPONSE}"
-          if [ "$(echo "${RESPONSE}" | jq -r '.ok')" != "true" ]; then
-            echo "Slack post failed." >&2
-            exit 1
-          fi
+      - name: Create JIRA ticket for throughput anomaly
+        if: always() && github.event_name != 'workflow_dispatch' && steps.anomaly.outputs.anomaly == 'true'
+        env:
+          JIRA_AUTH: ${{ secrets.JIRA_AUTH }}
+          JIRA_ASSIGNEE_ID: ${{ secrets.JIRA_ASSIGNEE_ID }}
+          JIRA_DESCRIPTION_EXTRA: |
+            Throughput anomaly at concurrency 16 (${{ steps.anomaly.outputs.direction }}).
+            Latest: ${{ steps.anomaly.outputs.latest }} ops/s
+            14-day mean: ${{ steps.anomaly.outputs.mean }} ops/s
+            SD: ${{ steps.anomaly.outputs.sigma }}
+            3-sigma band: [${{ steps.anomaly.outputs.lower }}, ${{ steps.anomaly.outputs.upper }}]
+            Deviation: ${{ steps.anomaly.outputs.deviation_sigma }} sigma
+            Baseline days: ${{ steps.anomaly.outputs.baseline_n }}
+        working-directory: ${{ github.workspace }}
+        run: |
+          bash .github/scripts/create_jira_ticket.sh \
+            "Throughput anomaly at concurrency 16 (${{ steps.anomaly.outputs.direction }})" \
+            "ScalarDL benchmark" \
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        continue-on-error: true
 
       - name: Stop ScalarDL ledger
         if: always()
