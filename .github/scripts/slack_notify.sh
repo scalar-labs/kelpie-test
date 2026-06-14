@@ -104,7 +104,7 @@ case "${MODE}" in
     else
       HEADER=":chart_with_upwards_trend: ${PRODUCT} throughput rose above the 3-sigma band"
     fi
-    TEXT=$(printf '%s (concurrency 16)\nLatest: *%s* ops/s (%s sigma from mean)\n14-day mean: %s, SD: %s, 3-sigma band: [%s, %s]\n<%s|Dashboard> | <%s|Workflow run>' \
+    TEXT=$(printf '<!channel> %s (concurrency 16)\nLatest: *%s* ops/s (%s sigma from mean)\n14-day mean: %s, SD: %s, 3-sigma band: [%s, %s]\n<%s|Dashboard> | <%s|Workflow run>' \
       "${HEADER}" "${LATEST}" "${DEV}" "${MEAN}" "${SD}" "${LOWER}" "${UPPER}" "${PAGE_URL}" "${RUN_URL}")
     BODY=$(jq -n --arg channel "${SLACK_CHANNEL}" --arg text "${TEXT}" '{channel: $channel, text: $text}')
 
