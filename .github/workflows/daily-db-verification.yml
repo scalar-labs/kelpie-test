@@ -141,6 +141,19 @@ jobs:
           name: result-${{ matrix.test.name }}
           path: scalardb-test/results/result-${{ matrix.test.name }}.txt
 
+      - name: Create JIRA ticket on failure
+        if: always() && steps.kelpie.outcome != 'success' && github.event_name != 'workflow_dispatch'
+        working-directory: .
+        env:
+          JIRA_AUTH: ${{ secrets.JIRA_AUTH }}
+          JIRA_ASSIGNEE_ID: ${{ secrets.JIRA_ASSIGNEE_ID }}
+        run: |
+          bash .github/scripts/create_jira_ticket.sh \
+            "${{ matrix.test.name }}" \
+            "ScalarDB verification" \
+            "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        continue-on-error: true
+
       - name: Tear down
         if: always()
         working-directory: scalardb-test/docker
