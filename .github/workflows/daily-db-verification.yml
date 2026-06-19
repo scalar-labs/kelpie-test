@@ -147,6 +147,7 @@ jobs:
         env:
           JIRA_AUTH: ${{ secrets.JIRA_AUTH }}
           JIRA_ASSIGNEE_ID: ${{ secrets.JIRA_ASSIGNEE_ID }}
+          JIRA_LOG_ARTIFACT: verification-logs-${{ matrix.test.name }}
         run: |
           bash .github/scripts/create_jira_ticket.sh \
             "${{ matrix.test.name }}" \
