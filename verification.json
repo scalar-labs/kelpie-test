@@ -159,5 +159,12 @@
       "phantom-write": "PASS",
       "write-skew": "PASS"
     }
+  },
+  {
+    "date": "2026-07-01",
+    "tests": {
+      "phantom-write": "PASS",
+      "write-skew": "PASS"
+    }
   }
 ]
