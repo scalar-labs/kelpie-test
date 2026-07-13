@@ -2,7 +2,7 @@ package kelpie.scalardb.transfer;
 
 import com.google.common.collect.Lists;
 import com.scalar.db.api.Result;
-import com.scalar.db.transaction.consensuscommit.Coordinator;
+import com.scalar.db.transaction.consensuscommit.CoordinatorStateAccessor;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.PostProcessException;
 import com.scalar.kelpie.modules.PostProcessor;
@@ -37,11 +37,10 @@ public class WriteSkewTransferChecker extends PostProcessor {
   }
 
   @Override
-  public void close() {
-  }
+  public void close() {}
 
   private int getNumOfUpdatesFromCoordinator(Config config) {
-    Coordinator coordinator = new Coordinator(Common.getStorage(config));
+    CoordinatorStateAccessor coordinator = new CoordinatorStateAccessor(Common.getStorage(config));
     if (getPreviousState().isNull("unknown_transaction")) {
       // for --only-post
       return 0;
