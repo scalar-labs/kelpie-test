@@ -1,7 +1,7 @@
 package kelpie.scalardb.transfer;
 
 import com.scalar.db.api.Result;
-import com.scalar.db.transaction.consensuscommit.Coordinator;
+import com.scalar.db.transaction.consensuscommit.CoordinatorStateAccessor;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.PostProcessException;
 import com.scalar.kelpie.modules.PostProcessor;
@@ -39,7 +39,7 @@ public class TransferChecker extends PostProcessor {
   public void close() {}
 
   private int getNumOfCommittedFromCoordinator(Config config) {
-    Coordinator coordinator = new Coordinator(Common.getStorage(config));
+    CoordinatorStateAccessor coordinator = new CoordinatorStateAccessor(Common.getStorage(config));
     JsonObject unknownTransactions = getPreviousState().getJsonObject("unknown_transaction");
     if (unknownTransactions == null) {
       // for --only-post

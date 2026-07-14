@@ -7,7 +7,7 @@ import com.scalar.db.api.TwoPhaseCommitTransactionManager;
 import com.scalar.db.config.DatabaseConfig;
 import com.scalar.db.service.StorageFactory;
 import com.scalar.db.service.TransactionFactory;
-import com.scalar.db.transaction.consensuscommit.Coordinator;
+import com.scalar.db.transaction.consensuscommit.CoordinatorStateAccessor;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.IllegalConfigException;
 import io.github.resilience4j.core.IntervalFunction;
@@ -116,12 +116,12 @@ public class Common {
     }
   }
 
-  public static boolean isCommitted(Coordinator coordinator, String txId) {
+  public static boolean isCommitted(CoordinatorStateAccessor coordinator, String txId) {
     Retry retry = Common.getRetryWithExponentialBackoff("checkCoordinator");
-    Function<String, Optional<Coordinator.State>> decorated =
+    Function<String, Optional<CoordinatorStateAccessor.State>> decorated =
         Retry.decorateFunction(retry, id -> getState(coordinator, id));
 
-    Optional<Coordinator.State> state;
+    Optional<CoordinatorStateAccessor.State> state;
     try {
       state = decorated.apply(txId);
     } catch (Exception e) {
@@ -131,7 +131,8 @@ public class Common {
     return state.isPresent() && state.get().getState().equals(TransactionState.COMMITTED);
   }
 
-  private static Optional<Coordinator.State> getState(Coordinator coordinator, String txId) {
+  private static Optional<CoordinatorStateAccessor.State> getState(
+      CoordinatorStateAccessor coordinator, String txId) {
     try {
       return coordinator.getState(txId);
     } catch (Exception e) {
