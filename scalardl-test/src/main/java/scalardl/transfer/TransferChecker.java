@@ -6,7 +6,7 @@ import com.scalar.db.api.TransactionState;
 import com.scalar.db.config.DatabaseConfig;
 import com.scalar.db.service.StorageModule;
 import com.scalar.db.service.StorageService;
-import com.scalar.db.transaction.consensuscommit.Coordinator;
+import com.scalar.db.transaction.consensuscommit.CoordinatorStateAccessor;
 import com.scalar.dl.client.service.ClientService;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.exception.PostProcessException;
@@ -89,9 +89,9 @@ public class TransferChecker extends PostProcessor {
   }
 
   private int getNumOfCommittedFromCoordinator() {
-    Coordinator coordinator = getCoordinator();
+    CoordinatorStateAccessor coordinator = getCoordinator();
     Retry retry = Common.getRetryWithExponentialBackoff("checkCoordinator");
-    Function<String, Optional<Coordinator.State>> decorated =
+    Function<String, Optional<CoordinatorStateAccessor.State>> decorated =
         Retry.decorateFunction(retry, id -> getState(coordinator, id));
 
     JsonObject unknownTransactions = getPreviousState().getJsonObject("unknown_transaction");
@@ -101,7 +101,7 @@ public class TransferChecker extends PostProcessor {
     }
     int committed = 0;
     for (String txId : unknownTransactions.keySet()) {
-      Optional<Coordinator.State> state;
+      Optional<CoordinatorStateAccessor.State> state;
       try {
         state = decorated.apply(txId);
       } catch (Exception e) {
@@ -124,7 +124,7 @@ public class TransferChecker extends PostProcessor {
     return committed;
   }
 
-  private Coordinator getCoordinator() {
+  private CoordinatorStateAccessor getCoordinator() {
     Properties props = new Properties();
     String contactPoints = config.getUserString("storage_config", "contact_points");
     String username = config.getUserString("storage_config", "username", "cassandra");
@@ -141,10 +141,10 @@ public class TransferChecker extends PostProcessor {
     Injector injector = Guice.createInjector(new StorageModule(dbConfig));
     StorageService storageService = injector.getInstance(StorageService.class);
 
-    return new Coordinator(storageService);
+    return new CoordinatorStateAccessor(storageService);
   }
 
-  private Optional<Coordinator.State> getState(Coordinator coordinator, String txId) {
+  private Optional<CoordinatorStateAccessor.State> getState(CoordinatorStateAccessor coordinator, String txId) {
     try {
       logInfo("reading the status of " + txId);
 
