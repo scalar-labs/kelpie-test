@@ -320,5 +320,12 @@
       "phantom-write": "TIMEOUT",
       "write-skew": "FAIL"
     }
+  },
+  {
+    "date": "2026-07-24",
+    "tests": {
+      "phantom-write": "PASS",
+      "write-skew": "PASS"
+    }
   }
 ]
