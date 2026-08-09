@@ -5150,75 +5150,75 @@
     "results": [
       {
         "concurrency": 1,
-        "throughput": 493.295,
-        "succeeded": 98659,
+        "throughput": 486.67,
+        "succeeded": 97334,
         "failed": 0,
-        "mean_ms": 2.016,
-        "sd_ms": 0.426,
+        "mean_ms": 2.042,
+        "sd_ms": 0.436,
         "p50_ms": 2,
         "p90_ms": 2,
-        "p99_ms": 4,
-        "max_ms": 14
+        "p99_ms": 3,
+        "max_ms": 58
       },
       {
         "concurrency": 2,
-        "throughput": 835.19,
-        "succeeded": 167038,
-        "failed": 4,
-        "mean_ms": 2.38,
-        "sd_ms": 0.593,
+        "throughput": 821.17,
+        "succeeded": 164234,
+        "failed": 3,
+        "mean_ms": 2.42,
+        "sd_ms": 0.602,
         "p50_ms": 2,
         "p90_ms": 3,
         "p99_ms": 4,
-        "max_ms": 16
+        "max_ms": 20
       },
       {
         "concurrency": 4,
-        "throughput": 1139.275,
-        "succeeded": 227855,
-        "failed": 14,
-        "mean_ms": 3.486,
-        "sd_ms": 0.707,
+        "throughput": 1140.02,
+        "succeeded": 228004,
+        "failed": 11,
+        "mean_ms": 3.484,
+        "sd_ms": 0.673,
         "p50_ms": 3,
         "p90_ms": 4,
-        "p99_ms": 6,
-        "max_ms": 29
+        "p99_ms": 5,
+        "max_ms": 23
       },
       {
         "concurrency": 8,
-        "throughput": 1402.34,
-        "succeeded": 280468,
-        "failed": 35,
-        "mean_ms": 5.663,
-        "sd_ms": 1.071,
+        "throughput": 1393.02,
+        "succeeded": 278604,
+        "failed": 31,
+        "mean_ms": 5.699,
+        "sd_ms": 1.055,
         "p50_ms": 6,
         "p90_ms": 7,
         "p99_ms": 9,
-        "max_ms": 30
+        "max_ms": 28
       },
       {
         "concurrency": 16,
-        "throughput": 1547.275,
-        "succeeded": 309455,
-        "failed": 85,
-        "mean_ms": 10.286,
-        "sd_ms": 2.472,
+        "throughput": 1528.465,
+        "succeeded": 305693,
+        "failed": 92,
+        "mean_ms": 10.414,
+        "sd_ms": 2.373,
         "p50_ms": 10,
         "p90_ms": 13,
         "p99_ms": 17,
-        "max_ms": 146
+        "max_ms": 159
       },
       {
         "concurrency": 32,
-        "throughput": 1536.04,
-        "succeeded": 307208,
-        "failed": 181,
-        "mean_ms": 20.599,
-        "sd_ms": 6.774,
+        "throughput": 1527.49,
+        "succeeded": 305498,
+        "failed": 176,
+        "mean_ms": 20.837,
+        "sd_ms": 7.258,
         "p50_ms": 20,
         "p90_ms": 28,
-        "p99_ms": 40,
-        "max_ms": 443
+        "p99_ms": 38,
+        "max_ms": 669
       }
     ]
   }
