@@ -6536,75 +6536,75 @@
     "results": [
       {
         "concurrency": 1,
-        "throughput": 481.015,
-        "succeeded": 96203,
+        "throughput": 478.29,
+        "succeeded": 95658,
         "failed": 0,
-        "mean_ms": 2.073,
-        "sd_ms": 0.397,
+        "mean_ms": 2.079,
+        "sd_ms": 0.467,
         "p50_ms": 2,
         "p90_ms": 2,
-        "p99_ms": 3,
-        "max_ms": 12
+        "p99_ms": 4,
+        "max_ms": 13
       },
       {
         "concurrency": 2,
-        "throughput": 826.245,
-        "succeeded": 165249,
-        "failed": 0,
-        "mean_ms": 2.408,
-        "sd_ms": 0.573,
+        "throughput": 820.97,
+        "succeeded": 164194,
+        "failed": 1,
+        "mean_ms": 2.422,
+        "sd_ms": 0.633,
         "p50_ms": 2,
         "p90_ms": 3,
-        "p99_ms": 4,
-        "max_ms": 17
+        "p99_ms": 5,
+        "max_ms": 18
       },
       {
         "concurrency": 4,
-        "throughput": 1133.68,
-        "succeeded": 226736,
-        "failed": 7,
-        "mean_ms": 3.5,
-        "sd_ms": 0.708,
+        "throughput": 1119.08,
+        "succeeded": 223816,
+        "failed": 12,
+        "mean_ms": 3.548,
+        "sd_ms": 0.776,
         "p50_ms": 3,
         "p90_ms": 4,
-        "p99_ms": 5,
-        "max_ms": 26
+        "p99_ms": 6,
+        "max_ms": 47
       },
       {
         "concurrency": 8,
-        "throughput": 1385.86,
-        "succeeded": 277172,
-        "failed": 25,
-        "mean_ms": 5.727,
-        "sd_ms": 1.084,
+        "throughput": 1377.43,
+        "succeeded": 275486,
+        "failed": 39,
+        "mean_ms": 5.762,
+        "sd_ms": 1.133,
         "p50_ms": 6,
         "p90_ms": 7,
         "p99_ms": 9,
-        "max_ms": 29
+        "max_ms": 42
       },
       {
         "concurrency": 16,
-        "throughput": 1508.505,
-        "succeeded": 301701,
-        "failed": 83,
-        "mean_ms": 10.549,
-        "sd_ms": 2.411,
+        "throughput": 1527.415,
+        "succeeded": 305483,
+        "failed": 88,
+        "mean_ms": 10.42,
+        "sd_ms": 2.306,
         "p50_ms": 10,
         "p90_ms": 13,
-        "p99_ms": 18,
-        "max_ms": 116
+        "p99_ms": 17,
+        "max_ms": 78
       },
       {
         "concurrency": 32,
-        "throughput": 1509.475,
-        "succeeded": 301895,
-        "failed": 164,
-        "mean_ms": 21.133,
-        "sd_ms": 5.492,
-        "p50_ms": 21,
-        "p90_ms": 28,
-        "p99_ms": 37,
-        "max_ms": 127
+        "throughput": 1536.76,
+        "succeeded": 307352,
+        "failed": 195,
+        "mean_ms": 20.751,
+        "sd_ms": 5.33,
+        "p50_ms": 20,
+        "p90_ms": 27,
+        "p99_ms": 36,
+        "max_ms": 109
       }
     ]
   }
