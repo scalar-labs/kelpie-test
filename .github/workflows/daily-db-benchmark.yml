@@ -2,7 +2,7 @@ name: Daily DB benchmark
 
 on:
   schedule:
-    - cron: "0 15 * * *"
+    - cron: "0 18 * * 0-5"
   workflow_dispatch:
     inputs:
       kelpie_version:
