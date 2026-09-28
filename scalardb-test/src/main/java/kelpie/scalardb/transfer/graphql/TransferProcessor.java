@@ -88,7 +88,7 @@ public class TransferProcessor extends TimeBasedProcessor {
       }
     }
 
-    // The @transaction directive resumes the transaction started by an earlier request, so the
+    // The mutation's @transaction(id: ...) resumes the transaction started by the query, so the
     // transaction manager needs to keep track of the active transactions
     transactionManager =
         new ActiveTransactionManagedDistributedTransactionManager(
