@@ -20,13 +20,15 @@ Jepsen (including ScalarDB Cluster) is documented in [scalar-jepsen](https://git
   * Check GitHub Actions: https://github.com/scalar-labs/kelpie-test/actions
   * Check GitHub Pages: https://scalar-labs.github.io/kelpie-test/
 
-* Confirm the expected scheduled runs completed (UTC):
+* Confirm the expected scheduled runs completed (UTC, Sunday–Friday):
 
   | Workflow | Cron | Approx IST |
   |----------|------|------------|
-  | Daily DB verification | `0 10 * * *` | 15:30 |
-  | Daily DB benchmark | `0 15 * * *` | 20:30 |
-  | Daily DL benchmark | `0 18 * * *` | 23:30 |
+  | Daily DB verification | `0 14 * * 0-5` | 19:30 |
+  | Daily DB benchmark | `0 18 * * 0-5` | 23:30 |
+  | Daily DL benchmark | `0 19 * * 0-5` | 00:30 next day |
+
+  Scheduled runs do not fire on Saturdays.
 
 Environments are ephemeral GitHub-hosted runners (Docker Compose / a Postgres container). There is no Azure VM to retain or destroy.
 

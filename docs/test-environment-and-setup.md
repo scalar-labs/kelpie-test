@@ -10,11 +10,11 @@ Module usage notes remain in [`scalardb-test/README.md`](../scalardb-test/README
 
 | Workflow | File | Schedule (UTC) | Environment |
 |----------|------|----------------|-------------|
-| Daily DB verification | [`.github/workflows/daily-db-verification.yml`](../.github/workflows/daily-db-verification.yml) | `0 10 * * *` | Cassandra ×3 + client (`scalardb-test/docker`) |
-| Daily DB benchmark | [`.github/workflows/daily-db-benchmark.yml`](../.github/workflows/daily-db-benchmark.yml) | `0 15 * * *` | Postgres 18 on the runner |
-| Daily DL benchmark | [`.github/workflows/daily-dl-benchmark.yml`](../.github/workflows/daily-dl-benchmark.yml) | `0 18 * * *` | `scalardl-samples` ledger + Postgres |
+| Daily DB verification | [`.github/workflows/daily-db-verification.yml`](../.github/workflows/daily-db-verification.yml) | `0 14 * * 0-5` (Sun–Fri) | Cassandra ×3 + client (`scalardb-test/docker`) |
+| Daily DB benchmark | [`.github/workflows/daily-db-benchmark.yml`](../.github/workflows/daily-db-benchmark.yml) | `0 18 * * 0-5` (Sun–Fri) | Postgres 18 on the runner |
+| Daily DL benchmark | [`.github/workflows/daily-dl-benchmark.yml`](../.github/workflows/daily-dl-benchmark.yml) | `0 19 * * 0-5` (Sun–Fri) | `scalardl-samples` ledger + Postgres |
 
-All three also support `workflow_dispatch`. Slack, Jira, and GitHub Pages run only on `schedule`.
+All three also support `workflow_dispatch`. Slack, Jira, and GitHub Pages run only on `schedule`. There is no Saturday cron.
 
 There is no ScalarDL Kelpie **verification** workflow in this repo (`scalardl-test/verification-config.toml` is for local / other consumers). `jdbc-test` has no CI.
 
