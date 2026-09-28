@@ -104,7 +104,7 @@ jobs:
           set -o pipefail
           docker compose exec -T client \
             kelpie --config ${{ matrix.test.config }} --inject \
-            2>&1 | tee logs/kelpie.log
+            2>&1 | tee logs/kelpie.log | tail -n 300
 
       - name: Collect Cassandra logs
         if: always()
