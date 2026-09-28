@@ -153,7 +153,7 @@ public class TransferProcessor extends TimeBasedProcessor {
             .putAll(variablesForKeys)
             .put("tx_id", txId)
             .put("from_new_balance", fromBalance - amount)
-            .put("to_new_balance", toBalance - amount)
+            .put("to_new_balance", toBalance + amount)
             .build();
     executionInput =
         ExecutionInput.newExecutionInput().query(PUT_BALANCES).variables(variables).build();
