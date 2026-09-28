@@ -2,8 +2,8 @@ package kelpie.scalardb.transfer.graphql;
 
 import com.google.common.collect.ImmutableMap;
 import com.scalar.db.api.DistributedTransactionAdmin;
-import com.scalar.db.api.DistributedTransactionManager;
-import com.scalar.db.api.TwoPhaseCommitTransactionManager;
+import com.scalar.db.common.ActiveTransactionManagedDistributedTransactionManager;
+import com.scalar.db.common.ResumableDistributedTransactionManager;
 import com.scalar.db.config.DatabaseConfig;
 import com.scalar.db.graphql.GraphQlFactory;
 import com.scalar.db.graphql.server.ScalarDbSchema;
@@ -60,8 +60,7 @@ public class TransferProcessor extends TimeBasedProcessor {
           + "  )\n"
           + "}";
 
-  private final DistributedTransactionManager transactionManager;
-  private final TwoPhaseCommitTransactionManager twoPhaseCommitTransactionManager;
+  private final ResumableDistributedTransactionManager transactionManager;
   private final GraphQL graphql;
   private final int numAccounts;
 
@@ -89,11 +88,17 @@ public class TransferProcessor extends TimeBasedProcessor {
       }
     }
 
-    transactionManager = transactionFactory.getTransactionManager();
-    twoPhaseCommitTransactionManager = transactionFactory.getTwoPhaseCommitTransactionManager();
+    // The @transaction directive resumes the transaction started by an earlier request, so the
+    // transaction manager needs to keep track of the active transactions
+    transactionManager =
+        new ActiveTransactionManagedDistributedTransactionManager(
+            transactionFactory.getTransactionManager(),
+            DatabaseConfig.getActiveTransactionManagementExpirationTimeMillis(
+                databaseConfig.getProperties()),
+            DatabaseConfig.getActiveTransactionManagementMaxActiveTransactions(
+                databaseConfig.getProperties()));
 
-    GraphQlFactory graphQlFactory =
-        new GraphQlFactory(transactionManager, twoPhaseCommitTransactionManager, scalarDbSchema);
+    GraphQlFactory graphQlFactory = new GraphQlFactory(transactionManager, scalarDbSchema);
     graphql = graphQlFactory.createGraphQL();
 
     this.numAccounts = (int) config.getUserLong("test_config", "num_accounts");
@@ -114,11 +119,6 @@ public class TransferProcessor extends TimeBasedProcessor {
       transactionManager.close();
     } catch (Exception e) {
       logger.warn("failed to close transactionManager", e);
-    }
-    try {
-      twoPhaseCommitTransactionManager.close();
-    } catch (Exception e) {
-      logger.warn("failed to close twoPhaseCommitTransactionManager", e);
     }
   }
 

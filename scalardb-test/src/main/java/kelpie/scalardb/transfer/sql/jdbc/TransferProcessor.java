@@ -1,6 +1,5 @@
 package kelpie.scalardb.transfer.sql.jdbc;
 
-import com.scalar.db.sql.TransactionMode;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
 import com.zaxxer.hikari.HikariDataSource;
@@ -19,7 +18,7 @@ public class TransferProcessor extends TimeBasedProcessor {
   public TransferProcessor(Config config) {
     super(config);
     numAccounts = (int) config.getUserLong("test_config", "num_accounts");
-    dataSource = SqlCommon.getDataSource(config, TransactionMode.TRANSACTION);
+    dataSource = SqlCommon.getDataSource(config);
   }
 
   @Override

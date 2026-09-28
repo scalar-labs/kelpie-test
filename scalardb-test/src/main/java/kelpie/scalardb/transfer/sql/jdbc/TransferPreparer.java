@@ -1,6 +1,5 @@
 package kelpie.scalardb.transfer.sql.jdbc;
 
-import com.scalar.db.sql.TransactionMode;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.PreProcessor;
 import com.zaxxer.hikari.HikariDataSource;
@@ -28,7 +27,7 @@ public class TransferPreparer extends PreProcessor {
 
   public TransferPreparer(Config config) {
     super(config);
-    dataSource = SqlCommon.getDataSource(config, TransactionMode.TRANSACTION);
+    dataSource = SqlCommon.getDataSource(config);
   }
 
   @Override
