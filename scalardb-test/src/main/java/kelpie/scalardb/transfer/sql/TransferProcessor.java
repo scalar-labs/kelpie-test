@@ -5,7 +5,6 @@ import com.scalar.db.sql.Record;
 import com.scalar.db.sql.ResultSet;
 import com.scalar.db.sql.SqlSession;
 import com.scalar.db.sql.SqlSessionFactory;
-import com.scalar.db.sql.TransactionMode;
 import com.scalar.db.sql.statement.BoundStatement;
 import com.scalar.kelpie.config.Config;
 import com.scalar.kelpie.modules.TimeBasedProcessor;
@@ -20,7 +19,7 @@ public class TransferProcessor extends TimeBasedProcessor {
   public TransferProcessor(Config config) {
     super(config);
     numAccounts = (int) config.getUserLong("test_config", "num_accounts");
-    sqlSessionFactory = SqlCommon.getSqlSessionFactory(config, TransactionMode.TRANSACTION);
+    sqlSessionFactory = SqlCommon.getSqlSessionFactory(config);
   }
 
   @Override

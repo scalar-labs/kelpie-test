@@ -137,7 +137,7 @@ public class HttpTransferProcessor extends TimeBasedProcessor {
               .add("to_type", toType)
               .add("tx_id", txId)
               .add("from_new_balance", fromBalance - amount)
-              .add("to_new_balance", toBalance - amount)
+              .add("to_new_balance", toBalance + amount)
               .build();
       JsonObject response2 = sendRequest(PUT_BALANCES, variables2);
 
