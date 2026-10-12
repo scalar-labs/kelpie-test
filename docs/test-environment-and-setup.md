@@ -1,8 +1,11 @@
 # Test Environment and Setup
 
-Daily Kelpie tests run on GitHub-hosted `ubuntu-latest` runners. Each job creates a Docker environment and tears it down at the end. There is no Terraform or Azure VM retain step.
+How daily Kelpie CI builds its environment, what it runs, and how to reproduce a failure locally.
 
-Module usage notes remain in [`scalardb-test/README.md`](../scalardb-test/README.md) and [`jdbc-test/README.md`](../jdbc-test/README.md).
+Daily jobs use GitHub-hosted `ubuntu-latest` runners. Each job starts a Docker environment and tears it down at the end (no Azure VM / Terraform retain).
+
+For the operator checklist (Slack / Jira / failures), see [daily-test-checks.md](./daily-test-checks.md).  
+Module how-tos: [`scalardb-test/README.md`](../scalardb-test/README.md), [`jdbc-test/README.md`](../jdbc-test/README.md).
 
 ---
 
