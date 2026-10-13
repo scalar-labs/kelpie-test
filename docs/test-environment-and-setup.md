@@ -1,6 +1,6 @@
 # Test Environment and Setup
 
-How daily Kelpie CI builds its environment, what it runs, and how to reproduce a failure locally.
+How daily Kelpie CI builds its environment and what it runs.
 
 Daily jobs use GitHub-hosted `ubuntu-latest` runners. Each job starts a Docker environment and tears it down at the end (no Azure VM / Terraform retain).
 
@@ -73,29 +73,6 @@ A failed Kelpie invocation in the sweep is logged and **does not `exit 1`**. Jir
 3. Start ledger compose with `SCALARDL_VERSION` default `4.0.0-SNAPSHOT`.
 4. Kelpie `--only-pre`, then concurrency sweep with `--except-pre` using `scalardl-test/benchmark-config.toml`.
 5. Same summarize / plot / Pages / Slack / anomaly / Jira pattern as DB bench (`dl_data.json`, `dl_throughput-vs-date.png`). Artifact: `dl-benchmark-results` (includes compose service logs on teardown).
-
----
-
-## Reproduce locally
-
-**Verification** (from `scalardb-test/`):
-
-```sh
-./gradlew shadowJar
-cd docker
-./make-key.sh
-docker compose build
-docker compose up -d --wait
-# Load schema with scalardb-schema-loader (Cassandra contact_points cassandra1,cassandra2,cassandra3)
-docker compose exec -T client kelpie --config phantom-write-config.toml --inject
-docker compose down -v
-```
-
-Configs and compose comments in `scalardb-test/docker/docker-compose.yml` describe schema loading. Download `verification-logs-*` from the failed run to compare `kelpie.log` and node logs.
-
-**DB benchmark:** run Postgres locally, apply `schema/tx_transfer.json` with the schema-loader, then `${KELPIE}/bin/kelpie --config scalardb-test/benchmark-config.toml`.
-
-**DL benchmark:** start `scalardl-samples/postgres` ledger compose (apply the same compose workarounds as CI if using 4.0.0-SNAPSHOT), then kelpie `--only-pre` / `--except-pre` with `scalardl-test/benchmark-config.toml`.
 
 ---
 

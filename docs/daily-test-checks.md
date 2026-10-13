@@ -47,8 +47,6 @@ Each run uses a temporary GitHub-hosted runner (Docker). There is nothing to SSH
    * **Known issue** → write the reason → close (the Docker cluster is already torn down).
    * **New issue** → add findings → notify the right engineer(s) → suggest a fix if you have one → wait for confirmation.
 
-Reproduce locally if needed: [test-environment-and-setup.md](./test-environment-and-setup.md).
-
 ### Benchmark (`eng-benchmark`)
 
 * A normal daily **report** in Slack is expected even when things are healthy. That alone is not a failure.
@@ -104,5 +102,5 @@ N -- No --> END2[Keep monitoring]
 
 ## 5. More detail
 
-* Environments, schedules, local reproduce: [test-environment-and-setup.md](./test-environment-and-setup.md)
+* Environments and schedules: [test-environment-and-setup.md](./test-environment-and-setup.md)
 * Jepsen dailies: [scalar-jepsen daily SOP](https://github.com/scalar-labs/scalar-jepsen/blob/master/docs/daily-test-checks.md)
