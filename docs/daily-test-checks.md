@@ -5,6 +5,7 @@ Quick daily checklist for Kelpie tests in this repository.
 | Related docs | |
 |--------------|---|
 | Environments / how tests run | [test-environment-and-setup.md](./test-environment-and-setup.md) |
+| What each job checks | [test-types.md](./test-types.md) |
 | Jepsen (DB / DL / Cluster) | [scalar-jepsen daily SOP](https://github.com/scalar-labs/scalar-jepsen/blob/master/docs/daily-test-checks.md) |
 
 **What this repo covers:** Kelpie ScalarDB verification (`phantom-write`, `write-skew`) and ScalarDB / ScalarDL benchmarks.  
@@ -103,4 +104,5 @@ N -- No --> END2[Keep monitoring]
 ## 5. More detail
 
 * Environments and schedules: [test-environment-and-setup.md](./test-environment-and-setup.md)
+* What each job checks: [test-types.md](./test-types.md)
 * Jepsen dailies: [scalar-jepsen daily SOP](https://github.com/scalar-labs/scalar-jepsen/blob/master/docs/daily-test-checks.md)

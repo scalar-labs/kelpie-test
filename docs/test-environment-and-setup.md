@@ -5,6 +5,7 @@ How daily Kelpie CI builds its environment and what it runs.
 Daily jobs use GitHub-hosted `ubuntu-latest` runners. Each job starts a Docker environment and tears it down at the end (no Azure VM / Terraform retain).
 
 For the operator checklist (Slack / Jira / failures), see [daily-test-checks.md](./daily-test-checks.md).  
+For what each job checks, see [test-types.md](./test-types.md).  
 Module how-tos: [`scalardb-test/README.md`](../scalardb-test/README.md), [`jdbc-test/README.md`](../jdbc-test/README.md).
 
 ---

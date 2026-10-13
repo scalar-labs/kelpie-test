@@ -6,5 +6,6 @@ Daily GitHub Actions (ScalarDB verification, ScalarDB/ScalarDL benchmarks), fail
 
 * [Daily test monitoring and failure handling](docs/daily-test-checks.md)
 * [Test environment and setup](docs/test-environment-and-setup.md)
+* [Daily test types (what each job checks)](docs/test-types.md)
 
 Module how-tos: [`scalardb-test/README.md`](scalardb-test/README.md), [`jdbc-test/README.md`](jdbc-test/README.md).
