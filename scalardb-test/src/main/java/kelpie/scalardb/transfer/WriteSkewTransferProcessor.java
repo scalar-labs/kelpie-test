@@ -89,7 +89,7 @@ public class WriteSkewTransferProcessor extends TimeBasedProcessor {
     JsonObjectBuilder builder = Json.createObjectBuilder();
     unknownTransactions.forEach(
         (txId, ids) -> {
-          builder.add(txId, Json.createArrayBuilder().add(ids.get(0)).add(ids.get(1)).build());
+          builder.add(txId, Json.createArrayBuilder(ids).build());
         });
     setState(
         Json.createObjectBuilder()
