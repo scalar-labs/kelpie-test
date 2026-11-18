@@ -24,11 +24,11 @@ Quick daily checklist for Kelpie tests in this repository.
 
 **When do the dailies run?** Sunday–Friday only (no Saturday). Times below are cron UTC and approx IST:
 
-| Workflow | Cron (UTC) | Approx IST |
+| Workflow | Cron (UTC) | Approx JST |
 |----------|------------|------------|
-| Daily DB verification | `0 14 * * 0-5` | 19:30 |
-| Daily DB benchmark | `0 18 * * 0-5` | 23:30 |
-| Daily DL benchmark | `0 19 * * 0-5` | 00:30 next day |
+| Daily DB verification | `0 14 * * 0-5` | 23:00 |
+| Daily DB benchmark | `0 18 * * 0-5` | 03:00 next day |
+| Daily DL benchmark | `0 19 * * 0-5` | 04:00 next day |
 
 Each run uses a temporary GitHub-hosted runner (Docker). There is nothing to SSH into or destroy in Azure after the job ends.
 
