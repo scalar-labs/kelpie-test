@@ -22,7 +22,7 @@ Quick daily checklist for Kelpie tests in this repository.
    * Open [GitHub Actions](https://github.com/scalar-labs/kelpie-test/actions)
    * Open [GitHub Pages](https://scalar-labs.github.io/kelpie-test/)
 
-**When do the dailies run?** Sunday–Friday only (no Saturday). Times below are cron UTC and approx IST:
+**When do the dailies run?** Sunday–Friday only (no Saturday). Times below are cron UTC and approx JST (UTC+9):
 
 | Workflow | Cron (UTC) | Approx JST |
 |----------|------------|------------|
